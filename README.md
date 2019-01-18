@@ -6,13 +6,13 @@ MSc work on pink and chum diets :fish:
 
 * Add raw data
 
-..* UFN metadata
+  * UFN metadata
 
-..* Diet data
+  * Diet data
 
 * Clean current R scripts
 
-..* Organize and upload
+  * Organize and upload
 
 * Create folders for results, etc.
 
