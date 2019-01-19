@@ -2,6 +2,8 @@
 
 MSc work on juvenile pink and chum :fish:
 
+i.e. Code related to Discovery Islands-Johnstone Strait research
+
 ### To do list:
 
 * Add raw data
