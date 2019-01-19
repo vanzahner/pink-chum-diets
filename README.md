@@ -1,6 +1,6 @@
 # pink-chum-diets
 
-MSc work on juvenile pink and chum diets :fish:
+MSc work on juvenile pink and chum :fish:
 
 ### To do list:
 
