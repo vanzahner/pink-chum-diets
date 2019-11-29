@@ -8,11 +8,11 @@ ___
 
 ### To do list:
 
-* Add raw data
+* Add raw data :white_check_mark:
 
-  * UFN metadata
+  * UFN metadata :white_check_mark:
 
-  * Diet data
+  * Diet data :white_check_mark:
 
 * Clean current R scripts
 
