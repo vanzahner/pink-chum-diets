@@ -16,7 +16,9 @@ ___
 
 * Clean current R scripts
 
-  * Organize and upload
+  * Organize
+  
+  * Upload :white_check_mark:
 
 * Create folders for results, etc.
 
