@@ -1,8 +1,9 @@
 #First Draft of MSC Data Analysis Script! For basic in progress graphs!#
 
-#updated November 26th 2019
+#updated Dec 11 2019
+# will be taking this long script apart into relevant smaller scripts for analyses *
 
-##### Set up #####
+##### Set up --> data_wrangling.R #####
 
 rm(list=ls())
 #remove other R stuff
@@ -25,20 +26,20 @@ library(lemon)
 
 #devtools::install_github("HakaiInstitute/hakaisalmon", auth_token = "23cbdd116ee9b4186200c2461834faee67dae43c")
 
-setwd("/Users/Vanessa/Desktop")
+setwd("/Users/Vanessa/Desktop/Nov desktop/R Projects/msc_project")
 #set working directory
 
-mscdata <- read_csv("MSC_DATA_191126.csv")
+mscdata <- read_csv("data/pink_chum_diets_raw_data.csv")
 #read in file (simplified version of excel sheet)
 #manually edited SEMSP_ID into semsp_id to merge datasheets
 
 #metadata <- read_csv("fishmetadata.csv")
 #read in data for weight and length, etc. (OLD VERSION)
 
-metadata <- read_csv("HakaiData_jsp_fish_filtered.csv")
+metadata <- read_csv("data/pink_chum_fish_info_filtered_data.csv")
 #new version - edited hakai_id to be ufn
 
-seinedata <- read_csv("HakaiData_jsp_seine.csv")
+seinedata <- read_csv("data/pink_chum_seine_raw_data.csv")
 #seine data for lat long info
 
 latlongdata <- select(seinedata, seine_id, long=gather_lat, lat=gather_long)
@@ -49,6 +50,17 @@ fishdata <- left_join(mscdata, metadata, by=c("UFN", "semsp_id"))
 #join tables to merge the meta data with the diet data!
 
 fish <- left_join(fishdata, latlongdata, by="seine_id")
+
+temp_fish <- filter(fish, Analysis!="Spatial")
+
+spat_fish <- filter(fish, Analysis!="Temporal")
+
+write_csv(spat_fish, path="processed/spatial_pink_chum_diets.csv")
+
+write_csv(temp_fish, path="processed/temporal_pink_chum_diets.csv")
+
+
+##### Transforming Data #####
 
 #fishdata %>%
 #	group_by(`Fish Species`, `Sample Date`, `Sample Site`, `Taxonomic Group`) %>%
@@ -89,10 +101,10 @@ datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Insects")] <- "Other
 #simplify groups
 
 biomass <- datamod %>%
-	group_by(UFN, `Fish Species`, `Sample Date`, `Sample Site`, `Taxonomic Group`, Analysis, `Taxonomic Detail`, semsp_id,
-	         Year, sampling_week, `Bolus Weight (mg)`, weight, fork_length, lat, long, `Size Class`, `Prey Digestion Index`) %>%
-	summarise(Biomass=sum(`% Stomach Content Weight`))
-	#%>%
+  group_by(UFN, `Fish Species`, `Sample Date`, `Sample Site`, `Taxonomic Group`, Analysis, `Taxonomic Detail`, semsp_id,
+           Year, sampling_week, `Bolus Weight (mg)`, weight, fork_length, lat, long, `Size Class`, `Prey Digestion Index`) %>%
+  summarise(Biomass=sum(`% Stomach Content Weight`))
+#%>%
 #filter(Biomass!=0)
 #summarize proportional biomass for each fish (& remove empty stom)
 
@@ -103,8 +115,8 @@ biomass$`Size Class` <- as.factor(biomass$`Size Class`)
 biomass$`Size Class` <- factor(biomass$`Size Class`, levels(biomass$`Size Class`)[c(1, 3, 4, 5, 2)])
 
 mscwide <- biomass %>%
-	group_by(UFN, `Fish Species`, `Sample Site`) %>%
-	spread(key = `Taxonomic Group`, value = Biomass, fill = 0)
+  group_by(UFN, `Fish Species`, `Sample Site`) %>%
+  spread(key = `Taxonomic Group`, value = Biomass, fill = 0)
 #make dataframe wide to check out data
 
 spat_sites <- biomass %>%
@@ -123,13 +135,13 @@ biom_graph$`Sample Site` <- factor(biom_graph$`Sample Site`, levels(biom_graph$`
 #								"June 16", "June 23", "June 30", "July 6", "July 13")
 
 date_order <- c("05-May", "12-May", "19-May", "26-May", "02-Jun", "09-Jun",
-								"16-Jun", "23-Jun", "30-Jun", "06-Jul", "13-Jul")
+                "16-Jun", "23-Jun", "30-Jun", "06-Jul", "13-Jul")
 #weird formatting for some reason - fix later
 biomass$sampling_week <- factor(biomass$sampling_week, levels = date_order)
 
 taxa_order <- c("Barnacles", "Calanoids", "Decapods", "Euphausiids",
-								"Euph_eggs", "Cladocerans", "Echinoderms",
-								"Chaetognaths", "Gelatinous", "Larvaceans", "Other")
+                "Euph_eggs", "Cladocerans", "Echinoderms",
+                "Chaetognaths", "Gelatinous", "Larvaceans", "Other")
 
 biomass$`Taxonomic Group` <- factor(biomass$`Taxonomic Group`, levels = taxa_order)
 
