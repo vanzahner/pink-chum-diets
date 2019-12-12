@@ -13,3 +13,12 @@ setwd("/Users/Vanessa/Desktop/Nov desktop/R Projects/msc_project")
 
 spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
 
+spat_biomass_data <- spat_data %>%
+  group_by(ufn, fish_species, sample_date, sample_site, taxa_group, taxa_detail_calc, semsp_id,
+           year, sampling_week, bolus_weight, weight, fork_length, size_class, digestion_state) %>%
+  summarise(Biomass=sum(relative_biomass))
+#simplify dataset and combine any redundancies
+
+unique(spat_biomass_data$taxa_detail_calc)
+#167 taxa groups (way too many?)
+
