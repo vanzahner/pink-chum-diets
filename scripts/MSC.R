@@ -26,7 +26,7 @@ library(lemon)
 
 #devtools::install_github("HakaiInstitute/hakaisalmon", auth_token = "23cbdd116ee9b4186200c2461834faee67dae43c")
 
-setwd("/Users/Vanessa/Desktop/Nov desktop/R Projects/msc_project")
+setwd("/Users/Vanessa/Desktop/msc_project")
 #set working directory
 
 mscdata <- read_csv("data/pink_chum_diets_raw_data.csv")

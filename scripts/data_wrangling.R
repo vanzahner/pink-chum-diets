@@ -5,10 +5,10 @@ rm(list=ls())
 
 library(readr)
 #read in files
-library(dplyr)
+library(tidyverse)
 #data wrangling
 
-setwd("/Users/Vanessa/Desktop/Nov desktop/R Projects/msc_project")
+setwd("/Users/Vanessa/Desktop/msc_project")
 #set working directory
 
 raw_data <- read_csv("data/pink_chum_diets_raw_data.csv")
@@ -23,7 +23,8 @@ seinedata <- read_csv("data/pink_chum_seine_raw_data.csv")
 fishdata <- left_join(raw_data, metadata, by=c("ufn", "semsp_id"))
 #join tables to merge the meta data with the diet data!
 
-fish <- left_join(fishdata, seinedata)
+fish <- left_join(fishdata, seinedata) %>%
+  filter(taxa_detail_calc!="Goop")
 #transformed dataset with all 312 fish (spatial + temporal)
 
 temp_fish <- filter(fish, analysis!="Spatial")
