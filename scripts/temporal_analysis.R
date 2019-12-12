@@ -11,5 +11,5 @@ library(ggplot2)
 setwd("/Users/Vanessa/Desktop/Nov desktop/R Projects/msc_project")
 #set working directory
 
-temp_data <- read_csv("processed/pink_chum_diets_temporal")
+temp_data <- read_csv("processed/temporal_pink_chum_diets.csv")
 

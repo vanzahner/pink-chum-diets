@@ -11,27 +11,23 @@ setwd("/Users/Vanessa/Desktop/Nov desktop/R Projects/msc_project")
 
 raw_data <- read_csv("data/pink_chum_diets_raw_data.csv")
 #read in raw data file
-#manually edited SEMSP_ID into semsp_id to merge datasheets (?*)
 
 metadata <- read_csv("data/pink_chum_fish_info_filtered_data.csv")
-#new version - edited hakai_id to be ufn (?*)
+#new version - edited hakai_id to be ufn (NEED DATA DICTIONARY AND CHANGELOG!*)
 
 seinedata <- read_csv("data/pink_chum_seine_raw_data.csv")
-#seine data for lat long info
+#seine data for lat long info (column names fixed, lat and long were mixed up!)
 
-latlongdata <- select(seinedata, seine_id, long=gather_lat, lat=gather_long)
-#needed to be renamed... lat and long were mixed up!
-
-fishdata <- left_join(raw_data, metadata, by=c("UFN", "semsp_id"))
+fishdata <- left_join(raw_data, metadata, by=c("ufn", "semsp_id"))
 #join tables to merge the meta data with the diet data!
 
-fish <- left_join(fishdata, latlongdata, by="seine_id")
+fish <- left_join(fishdata, seinedata)
 #transformed dataset with all 312 fish (spatial + temporal)
 
-temp_fish <- filter(fish, Analysis!="Spatial")
+temp_fish <- filter(fish, analysis!="Spatial")
 #make datafile for only temporal analysis fish
 
-spat_fish <- filter(fish, Analysis!="Temporal")
+spat_fish <- filter(fish, analysis!="Temporal")
 #make datafile for only spatial analysis fish
 
 write_csv(spat_fish, path="processed/spatial_pink_chum_diets.csv")

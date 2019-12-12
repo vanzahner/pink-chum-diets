@@ -11,5 +11,5 @@ library(ggplot2)
 setwd("/Users/Vanessa/Desktop/Nov desktop/R Projects/msc_project")
 #set working directory
 
-spat_data <- read_csv("processed/pink_chum_diets_spatial.csv")
+spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
 
