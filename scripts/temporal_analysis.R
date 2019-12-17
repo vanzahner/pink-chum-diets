@@ -11,6 +11,10 @@ library(ggplot2)
 #graphs
 library(tidyverse)
 #data wrangling
+library(ggdendro)
+#dendrograms
+library(vegan)
+#analysis
 
 setwd("/Users/Vanessa/Desktop/msc_project")
 #set working directory
@@ -53,5 +57,13 @@ temp_data_wide <- temp_biomass_data %>%
 sum(temp_data_wide$microscope_hours)
 #634 hours at the microscope for temporal alone... average time per stomach of 3.0 hours!
 
-##### NMDS/Cluster #####
+##### Multivariate matrix prep #####
+
+
+
+##### NMDS #####
+
+
+
+##### Cluster #####
 

@@ -42,23 +42,23 @@ metadata <- read_csv("data/pink_chum_fish_info_filtered_data.csv")
 seinedata <- read_csv("data/pink_chum_seine_raw_data.csv")
 #seine data for lat long info
 
-latlongdata <- select(seinedata, seine_id, long=gather_lat, lat=gather_long)
+#latlongdata <- select(seinedata, seine_id, long=gather_lat, lat=gather_long)
 #needed to be renamed... lat and long were mixed up! Geez.
 
-fishdata <- left_join(mscdata, metadata, by=c("UFN", "semsp_id"))
+fishdata <- left_join(mscdata, metadata, by=c("ufn", "semsp_id")) %>%
+  filter(taxa_detail_calc!="Goop")
                       #by="semsp_id")
 #join tables to merge the meta data with the diet data!
 
-fish <- left_join(fishdata, latlongdata, by="seine_id")
+#fish <- left_join(fishdata, latlongdata, by="seine_id")
 
-temp_fish <- filter(fish, Analysis!="Spatial")
+temp_fish <- filter(fishdata, analysis!="Spatial" & taxa_detail_calc!="Goop")
 
-spat_fish <- filter(fish, Analysis!="Temporal")
+spat_fish <- filter(fishdata, analysis!="Temporal"& taxa_detail_calc!="Goop")
 
-write_csv(spat_fish, path="processed/spatial_pink_chum_diets.csv")
+#write_csv(spat_fish, path="processed/spatial_pink_chum_diets.csv")
 
-write_csv(temp_fish, path="processed/temporal_pink_chum_diets.csv")
-
+#write_csv(temp_fish, path="processed/temporal_pink_chum_diets.csv")
 
 ##### Transforming Data #####
 
@@ -67,7 +67,23 @@ write_csv(temp_fish, path="processed/temporal_pink_chum_diets.csv")
 #	summarise(Biomass=mean(`% Stomach Content Weight`)) %>%
 #	View()
 
-datamod <- fish %>%
+#load in file with old and new taxa names to be assigned
+fish_names<-read.csv("data/taxa_groups_all_fish.csv") 
+
+#for loop doesn't like data as factors
+fishdata$taxa_detail_calc <- as.character(fishdata$taxa_detail_calc) 
+fish_names$taxa_detail_calc <- as.character(fish_names$taxa_detail_calc)
+fish_names$taxa_group <- as.character(fish_names$taxa_group)
+
+#for loop that will go through all the organism names in the data spreadsheet 
+#and for each one it will go to the names spreadsheet and reassign the name accordingly
+for (n in fish_names$taxa_detail_calc) {
+  fishdata$taxa_detail_calc[which(fishdata$taxa_detail_calc %in% n)] <- fish_names$taxa_group[which(fish_names$taxa_detail_calc == n)]
+}
+
+unique(fishdata$taxa_detail_calc)
+
+datamod <- fishdata %>%
   filter(`Taxonomic Group`!="Digested")
 
 datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Empty")] <- "Other"

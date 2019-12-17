@@ -11,6 +11,10 @@ library(ggplot2)
 #graphs
 library(tidyverse)
 #data wrangling
+library(ggdendro)
+#dendrograms
+library(vegan)
+#analysis
 
 setwd("/Users/Vanessa/Desktop/msc_project")
 #set working directory
@@ -54,5 +58,13 @@ spat_data_wide <- spat_biomass_data %>%
 sum(spat_data_wide$microscope_hours)
 #432 hours at the microscope for spatial alone... average time per stomach of 3.6 hours!
 
-##### NMDS/Cluster #####
+##### Multivariate matrix prep #####
+
+
+
+##### NMDS #####
+
+
+
+##### Cluster #####
 
