@@ -131,7 +131,7 @@ species_names_filtered <- diets_filtered$species_names
 region_names_filtered <- diets_filtered$region_names
 #vector with region labels corresponding to the 105 fish ids
 simple_semsp_filtered <- diets_filtered$simple_semsp_names
-#vector with region labels corresponding to the 105 fish ids
+#vector with semsp labels corresponding to the 105 fish ids
 
 #create a matrix with ufns as row names
 matrix1<-as.matrix(diets_ufn)
@@ -223,7 +223,7 @@ rankindex(species_names_filtered, spat_diet_matrix, indices = c("euc", "man", "g
 
 Bray_Curtis_Dissimilarity <- vegdist(spat_diet_matrix, method = "bray")
 bcclust <- hclust(Bray_Curtis_Dissimilarity)
-#make dendrogram data
+#make dendrogram data (heirarchical clustering by complete linkages method)
 
 dendr <- dendro_data(bcclust, type = "rectangle")
 #put it in ggdendro form
