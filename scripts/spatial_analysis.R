@@ -39,13 +39,15 @@ for (n in spat_names$old_category) {
 }
 
 spat_biomass_data <- spat_data %>%
+  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested food",
+                                "Coscinodiscophycidae", "Phaeophyceae")) %>% 
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
   summarise(Biomass=sum(prey_weight))
 #simplify dataset and combine any redundancies (rename QUADRA area later)
 
 unique(spat_biomass_data$taxa_detail_calc)
-#166 taxa groups --> Simplified to 118. (what about lrg/sml calanoids?) and n=8 empties
+#161 taxa groups --> Simplified to 87! (what about lrg/sml calanoids?) and n=8 empties
 
 spat_numbers_taxa <- spat_biomass_data %>%
   ungroup() %>%

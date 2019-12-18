@@ -39,17 +39,20 @@ for (n in temp_names$old_category) {
 }
 
 temp_biomass_data <- temp_data %>%
+  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested food",
+                                "Coscinodiscophycidae", "Phaeophyceae")) %>% 
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, microscope_hours) %>%
   summarise(Biomass=sum(prey_weight))
 #simplify dataset and combine any redundancies
 
 unique(temp_biomass_data$taxa_detail_calc)
-#179 taxa groups (way too many?) --> Simplified to 131. n=7 empties (like 100% empty.)
+#176 taxa groups (way too many?) --> Simplified to 101. n=7 empties (like 100% empty.)
 
 temp_numbers_taxa <- temp_biomass_data %>%
   ungroup() %>%
   count(taxa_detail_calc)
+#grouped together anything <3 occurances and grouped together all insects/arachnids.
 
 temp_data_wide <- temp_biomass_data %>%
   ungroup() %>% 
