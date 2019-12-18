@@ -110,9 +110,14 @@ diet_proportions <- data.frame()
 
 diet_proportions <- diet_matrix/diet_matrix$Total*100
 #divide entire dataframe by row totals (total column should all = 100)
+#just realized that decostand function can calc and divide by totals...
 
 diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, region_names, diet_proportions)
 #reattach all relevant labels now that total calculation is done
+
+diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, region_names,
+                        diet_matrix, semsp_names)
+#REDO WITH RAW BIOMASS DATA (DELETE ONE OF THESE OPTIONS LATAER)
 
 diets_filtered <- diets_w_labels %>%
   filter(Total!=0 & !ufn_names %in% c("U2978", "U3501", "U5168", "U5282", "U5283", "U5285"))
@@ -138,23 +143,24 @@ matrix1<-as.matrix(diets_ufn)
 row.names(matrix1) <- matrix1[,1]
 spat_diet_matrix <- matrix1[,-1]
 class(spat_diet_matrix)<-"numeric"
+spat_trans_matrix <- decostand(spat_diet_matrix, "log")
 #need to rename in between matrices and dataframes better...
 
 ##### NMDS #####
 
-rankindex(region_names_filtered, spat_diet_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
-#it says bray and kul tied for best, then man, then euc, then gow.
+rankindex(region_names_filtered, spat_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
+#it says bray is best, then kul, then man, then euc, then gow.
 
 #region, proportion based dissimilarity - bray curtis
-eco.nmds.bc<- metaMDS(spat_diet_matrix,distance="bray",labels=region_names_filtered, trymax = 100, autotransform = FALSE)
+eco.nmds.bc<- metaMDS(spat_trans_matrix,distance="bray",labels=region_names_filtered, trymax = 100, autotransform = FALSE)
 eco.nmds.bc
 plot(eco.nmds.bc)
-#found convergence relatively easily (<40), stress is not super low... 0.1711
+#NO CONVERGENCE --> NEED TO FIX SOMEHOW (Simplify taxa groups even further?????)
 
 ##PERMANOVA - provides r2 and p values related to the nmds (are differences between factor levels (e.g. clusters) significant?)
-permanova_eco.bc<-adonis(spat_diet_matrix ~ region_names_filtered, permutations = 999, method="bray")
+permanova_eco.bc<-adonis(spat_trans_matrix ~ region_names_filtered, permutations = 999, method="bray")
 permanova_eco.bc #significant! p = 0.001 so plot it
-permanova_eco.eu<-adonis(spat_diet_matrix ~ region_names_filtered, permutations = 999, method="euclidean")
+permanova_eco.eu<-adonis(spat_trans_matrix ~ region_names_filtered, permutations = 999, method="euclidean")
 permanova_eco.eu #significant! p = 0.001 so plot it (has lower mean sqs and sum of sqs tho)
 #this is old code, will prob do anosim+simper not permanova...
 
@@ -218,10 +224,10 @@ ggsave("figs/spatial_NMDS.png")
 
 ##### Cluster #####
 
-rankindex(species_names_filtered, spat_diet_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
+rankindex(species_names_filtered, spat_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
 #see which is best
 
-Bray_Curtis_Dissimilarity <- vegdist(spat_diet_matrix, method = "bray")
+Bray_Curtis_Dissimilarity <- vegdist(spat_trans_matrix, method = "bray")
 bcclust <- hclust(Bray_Curtis_Dissimilarity)
 #make dendrogram data (heirarchical clustering by complete linkages method)
 

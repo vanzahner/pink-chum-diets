@@ -119,10 +119,15 @@ diet_proportions <- data.frame()
 
 diet_proportions <- diet_matrix/diet_matrix$Total*100
 #divide entire dataframe by row totals (total column should all = 100)
+#just realized that decostand function can calc and divide by totals...
 
 diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, date_names,
                         year_names, week_names, diet_proportions, semsp_names)
 #reattach all relevant labels now that total calculation is done
+
+diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, date_names,
+                        year_names, week_names, diet_matrix, semsp_names)
+#REDO WITH RAW BIOMASS DATA (DELETE ONE OF THESE OPTIONS LATAER)
 
 diets_filtered <- diets_w_labels %>%
   filter(Total!=0 & !ufn_names %in% c("U2627", "U5435", "U5143", "U5346", "U5319", "U5400", "U5404"
@@ -155,30 +160,30 @@ matrix1<-as.matrix(diets_ufn)
 row.names(matrix1) <- matrix1[,1]
 temp_diet_matrix <- matrix1[,-1]
 class(temp_diet_matrix)<-"numeric"
+temp_trans_matrix <- decostand(temp_diet_matrix, "log")
 #need to rename in between matrices and dataframes better...
 
 ##### NMDS #####
 
-rankindex(site_names_filtered, temp_diet_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
-#it says bray and kul tied for best, then man, then euc, then gow.
+rankindex(species_names_filtered, temp_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
+#see which is best
 
 #region, proportion based dissimilarity - bray curtis
-eco.nmds.bc<- metaMDS(temp_diet_matrix,distance="bray",labels=site_names_filtered, trymax = 100, autotransform = FALSE)
+eco.nmds.bc<- metaMDS(temp_trans_matrix,distance="bray",labels=species_names_filtered, trymax = 100, autotransform = FALSE)
 eco.nmds.bc
 plot(eco.nmds.bc)
-#NO CONVERGENCE --> NEED TO FIX SOMEHOW (Simplify taxa groups even further?????)
 
 ##PERMANOVA - provides r2 and p values related to the nmds (are differences between factor levels (e.g. clusters) significant?)
-permanova_eco.bc<-adonis(temp_diet_matrix ~ region_names_filtered, permutations = 999, method="bray")
+permanova_eco.bc<-adonis(temp_trans_matrix ~ species_names_filtered, permutations = 999, method="bray")
 permanova_eco.bc #significant! p = 0.001 so plot it
-permanova_eco.eu<-adonis(temp_diet_matrix ~ region_names_filtered, permutations = 999, method="euclidean")
+permanova_eco.eu<-adonis(temp_trans_matrix ~ species_names_filtered, permutations = 999, method="euclidean")
 permanova_eco.eu #significant! p = 0.001 so plot it (has lower mean sqs and sum of sqs tho)
 #this is old code, will prob do anosim+simper not permanova...
 
-NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=region_names_filtered)
+NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=species_names_filtered)
 #plot NMDS, only once (picking Bray because all similar), no presence absence
 
-ord.bc<-ordiellipse(eco.nmds.bc,region_names_filtered,display="sites",kind="sd", conf = 0.95, label=T)
+ord.bc<-ordiellipse(eco.nmds.bc,species_names_filtered,display="sites",kind="sd", conf = 0.95, label=T)
 #Ellipses are standard deviation, no scaling of data (can use standard error, scaling, and confidence limit options)
 
 veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
@@ -209,8 +214,7 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   geom_point(stat = "identity", aes(shape=species_names_filtered, fill=site_names_filtered), size=3)+#, color = "black")+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 22), name="Species")+
-  scale_fill_manual(values=c("#B2182B", "#E41A1C", "#F781BF",
-                             "#053061", "#A6CEE3", "#1F78B4"),
+  scale_fill_manual(values=c("#053061", "#B2182B"),
                     name="Region", guide="legend") +
   guides(fill= guide_legend(override.aes = list(shape=21)))+
   scale_colour_manual(values=c("#053061", "#B2182B")#,
@@ -235,10 +239,10 @@ ggsave("figs/temporal_NMDS.png")
 
 ##### Cluster #####
 
-rankindex(species_names_filtered, temp_diet_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
+rankindex(species_names_filtered, temp_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
 #see which is best
 
-Bray_Curtis_Dissimilarity <- vegdist(temp_diet_matrix, method = "bray")
+Bray_Curtis_Dissimilarity <- vegdist(temp_trans_matrix, method = "bray")
 bcclust <- hclust(Bray_Curtis_Dissimilarity)
 #make dendrogram data (heirarchical clustering by complete linkages method)
 
