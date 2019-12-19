@@ -68,7 +68,7 @@ sum(temp_data_wide$microscope_hours)
 
 diet_matrix <- temp_data_wide %>%
   ungroup() %>%
-  select(Acartia:Echinodermata_Larvae, Epilabidocera_amphrites:Tortanus_discaudatus)
+  select(Acartia:Tortanus_discaudatus, -Empty)
 #create a dataframe with only taxa categories (delete "Empty" category)
 
 temp_data_wide$ufn <- as.factor(temp_data_wide$ufn)
@@ -98,15 +98,26 @@ week_names <- as.factor(week_names)
 #make vector with date labels (as factors) too
 
 semsp_names <- temp_data_wide$semsp_id
-
 simple_semsp_names <- vector(length = length(semsp_names))
-
 for(i in 1:length(semsp_names)){
   simple_semsp_names[i] <- substring(semsp_names[i], first=12)
 }
-
 simple_semsp_names <- as.factor(simple_semsp_names)
 #make vector with semsp id (for cluster dendrogram)
+
+date_categories <- read_csv("data/temporal_date_id_categories.csv")
+date_site_names <- vector(length = length(semsp_names))
+date_id_names <- vector(length = length(semsp_names))
+for(i in 1:length(semsp_names)){
+  date_site_names[i] <- substring(semsp_names[i], first=1, last=14)
+}
+date_site_names <- as.data.frame(date_site_names)
+date_site_names$date_site_names <- as.character(date_site_names$date_site_names)
+for(n in date_site_names$date_site_names){
+  date_site_names$date_site_names[which(date_site_names$date_site_names %in% n)] <- date_categories$date_id_names[which(date_categories$date_site_names == n)]
+}
+date_site_names$date_site_names <- as.factor(date_site_names$date_site_names)
+#make vector with date id (for cluster dendrogram)
 
 Total <- vector(length = nrow(diet_matrix))
 #create an empty vector
@@ -120,16 +131,16 @@ diet_matrix <- cbind(diet_matrix, Total)
 diet_proportions <- data.frame()
 #create empty dataframe to fill with transformed data!
 
-diet_proportions <- diet_matrix/diet_matrix$Total*100
+diet_proportions <- diet_matrix/diet_matrix$Total#*100
 #divide entire dataframe by row totals (total column should all = 100)
 #just realized that decostand function can calc and divide by totals...
 
 diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, date_names,
-                        year_names, week_names, diet_proportions, semsp_names)
+                        year_names, week_names, diet_proportions, semsp_names, date_site_names)
 #reattach all relevant labels now that total calculation is done
 
-diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, date_names,
-                        year_names, week_names, diet_matrix, semsp_names)
+#diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, date_names,
+#                        year_names, week_names, diet_matrix, semsp_names)
 #REDO WITH RAW BIOMASS DATA (DELETE ONE OF THESE OPTIONS LATAER)
 
 diets_filtered <- diets_w_labels %>%
@@ -157,36 +168,40 @@ year_names_filtered <- diets_filtered$year_names
 #vector with date labels corresponding to the 198 fish ids
 week_names_filtered <- diets_filtered$week_names
 #vector with date labels corresponding to the 198 fish ids
+date_sites_filtered <- diets_filtered$date_site_names
+#vector for date and site id corresponding to 198 fish ids
+#NEED TO STREAMLINE THIS MESS OF CODE... Do it after filter?
 
 #create a matrix with ufns as row names
 matrix1<-as.matrix(diets_ufn)
 row.names(matrix1) <- matrix1[,1]
 temp_diet_matrix <- matrix1[,-1]
 class(temp_diet_matrix)<-"numeric"
-temp_trans_matrix <- decostand(temp_diet_matrix, "log")
+temp_trans_matrix <- asin(sqrt(temp_diet_matrix))
 #need to rename in between matrices and dataframes better...
 
 ##### NMDS #####
 
-rankindex(species_names_filtered, temp_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
+rankindex(site_names_filtered, temp_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
 #see which is best
 
 #region, proportion based dissimilarity - bray curtis
-eco.nmds.bc<- metaMDS(temp_trans_matrix,distance="bray",labels=species_names_filtered, trymax = 100, autotransform = FALSE)
+eco.nmds.bc<- metaMDS(temp_trans_matrix,distance="bray",labels=site_names_filtered, trymax = 100, autotransform = FALSE)
 eco.nmds.bc
 plot(eco.nmds.bc)
+#converge ~60, stress ~0.15!
 
 ##PERMANOVA - provides r2 and p values related to the nmds (are differences between factor levels (e.g. clusters) significant?)
-permanova_eco.bc<-adonis(temp_trans_matrix ~ species_names_filtered, permutations = 999, method="bray")
+permanova_eco.bc<-adonis(temp_trans_matrix ~ site_names_filtered, permutations = 999, method="bray")
 permanova_eco.bc #significant! p = 0.001 so plot it
-permanova_eco.eu<-adonis(temp_trans_matrix ~ species_names_filtered, permutations = 999, method="euclidean")
+permanova_eco.eu<-adonis(temp_trans_matrix ~ site_names_filtered, permutations = 999, method="euclidean")
 permanova_eco.eu #significant! p = 0.001 so plot it (has lower mean sqs and sum of sqs tho)
 #this is old code, will prob do anosim+simper not permanova...
 
-NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=species_names_filtered)
+NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=site_names_filtered)
 #plot NMDS, only once (picking Bray because all similar), no presence absence
 
-ord.bc<-ordiellipse(eco.nmds.bc,species_names_filtered,display="sites",kind="sd", conf = 0.95, label=T)
+ord.bc<-ordiellipse(eco.nmds.bc,site_names_filtered,display="sites",kind="sd", conf = 0.95, label=T)
 #Ellipses are standard deviation, no scaling of data (can use standard error, scaling, and confidence limit options)
 
 veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
@@ -217,10 +232,10 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   geom_point(stat = "identity", aes(shape=species_names_filtered, fill=site_names_filtered), size=3)+#, color = "black")+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 22), name="Species")+
-  scale_fill_manual(values=c("#053061", "#B2182B"),
+  scale_fill_manual(values=c("#B2182B", "#053061"),
                     name="Region", guide="legend") +
   guides(fill= guide_legend(override.aes = list(shape=21)))+
-  scale_colour_manual(values=c("#053061", "#B2182B")#,
+  scale_colour_manual(values=c("#B2182B", "#053061")#,
                       #guide=FALSE
   ) +
   #scale_y_continuous(limits=c(-1,1),breaks=seq(-1,1,by=.5),name = "NMDS2, Proportion-based dissimilarity")+
@@ -233,16 +248,17 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
         panel.grid.minor=element_blank(),panel.grid.major=element_blank()#,
         #legend.position = "none"
   ) + coord_fixed() +
-  annotate("text",x=-2.5,y=1.5,label="(stress = 0.17)",size=4, hjust = -0.1)
+  annotate("text",x=-2.5,y=1.5,label="(stress = 0.15)",size=4, hjust = -0.1)
 #NMDS graph for the different sites!
 
 a
+#NEXT STEP: COLOR ACCORDING TO DATE ID - USE PAIRED COLORS FOR DIFF YEARS AS IN CLUSTER
 
 ggsave("figs/temporal_NMDS.png")
 
 ##### Cluster #####
 
-rankindex(species_names_filtered, temp_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
+rankindex(date_sites_filtered, temp_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
 #see which is best
 
 Bray_Curtis_Dissimilarity <- vegdist(temp_trans_matrix, method = "bray")
@@ -261,11 +277,11 @@ for(i in 1:length(simple_semsp_filtered)){
 site_sp_names <- as.factor(site_sp_names)
 #make vector with semsp id (for cluster dendrogram)
 
-data_w_site_sp_combo <- cbind(diets_filtered, site_sp_names)
+data_w_site_sp_combo <- cbind(diets_filtered, date_sites_filtered)
 
 fishsp <- data_w_site_sp_combo %>%
   ungroup() %>%
-  select(ufn=semsp_names, Sp=site_sp_names)
+  select(ufn=semsp_names, Sp=date_sites_filtered)
 
 labs <- label(dendr)
 
@@ -278,12 +294,15 @@ brewer.pal(n=12, "Paired")
 
 ggplot()+
   geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend, color="white"))+
-  geom_text(data=label(dendr), aes(x=x, y=y, label=label, hjust=1.05, angle=90, color=lab$Sp), size=4) +
+  geom_text(data=label(dendr), aes(x=x, y=y, label=label, hjust=1.05, angle=90, color=lab$Sp), size=2.5) +
   #coord_flip() + scale_y_reverse(expand=c(0.2, 0)) +
   #scale_colour_manual(values = c("#F781BF", "#1F78B4", "white"))+
   #scale_colour_manual(values = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
   #                               "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928", "grey50"))+
-  scale_y_continuous(limits = c(-0.5, 1))+
+  scale_colour_manual(values = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
+                                 "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928", "grey50"))+
+  #change later to blue, purple, green for JS and red, orange, yellow for DI
+  scale_y_continuous(limits = c(-0.2, 1))+
   theme(axis.line.y=element_blank(),
         axis.ticks.y=element_blank(),
         axis.text.x=element_blank(),
@@ -293,6 +312,9 @@ ggplot()+
   labs(title="Cluster By Fish ID")
 #plot the dendrogram data for the different fish ID's
 
-ggsave("figs/temporal_cluster_color_by_site_and_species.png", width=25, height=10)
+#NOTICE DIFF BY SITE AND SPECIES AND DATE AND YEAR????? INVESTIGATE FURTHER!
+
+ggsave("figs/temporal_cluster_site_and_date.png", width=20, height=10)
 
 #next step compare dendrograms of pink and chum separately? (or other combos)
+#such as dividing DI and JS! Some DI outliers in JS cluster but JS all the same

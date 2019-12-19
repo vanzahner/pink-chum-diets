@@ -66,7 +66,7 @@ sum(spat_data_wide$microscope_hours)
 
 diet_matrix <- spat_data_wide %>%
   ungroup() %>%
-  select(Acartia:Ditrichocorycaeus_anglicus_Copepodite, Epilabidocera_amphrites:Triconia_conifera)
+  select(Acartia:Tortanus_discaudatus, -Empty)
 #create a dataframe with only taxa categories (delete "Empty" category)
 
 spat_data_wide$ufn <- as.factor(spat_data_wide$ufn)
@@ -110,15 +110,15 @@ diet_matrix <- cbind(diet_matrix, Total)
 diet_proportions <- data.frame()
 #create empty dataframe to fill with transformed data!
 
-diet_proportions <- diet_matrix/diet_matrix$Total*100
+diet_proportions <- diet_matrix/diet_matrix$Total#*100
 #divide entire dataframe by row totals (total column should all = 100)
 #just realized that decostand function can calc and divide by totals...
 
 diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, region_names, diet_proportions)
 #reattach all relevant labels now that total calculation is done
 
-diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, region_names,
-                        diet_matrix, semsp_names)
+#diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, region_names,
+#                        diet_matrix, semsp_names)
 #REDO WITH RAW BIOMASS DATA (DELETE ONE OF THESE OPTIONS LATAER)
 
 diets_filtered <- diets_w_labels %>%
@@ -128,7 +128,7 @@ diets_filtered <- diets_w_labels %>%
 #need to figure out how to strategically go through what is "empty" later.
 
 diets_ufn <- diets_filtered %>%
-  select(simple_semsp_names, Acartia:Triconia_conifera)
+  select(simple_semsp_names, Acartia:Tortanus_discaudatus)
 #drop total=100 column and other label columns to have numerical matrix
 
 site_names_filtered <- diets_filtered$site_names
@@ -145,7 +145,7 @@ matrix1<-as.matrix(diets_ufn)
 row.names(matrix1) <- matrix1[,1]
 spat_diet_matrix <- matrix1[,-1]
 class(spat_diet_matrix)<-"numeric"
-spat_trans_matrix <- decostand(spat_diet_matrix, "log")
+spat_trans_matrix <- asin(sqrt(spat_diet_matrix))
 #need to rename in between matrices and dataframes better...
 
 ##### NMDS #####
@@ -275,6 +275,8 @@ ggplot()+
   labs(title="Cluster By Fish ID")
 #plot the dendrogram data for the different fish ID's
 
-ggsave("figs/spatial_cluster.png", width=15, height=15)
+#NOTICE DIFF BY SITE AND SPECIES AND REGION AND GFI????? INVESTIGATE FURTHER!
+
+ggsave("figs/spatial_cluster.png", width=15, height=20)
 
 #next step compare dendrograms of pink and chum separately? (or other combos)
