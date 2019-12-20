@@ -13,7 +13,7 @@ Coscinodiscophycidae,Algae
 Mesocalanus_tenuicornis,Calanoids_Large
 Metridia_curticaudata,Calanoids_Large
 Pseudocalanus,Calanoids_Small
-Calanoida,Calanoids_Small
+Calanoida,Calanoids
 Oikopleura,Larvaceans
 Balanomorpha_Molt,Barnacles
 Themisto_pacifica,Hyperiids
@@ -23,7 +23,6 @@ Digested_food,Digested
 Balanomorpha_Cyprid,Barnacles
 Senticaudata,Gammarids
 Ditrichocorycaeus_anglicus,Cyclopoids
-Calanoida,Calanoids_Large
 Euphausiidae,Euphausiids
 Hyperia,Hyperiids
 Culicomorpha,Insects
@@ -106,7 +105,7 @@ Calanoida_Copepodite,Calanoids_Small
 Cancer_gracilis_Zoea_V,Decapods
 Neocalanus_cristatus,Calanoids_Large
 Nematoscelis_difficilis,Euphausiids
-Calanoida_Copepodite,Small_Calanoids
+Calanoida_Copepodite,Calanoids_Small
 Nannastacidae,Cumacean
 Cancer_antennarius_Zoea_IV,Decapods
 Lepeophtheirus_salmonis_Juvenile,Parasites
