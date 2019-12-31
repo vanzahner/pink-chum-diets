@@ -22,4 +22,6 @@ ___
 
 * Create folders for results, etc. :white_check_mark:
 
+* Update description for project
+
 * Anything else recommended [here](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1005510)

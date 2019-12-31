@@ -20,7 +20,8 @@ library(RColorBrewer)
 #nicer colors
 library(leaflet)
 #map
-
+library(pivot)
+#instead of gather() and spread()
 library(lemon)
 #repeat axis in facet wrap and grid
 
@@ -83,43 +84,16 @@ for (n in fish_names$taxa_detail_calc) {
 
 unique(fishdata$taxa_detail_calc)
 
-datamod <- fishdata %>%
-  filter(`Taxonomic Group`!="Digested")
+# NEED TO RESOLVE CALANOID SIZE ISSUE AND MONSTRILLOIDS ONLY N=2 ????? MYSIDS=3 IS OK?
 
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Empty")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Bivalves")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Cumacean")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Cyphonauts")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Detritus")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Diatoms")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Isopods")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Objects")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Parasites")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Polychaetes")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Pteropods")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Siphonophore")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Ostracods")] <- "Other"
-#datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Cladocerans")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Cyclopoids")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Amphipods")] <- "Other"
-#datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Decapods")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Fish")] <- "Other"
-#changed from barnacles to fish to see barnacle trends, change back later!
-#datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Chaetognaths")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Digested")] <- "Other"
-#datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Echinoderms")] <- "Other"
-#datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Euph_eggs")] <- "Other"
-#datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Gelatinous")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Harpacticoids")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Ostracod")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Mysids")] <- "Other"
-datamod$`Taxonomic Group`[which(datamod$`Taxonomic Group`=="Insects")] <- "Other"
-#simplify groups
+numbers_taxa <- fishdata %>%
+  ungroup() %>%
+  count(taxa_detail_calc)
 
-biomass <- datamod %>%
-  group_by(UFN, `Fish Species`, `Sample Date`, `Sample Site`, `Taxonomic Group`, Analysis, `Taxonomic Detail`, semsp_id,
-           Year, sampling_week, `Bolus Weight (mg)`, weight, fork_length, lat, long, `Size Class`, `Prey Digestion Index`) %>%
-  summarise(Biomass=sum(`% Stomach Content Weight`))
+biomass <- fishdata %>%
+  group_by(ufn, fish_species, sample_date, sample_site, taxa_group, analysis,# taxa_detail_calc, 
+           semsp_id, year, sampling_week, bolus_weight, weight, fork_length, size_class, digestion_state) %>%
+  summarise(Biomass=sum(prey_weight))
 #%>%
 #filter(Biomass!=0)
 #summarize proportional biomass for each fish (& remove empty stom)
@@ -127,25 +101,33 @@ biomass <- datamod %>%
 #biomass$`Taxonomic Group` <- as.factor(biomass$`Taxonomic Group`)
 #biomass$`Taxonomic Group` <- factor(biomass$`Taxonomic Group`, levels(biomass$`Taxonomic Group`)[c(1, 2, 4, 5, 3, 6, 7, 8)])
 
-biomass$`Size Class` <- as.factor(biomass$`Size Class`)
-biomass$`Size Class` <- factor(biomass$`Size Class`, levels(biomass$`Size Class`)[c(1, 3, 4, 5, 2)])
+#biomass$size_class <- as.factor(biomass$size_class)
+#biomass$size_class <- factor(biomass$size_class, levels(biomass$size_class)[c(1, 3, 4, 5, 2)])
 
 mscwide <- biomass %>%
-  group_by(UFN, `Fish Species`, `Sample Site`) %>%
-  spread(key = `Taxonomic Group`, value = Biomass, fill = 0)
+  ungroup() %>% 
+  select(-c(size_class, digestion_state)) %>% 
+  group_by(ufn, fish_species, sample_site) %>%
+  spread(key = taxa_group, value = Biomass, fill = 0)
 #make dataframe wide to check out data
 
+mscwide <- biomass %>%
+  ungroup() %>%
+  select(-c(size_class, digestion_state)) %>% 
+  group_by(ufn, fish_species, sample_site) %>% 
+  pivot
+
 spat_sites <- biomass %>%
-  filter(`Sample Site` %in% c("D11", "D09", "J02", "J06", "J08"))
+  filter(sample_site %in% c("D11", "D09", "J02", "J06", "J08"))
 
 temp_site <- biomass %>% 
-  filter(`Sample Site` == "D07" & `Sample Date`=="2016-06-16")
+  filter(sample_site == "D07" & sample_date=="2016-06-16")
 
 biom_graph <- rbind(spat_sites, temp_site)
 
-biom_graph$`Sample Site` <- as.factor(biom_graph$`Sample Site`)
+biom_graph$sample_site <- as.factor(biom_graph$sample_site)
 
-biom_graph$`Sample Site` <- factor(biom_graph$`Sample Site`, levels(biom_graph$`Sample Site`)[c(4, 6, 5, 3, 2, 1)])
+biom_graph$sample_site <- factor(biom_graph$sample_site, levels(biom_graph$sample_site)[c(4, 6, 5, 3, 2, 1)])
 
 #date_order <- c("May 5", "May 12", "May 19", "May 26", "June 2", "June 9",
 #								"June 16", "June 23", "June 30", "July 6", "July 13")
@@ -159,9 +141,11 @@ taxa_order <- c("Barnacles", "Calanoids", "Decapods", "Euphausiids",
                 "Euph_eggs", "Cladocerans", "Echinoderms",
                 "Chaetognaths", "Gelatinous", "Larvaceans", "Other")
 
-biomass$`Taxonomic Group` <- factor(biomass$`Taxonomic Group`, levels = taxa_order)
+#biomass$`Taxonomic Group` <- factor(biomass$`Taxonomic Group`, levels = taxa_order)
 
-biom_graph$`Taxonomic Group` <- factor(biom_graph$`Taxonomic Group`, levels = taxa_order)
+#biom_graph$`Taxonomic Group` <- factor(biom_graph$`Taxonomic Group`, levels = taxa_order)
+
+#need to resolve taxa_order and list of groups before reordering the levels and whatnot
 
 ##### Overlap #####
 

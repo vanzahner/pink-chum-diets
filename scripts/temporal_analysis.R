@@ -105,6 +105,13 @@ for(i in 1:length(semsp_names)){
 simple_semsp_names <- as.factor(simple_semsp_names)
 #make vector with semsp id (for cluster dendrogram)
 
+site_sp_names <- vector(length = length(semsp_names))
+for(i in 1:length(semsp_names)){
+  site_sp_names[i] <- substring(semsp_names[i], first=12, last=17)
+}
+site_sp_names <- as.factor(site_sp_names)
+#make vector with site and sp id (for cluster dendrogram/nmds)
+
 date_categories <- read_csv("data/temporal_date_id_categories.csv")
 date_site_names <- vector(length = length(semsp_names))
 date_id_names <- vector(length = length(semsp_names))
@@ -135,7 +142,7 @@ diet_proportions <- diet_matrix/diet_matrix$Total#*100
 #divide entire dataframe by row totals (total column should all = 100)
 #just realized that decostand function can calc and divide by totals...
 
-diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, date_names,
+diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, date_names, site_sp_names,
                         year_names, week_names, diet_proportions, semsp_names, date_site_names)
 #reattach all relevant labels now that total calculation is done
 
@@ -170,6 +177,8 @@ week_names_filtered <- diets_filtered$week_names
 #vector with date labels corresponding to the 198 fish ids
 date_sites_filtered <- diets_filtered$date_site_names
 #vector for date and site id corresponding to 198 fish ids
+site_sp_names_filtered <- diets_filtered$site_sp_names
+#vector for species and site id corresponding to 198 fish ids
 #NEED TO STREAMLINE THIS MESS OF CODE... Do it after filter?
 
 #create a matrix with ufns as row names
@@ -189,7 +198,7 @@ rankindex(site_names_filtered, temp_trans_matrix, indices = c("euc", "man", "gow
 eco.nmds.bc<- metaMDS(temp_trans_matrix,distance="bray",labels=site_names_filtered, trymax = 100, autotransform = FALSE)
 eco.nmds.bc
 plot(eco.nmds.bc)
-#converge ~60, stress ~0.15!
+#converge ~20-60 varies, stress ~0.15!
 
 ##PERMANOVA - provides r2 and p values related to the nmds (are differences between factor levels (e.g. clusters) significant?)
 permanova_eco.bc<-adonis(temp_trans_matrix ~ site_names_filtered, permutations = 999, method="bray")
@@ -221,7 +230,7 @@ brewer.pal(n = 5, name = "Set3")
 #medium blue "#80B1D3"
 brewer.pal(n = 8, name = "Set1")
 #red and pink "#E41A1C" "#F781BF"
-brewer.pal(n = 2, name = "Paired")
+brewer.pal(n = 12, name = "Paired")
 #dark and light blue "#A6CEE3" "#1F78B4"
 brewer.pal(n = 4, name = "Dark2")
 #hot pink "#E7298A"
@@ -229,15 +238,17 @@ brewer.pal(n=11, "RdBu")
 #darker red and darker blue "#B2182B" "#2166AC"
 
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
-  geom_point(stat = "identity", aes(shape=species_names_filtered, fill=site_names_filtered), size=3)+#, color = "black")+
+  geom_point(stat = "identity", aes(shape=species_names_filtered, fill=date_sites_filtered), size=3)+#, color = "black")+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 22), name="Species")+
-  scale_fill_manual(values=c("#B2182B", "#053061"),
-                    name="Region", guide="legend") +
+  scale_fill_manual(values=c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", "#FFFF99", "#B15928", "#CAB2D6", "#6A3D9A",
+                             "#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "grey50"),
+                    name="Date", guide="legend") + #for site and date groupings
+  #scale_fill_manual(values=c("#FB9A99", "#E31A1C", "#A6CEE3", "#1F78B4"),
+  #                    name="Site and Sp.", guide="legend") + #for site and sp groups
   guides(fill= guide_legend(override.aes = list(shape=21)))+
-  scale_colour_manual(values=c("#B2182B", "#053061")#,
-                      #guide=FALSE
-  ) +
+  scale_colour_manual(values=c("#B2182B", "#053061"),
+                      name="Site and Sp.", guide="legend") + #for site and sp groups
   #scale_y_continuous(limits=c(-1,1),breaks=seq(-1,1,by=.5),name = "NMDS2, Proportion-based dissimilarity")+
   #scale_x_continuous(limits=c(-0.85,0.65),breaks=seq(-0.85,0.65,by=.5),name = "NMDS1, Proportion-based dissimilarity")+
   theme_bw()+
@@ -254,7 +265,7 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
 a
 #NEXT STEP: COLOR ACCORDING TO DATE ID - USE PAIRED COLORS FOR DIFF YEARS AS IN CLUSTER
 
-ggsave("figs/temporal_NMDS.png")
+ggsave("figs/temporal_NMDS_detailed.png")
 
 ##### Cluster #####
 
@@ -281,7 +292,7 @@ data_w_site_sp_combo <- cbind(diets_filtered, date_sites_filtered)
 
 fishsp <- data_w_site_sp_combo %>%
   ungroup() %>%
-  select(ufn=semsp_names, Sp=date_sites_filtered)
+  select(ufn=semsp_names, Sp=site_sp_names)
 
 labs <- label(dendr)
 
@@ -296,12 +307,13 @@ ggplot()+
   geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend, color="white"))+
   geom_text(data=label(dendr), aes(x=x, y=y, label=label, hjust=1.05, angle=90, color=lab$Sp), size=2.5) +
   #coord_flip() + scale_y_reverse(expand=c(0.2, 0)) +
-  #scale_colour_manual(values = c("#F781BF", "#1F78B4", "white"))+
-  #scale_colour_manual(values = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
-  #                               "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928", "grey50"))+
-  scale_colour_manual(values = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
-                                 "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928", "grey50"))+
-  #change later to blue, purple, green for JS and red, orange, yellow for DI
+  #scale_colour_manual(values = c("#A6CEE3", lightblue "#1F78B4", blue "#B2DF8A", lightgreen "#33A02C", green "#FB9A99", pink
+                                  #"#E31A1C", red "#FDBF6F", lightorange "#FF7F00", orange
+  #                               "#CAB2D6", lightpurple "#6A3D9A", purple "#FFFF99", yellow "#B15928", brown "grey50"))+
+  #scale_colour_manual(values = c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", "#FFFF99", "#B15928", "#CAB2D6", "#6A3D9A",
+  #                               "#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "grey50"))+
+  scale_colour_manual(values = c("#FB9A99", "#E31A1C",
+                                 "#A6CEE3", "#1F78B4", "grey50"))+
   scale_y_continuous(limits = c(-0.2, 1))+
   theme(axis.line.y=element_blank(),
         axis.ticks.y=element_blank(),
@@ -312,9 +324,4 @@ ggplot()+
   labs(title="Cluster By Fish ID")
 #plot the dendrogram data for the different fish ID's
 
-#NOTICE DIFF BY SITE AND SPECIES AND DATE AND YEAR????? INVESTIGATE FURTHER!
-
-ggsave("figs/temporal_cluster_site_and_date.png", width=20, height=10)
-
-#next step compare dendrograms of pink and chum separately? (or other combos)
-#such as dividing DI and JS! Some DI outliers in JS cluster but JS all the same
+ggsave("figs/temporal_cluster_site_and_species.png", width=20, height=10)
