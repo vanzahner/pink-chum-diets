@@ -39,7 +39,7 @@ for (n in temp_names$old_category) {
 }
 
 temp_biomass_data <- temp_data %>%
-  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested food",
+  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
                                 "Coscinodiscophycidae", "Phaeophyceae")) %>% 
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, microscope_hours) %>%
@@ -63,6 +63,10 @@ temp_data_wide <- temp_biomass_data %>%
 
 sum(temp_data_wide$microscope_hours)
 #634 hours at the microscope for temporal alone... average time per stomach of 3.0 hours!
+
+species_order <- c("Pink", "Chum")
+temp_data_wide$fish_species <- factor(temp_data_wide$fish_species, levels = species_order)
+#reorder species from the default of alphabetical to pink then chum, for graph reasons
 
 ##### Multivariate matrix prep #####
 
@@ -378,3 +382,46 @@ temporal_gfi_dates %>%
 
 ggsave("figs/temporal_GFI.png")
 #save figure into folder
+
+##### Niche Breadth #####
+
+temp_data_wide_info <- temporal_gfi_dates %>%
+  ungroup() %>% 
+  select(semsp_id, ufn, sample_site, fish_species, sample_date, year, simple_date_site_names)
+
+temp_data_pa <- temporal_gfi_dates %>%
+  ungroup() %>% 
+  select(Acartia:Tortanus_discaudatus, -Empty) %>% 
+  decostand(method = "pa")
+
+totals <- vector(length = nrow(temp_data_pa))
+#create an empty vector
+totals <- rowSums(temp_data_pa)
+#fill that vector with calculated row totals (total per stom.)
+totals <- as.data.frame(totals)
+
+temp_data_taxa_sum <- cbind(temp_data_wide_info, totals)
+
+count(temp_data_taxa_sum)
+
+temp_data_taxa_sum %>%
+  group_by(sample_site, fish_species, sample_date, year, simple_date_site_names) %>%
+  summarise(mean(totals))
+
+temp_data_taxa_sum %>% 
+  ggplot(aes(simple_date_site_names, totals))+
+  geom_boxplot(aes(fill=fish_species))+
+  labs(title="Temporal Niche Breadth", y="Number of taxanomic groups", fill="Species",
+       x=NULL)+
+  theme_bw()+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text.y = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5),
+        axis.text.x = element_text(size=12))+
+  facet_grid(year~sample_site, scales = "free_x")+
+  scale_x_discrete(labels=c("DI_Early"="May", "DI_June_Early"="Early June", "DI_June_Mid"="Mid-June",
+                            "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))
+#boxplot for simple version of niche breadth (just number of taxa in each fish stomach)
+
+ggsave("figs/temporal_niche_breadth.png")

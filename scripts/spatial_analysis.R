@@ -39,7 +39,7 @@ for (n in spat_names$old_category) {
 }
 
 spat_biomass_data <- spat_data %>%
-  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested food",
+  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
                                 "Coscinodiscophycidae", "Phaeophyceae")) %>% 
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
@@ -47,7 +47,7 @@ spat_biomass_data <- spat_data %>%
 #simplify dataset and combine any redundancies (rename QUADRA area later)
 
 unique(spat_biomass_data$taxa_detail_calc)
-#161 taxa groups --> Simplified to 87! (what about lrg/sml calanoids?) and n=8 empties
+#161 taxa groups --> Simplified to 86! (what about lrg/sml calanoids?) and n=8 empties
 
 spat_numbers_taxa <- spat_biomass_data %>%
   ungroup() %>%
@@ -55,7 +55,7 @@ spat_numbers_taxa <- spat_biomass_data %>%
 
 spat_data_wide <- spat_biomass_data %>%
   ungroup() %>% 
-  select(ufn, semsp_id, fish_species, sample_site, work_area, bolus_weight, weight, fork_length, taxa_detail_calc, Biomass, microscope_hours) %>% 
+  select(ufn, semsp_id, fish_species, sample_date, sample_site, work_area, bolus_weight, weight, fork_length, taxa_detail_calc, Biomass, microscope_hours) %>% 
   group_by(ufn, fish_species, sample_site) %>% 
   spread(key=taxa_detail_calc, value=Biomass, fill = 0)
 
@@ -68,7 +68,7 @@ spat_data_wide$sample_site <- factor(spat_data_wide$sample_site, levels = site_o
 
 species_order <- c("Pink", "Chum")
 spat_data_wide$fish_species <- factor(spat_data_wide$fish_species, levels = species_order)
-#reorder sites from the default of alphabetical to pink then chum, for coloring reasons
+#reorder species from the default of alphabetical to pink then chum, for graph reasons
 
 ##### Multivariate matrix prep #####
 
@@ -297,6 +297,7 @@ spatial_gfi_data <- spat_data_wide %>%
 #stomach bolus weight (grams) / fish body weight (grams), expressed as a percentage
 
 spatial_gfi_data %>% 
+  #filter(sample_site %in% c("J06", "D11", "D09", "D07")) %>% 
   ggplot(aes(sample_site, calc_gfi))+
   geom_boxplot(aes(fill=fish_species))+
   labs(title="Spatial Gut Fullness Index", y="GFI (% Body Weight)", fill="Species",
@@ -311,3 +312,42 @@ spatial_gfi_data %>%
 
 ggsave("figs/spatial_GFI.png")
 #save figure into folder
+##### Niche Breadth #####
+
+spat_data_wide_info <- spat_data_wide %>%
+  ungroup() %>% 
+  select(semsp_id, ufn, sample_site, fish_species)
+
+spat_data_pa <- spat_data_wide %>%
+  ungroup() %>% 
+  select(Acartia:Tortanus_discaudatus, -Empty) %>% 
+  decostand(method = "pa")
+
+totals <- vector(length = nrow(spat_data_pa))
+#create an empty vector
+totals <- rowSums(spat_data_pa)
+#fill that vector with calculated row totals (total per stom.)
+totals <- as.data.frame(totals)
+
+spat_data_taxa_sum <- cbind(spat_data_wide_info, totals)
+
+count(spat_data_taxa_sum)
+
+spat_data_taxa_sum %>%
+  group_by(sample_site, fish_species) %>%
+  summarise(mean(totals))
+
+spat_data_taxa_sum %>% 
+  ggplot(aes(sample_site, totals))+
+  geom_boxplot(aes(fill=fish_species))+
+  labs(title="Spatial Niche Breadth", y="Number of taxanomic groups", fill="Species",
+       x=NULL)+
+  theme_bw()+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text.y = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5),
+        axis.text.x = element_text(size=12))
+#boxplot for simple version of niche breadth (just number of taxa in each fish stomach)
+
+ggsave("figs/spatial_niche_breadth.png")
