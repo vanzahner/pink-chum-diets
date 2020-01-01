@@ -62,6 +62,14 @@ spat_data_wide <- spat_biomass_data %>%
 sum(spat_data_wide$microscope_hours)
 #432 hours at the microscope for spatial alone... average time per stomach of 3.6 hours!
 
+site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
+spat_data_wide$sample_site <- factor(spat_data_wide$sample_site, levels = site_order)
+#reorder sites from the default of alphabetical to west to east, like on the map
+
+species_order <- c("Pink", "Chum")
+spat_data_wide$fish_species <- factor(spat_data_wide$fish_species, levels = species_order)
+#reorder sites from the default of alphabetical to pink then chum, for coloring reasons
+
 ##### Multivariate matrix prep #####
 
 diet_matrix <- spat_data_wide %>%
@@ -280,3 +288,26 @@ ggplot()+
 ggsave("figs/spatial_cluster.png", width=15, height=20)
 
 #next step compare dendrograms of pink and chum separately? (or other combos)
+
+##### GFI #####
+
+spatial_gfi_data <- spat_data_wide %>%
+  mutate(bolus_weight_g = bolus_weight/1000) %>%
+  mutate(calc_gfi=bolus_weight_g/weight*100)
+#stomach bolus weight (grams) / fish body weight (grams), expressed as a percentage
+
+spatial_gfi_data %>% 
+  ggplot(aes(sample_site, calc_gfi))+
+  geom_boxplot(aes(fill=fish_species))+
+  labs(title="Spatial Gut Fullness Index", y="GFI (% Body Weight)", fill="Species",
+       x="Sample Site")+
+  theme_bw()+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5))+
+  annotate("text",x=5,y=7,label="Empty n = 12",size=4, hjust = -0.1)
+#GFI for spatial (1 weight=NA, which is why warning message pops up after printing)
+
+ggsave("figs/spatial_GFI.png")
+#save figure into folder

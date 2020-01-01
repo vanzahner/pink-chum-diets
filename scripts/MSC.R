@@ -1,6 +1,6 @@
 #First Draft of MSC Data Analysis Script! For basic in progress graphs!#
 
-#updated Dec 11 2019
+#updated Dec 31 2019
 # will be taking this long script apart into relevant smaller scripts for analyses *
 
 ##### Set up --> data_wrangling.R #####
@@ -18,10 +18,6 @@ library(tidyverse)
 #data manip
 library(RColorBrewer)
 #nicer colors
-library(leaflet)
-#map
-library(pivot)
-#instead of gather() and spread()
 library(lemon)
 #repeat axis in facet wrap and grid
 
@@ -32,10 +28,6 @@ setwd("/Users/Vanessa/Desktop/msc_project")
 
 mscdata <- read_csv("data/pink_chum_diets_raw_data.csv")
 #read in file (simplified version of excel sheet)
-#manually edited SEMSP_ID into semsp_id to merge datasheets
-
-#metadata <- read_csv("fishmetadata.csv")
-#read in data for weight and length, etc. (OLD VERSION)
 
 metadata <- read_csv("data/pink_chum_fish_info_filtered_data.csv")
 #new version - edited hakai_id to be ufn
@@ -43,30 +35,16 @@ metadata <- read_csv("data/pink_chum_fish_info_filtered_data.csv")
 seinedata <- read_csv("data/pink_chum_seine_raw_data.csv")
 #seine data for lat long info
 
-#latlongdata <- select(seinedata, seine_id, long=gather_lat, lat=gather_long)
-#needed to be renamed... lat and long were mixed up! Geez.
-
 fishdata <- left_join(mscdata, metadata, by=c("ufn", "semsp_id")) %>%
   filter(taxa_detail_calc!="Goop")
                       #by="semsp_id")
 #join tables to merge the meta data with the diet data!
 
-#fish <- left_join(fishdata, latlongdata, by="seine_id")
-
 temp_fish <- filter(fishdata, analysis!="Spatial" & taxa_detail_calc!="Goop")
 
 spat_fish <- filter(fishdata, analysis!="Temporal"& taxa_detail_calc!="Goop")
 
-#write_csv(spat_fish, path="processed/spatial_pink_chum_diets.csv")
-
-#write_csv(temp_fish, path="processed/temporal_pink_chum_diets.csv")
-
 ##### Transforming Data #####
-
-#fishdata %>%
-#	group_by(`Fish Species`, `Sample Date`, `Sample Site`, `Taxonomic Group`) %>%
-#	summarise(Biomass=mean(`% Stomach Content Weight`)) %>%
-#	View()
 
 #load in file with old and new taxa names to be assigned
 fish_names<-read.csv("data/taxa_groups_all_fish.csv") 
@@ -92,30 +70,17 @@ numbers_taxa <- fishdata %>%
 
 biomass <- fishdata %>%
   group_by(ufn, fish_species, sample_date, sample_site, taxa_group, analysis,# taxa_detail_calc, 
-           semsp_id, year, sampling_week, bolus_weight, weight, fork_length, size_class, digestion_state) %>%
-  summarise(Biomass=sum(prey_weight))
+           semsp_id, year, sampling_week, bolus_weight, weight, fork_length) %>%
+  summarise(prey_weight_sum=sum(prey_weight))
+#summarize biomass for each fish
+
 #%>%
-#filter(Biomass!=0)
-#summarize proportional biomass for each fish (& remove empty stom)
-
-#biomass$`Taxonomic Group` <- as.factor(biomass$`Taxonomic Group`)
-#biomass$`Taxonomic Group` <- factor(biomass$`Taxonomic Group`, levels(biomass$`Taxonomic Group`)[c(1, 2, 4, 5, 3, 6, 7, 8)])
-
-#biomass$size_class <- as.factor(biomass$size_class)
-#biomass$size_class <- factor(biomass$size_class, levels(biomass$size_class)[c(1, 3, 4, 5, 2)])
-
-mscwide <- biomass %>%
-  ungroup() %>% 
-  select(-c(size_class, digestion_state)) %>% 
-  group_by(ufn, fish_species, sample_site) %>%
-  spread(key = taxa_group, value = Biomass, fill = 0)
-#make dataframe wide to check out data
+#filter(Biomass!=0) #remove empty stom
 
 mscwide <- biomass %>%
   ungroup() %>%
-  select(-c(size_class, digestion_state)) %>% 
   group_by(ufn, fish_species, sample_site) %>% 
-  pivot
+  pivot_wider(names_from = taxa_group, values_from = prey_weight_sum, values_fill = list(prey_weight_sum = 0))
 
 spat_sites <- biomass %>%
   filter(sample_site %in% c("D11", "D09", "J02", "J06", "J08"))

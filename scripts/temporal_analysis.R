@@ -325,3 +325,56 @@ ggplot()+
 #plot the dendrogram data for the different fish ID's
 
 ggsave("figs/temporal_cluster_site_and_species.png", width=20, height=10)
+
+##### GFI #####
+
+temporal_gfi_data <- temp_data_wide %>%
+  mutate(bolus_weight_g = bolus_weight/1000) %>%
+  mutate(calc_gfi=bolus_weight_g/weight*100) %>% 
+  ungroup()
+#stomach bolus weight (grams) / fish body weight (grams), expressed as a percentage
+
+date_site_names$date_site_names <- as.character(date_site_names$date_site_names)
+simple_date_site_names <- date_site_names$date_site_names
+simple_date_site_names <- vector(length = length(date_site_names$date_site_names))
+for(i in 1:length(date_site_names$date_site_names)){
+  simple_date_site_names[i] <- gsub('.{3}$', '', date_site_names$date_site_names[i])
+}
+simple_date_site_names <- as.factor(simple_date_site_names)
+#make vector with ids for site and date, but no year (for gfi boxplot)
+
+temporal_gfi_dates <- cbind(temporal_gfi_data, simple_date_site_names)
+#combine wide dataset with site_date ids for plotting
+
+dat_text <- data.frame(
+  label = c("Empty n = 1", "Empty n = 3", "Empty n = 0", "Empty n = 5"),
+  sample_site=c("D07", "D07", "J07", "J07"),
+  year=c("2015", "2016", "2015", "2016"),
+  x=c(2.5, 2.5, 2.5, 2.5),
+  y=c(3.75, 3.75, 3.75, 3.75)
+)
+
+temporal_gfi_dates %>% 
+  ggplot(aes(simple_date_site_names, calc_gfi))+
+  geom_boxplot(aes(fill=fish_species))+
+  labs(title="Temporal Gut Fullness Index", y="GFI (% Body Weight)", fill="Species",
+       x=NULL)+
+  theme_bw()+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text.y = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5),
+        axis.text.x = element_text(size=12))+
+  facet_grid(year~sample_site, scales = "free_x")+
+  scale_x_discrete(labels=c("DI_Early"="May", "DI_June_Early"="Early June", "DI_June_Mid"="Mid-June",
+                            "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))+
+  #can change these labels later to be more exact and relevant.
+  geom_text(data = dat_text,
+    mapping = aes(x = x, y = y, label = label),
+    hjust   = 0,
+    vjust   = 0
+  )
+#GFI for temporal (1 weight=NA, which is why warning message pops up after printing)
+
+ggsave("figs/temporal_GFI.png")
+#save figure into folder
