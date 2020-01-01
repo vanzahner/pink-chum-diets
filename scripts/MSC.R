@@ -37,7 +37,6 @@ seinedata <- read_csv("data/pink_chum_seine_raw_data.csv")
 
 fishdata <- left_join(mscdata, metadata, by=c("ufn", "semsp_id")) %>%
   filter(taxa_detail_calc!="Goop")
-                      #by="semsp_id")
 #join tables to merge the meta data with the diet data!
 
 temp_fish <- filter(fishdata, analysis!="Spatial" & taxa_detail_calc!="Goop")
@@ -100,6 +99,7 @@ biom_graph$sample_site <- factor(biom_graph$sample_site, levels(biom_graph$sampl
 date_order <- c("05-May", "12-May", "19-May", "26-May", "02-Jun", "09-Jun",
                 "16-Jun", "23-Jun", "30-Jun", "06-Jul", "13-Jul")
 #weird formatting for some reason - fix later
+
 biomass$sampling_week <- factor(biomass$sampling_week, levels = date_order)
 
 taxa_order <- c("Barnacles", "Calanoids", "Decapods", "Euphausiids",
@@ -107,9 +107,7 @@ taxa_order <- c("Barnacles", "Calanoids", "Decapods", "Euphausiids",
                 "Chaetognaths", "Gelatinous", "Larvaceans", "Other")
 
 #biomass$`Taxonomic Group` <- factor(biomass$`Taxonomic Group`, levels = taxa_order)
-
 #biom_graph$`Taxonomic Group` <- factor(biom_graph$`Taxonomic Group`, levels = taxa_order)
-
 #need to resolve taxa_order and list of groups before reordering the levels and whatnot
 
 ##### Overlap #####
@@ -1140,9 +1138,7 @@ biomass %>%
 
 notaxadata <- biom_graph %>%
   ungroup() %>% 
-	select(UFN, `Fish Species`, `Sample Site`, `Sample Date`, weight, fork_length, `Bolus Weight (mg)`,
-	       #, region, lat, lon, `Clipped Adipose Fin`
-	       lat, long) %>%
+	select(ufn, fish_species, sample_site, sample_date, weight, fork_length, bolus_weight) %>%
 	unique()
 
 notaxadata$`Fish Species` <- as.factor(notaxadata$`Fish Species`)
