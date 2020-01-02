@@ -148,6 +148,7 @@ region_names_filtered <- diets_filtered$region_names
 simple_semsp_filtered <- diets_filtered$simple_semsp_names
 #vector with semsp labels corresponding to the 105 fish ids
 
+
 #create a matrix with ufns as row names
 matrix1<-as.matrix(diets_ufn)
 row.names(matrix1) <- matrix1[,1]
@@ -336,6 +337,7 @@ count(spat_data_taxa_sum)
 spat_data_taxa_sum %>%
   group_by(sample_site, fish_species) %>%
   summarise(mean(totals))
+#calculations of number of prey taxa for each individual fish, then summarized by site
 
 spat_data_taxa_sum %>% 
   ggplot(aes(sample_site, totals))+
@@ -351,3 +353,39 @@ spat_data_taxa_sum %>%
 #boxplot for simple version of niche breadth (just number of taxa in each fish stomach)
 
 ggsave("figs/spatial_niche_breadth.png")
+
+summary_spat_data <- spat_biomass_data %>%
+  ungroup() %>% 
+  group_by(sample_site, fish_species, taxa_detail_calc) %>% 
+  summarise(summary_biomass=sum(Biomass)) %>%
+  ungroup() %>% 
+  spread(key = taxa_detail_calc, value = summary_biomass, fill = 0)
+
+summary_spat_data_wide_info <- summary_spat_data %>%
+  select(sample_site, fish_species)
+
+summary_spat_data_pa <- summary_spat_data %>%
+  ungroup() %>% 
+  select(Acartia:Tortanus_discaudatus, -Empty) %>% 
+  decostand(method = "pa")
+
+sum_totals <- vector(length = nrow(summary_spat_data_pa))
+#create an empty vector
+sum_totals <- rowSums(summary_spat_data_pa)
+#fill that vector with calculated row totals (total per stom.)
+sum_totals <- as.data.frame(sum_totals)
+
+spat_data_taxa_summary <- cbind(summary_spat_data_wide_info, sum_totals)
+
+count(spat_data_taxa_summary)
+
+spat_data_taxa_summary %>%
+  group_by(sample_site, fish_species) %>%
+  summarise(mean(sum_totals))
+#same calculations as the one above but totals taxa for each species and site combo
+
+spat_diet_matrix
+site_names_filtered
+species_names_filtered
+site_sp_names
+
