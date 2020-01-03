@@ -384,8 +384,66 @@ spat_data_taxa_summary %>%
   summarise(mean(sum_totals))
 #same calculations as the one above but totals taxa for each species and site combo
 
-spat_diet_matrix
-site_names_filtered
-species_names_filtered
-site_sp_names
+spat_diet_matrix <- as.data.frame(spat_diet_matrix)
+rownames(spat_diet_matrix) <- NULL
+site_names_filtered <- as.character(site_names_filtered)
+species_names_filtered <- as.character(species_names_filtered)
+site_sp_names <- as.character(site_sp_names)
 
+spat_matrix_df <- cbind(site_names_filtered, species_names_filtered, site_sp_names, spat_diet_matrix)
+
+spat_matrix_long <- pivot_longer(spat_matrix_df, cols=Acartia:Tortanus_discaudatus, names_to = "taxa")
+#calculation includes taxa biomass = 0 values so the mean is calculated correctly! :)
+
+spat_df_sum <- spat_matrix_long %>%
+  group_by(taxa, site_names_filtered, species_names_filtered, site_sp_names) %>%
+  summarise(ave_rel_biomass=mean(value))
+
+spat_sum_wide <- spread(spat_df_sum, taxa, ave_rel_biomass)
+#note: this might be the best way to do a bar graph of diet comp (after grouping taxa)
+
+spat_sum_matrix <- spat_sum_wide %>%
+  ungroup() %>%
+  select(Acartia:Tortanus_discaudatus)
+
+spat_matrix_site_sp <- as.character(spat_sum_wide$site_sp_names)
+spat_matrix_site <- as.character(spat_sum_wide$site_names_filtered)
+spat_matrix_sp <- as.character(spat_sum_wide$species_names_filtered)
+spat_matrix_info <- cbind(spat_matrix_sp, spat_matrix_site, spat_matrix_site_sp)
+
+spat_matrix_sqr <- spat_sum_matrix^2
+spat_matrix_row_sum <- rowSums(spat_matrix_sqr)
+spat_matrix_inverse <- 1/spat_matrix_row_sum
+#Levins NB is ave % utilization by sp and site/whatever, calc = 1/(preyi^2+preyj^2+...)
+#combine these into one line of code later? Idk, better to have more code than mistakes
+
+spat_nb_calc <- cbind(spat_matrix_info, spat_matrix_inverse)
+spat_nb_calc <- as.data.frame(spat_nb_calc) %>%
+  rename(site=spat_matrix_site, species=spat_matrix_sp, site_sp=spat_matrix_site_sp, nb=spat_matrix_inverse)
+spat_nb_calc$site <- factor(spat_nb_calc$site, levels = site_order)
+spat_nb_calc$species <- factor(spat_nb_calc$species, levels = species_order)
+spat_nb_calc$nb <- as.character(spat_nb_calc$nb)
+spat_nb_calc$nb <- as.numeric(spat_nb_calc$nb)
+#the niche breadth calculation was a factor for some reason... takes two steps to fix.
+
+spat_nb_standard <- (spat_matrix_inverse-1)/84
+#standardized Levins NB = (NB-1)/(N-1) where N is the number of categories (prey groups)
+spat_nb <- cbind(spat_matrix_info, spat_nb_standard)
+spat_nb <- as.data.frame(spat_nb) %>%
+  rename(site=spat_matrix_site, species=spat_matrix_sp, site_sp=spat_matrix_site_sp, nb=spat_nb_standard)
+spat_nb$site <- factor(spat_nb$site, levels = site_order)
+spat_nb$species <- factor(spat_nb$species, levels = species_order)
+spat_nb$nb <- as.character(spat_nb$nb)
+spat_nb$nb <- as.numeric(spat_nb$nb)
+#trends look the exact same for standarized and non-standarized, which is good news.
+
+spat_nb %>% 
+  ggplot(aes(site, nb))+
+  geom_line(aes(group=species, color=species))+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(x="Site", y="Levin's NB (Standardized)", title="Spatial Niche Breadth", color="Species")
+
+#try including empty stomachs, see if that changes it. Try less taxa categories too?
+
+ggsave("figs/spatial_NB_calc.png")

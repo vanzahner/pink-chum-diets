@@ -425,3 +425,100 @@ temp_data_taxa_sum %>%
 #boxplot for simple version of niche breadth (just number of taxa in each fish stomach)
 
 ggsave("figs/temporal_niche_breadth.png")
+
+summary_temp_data <- temp_biomass_data %>%
+  ungroup() %>% 
+  group_by(sample_site, sample_date, fish_species, taxa_detail_calc) %>% 
+  summarise(summary_biomass=sum(Biomass)) %>%
+  ungroup() %>% 
+  spread(key = taxa_detail_calc, value = summary_biomass, fill = 0)
+
+summary_temp_data_wide_info <- summary_temp_data %>%
+  select(sample_site, sample_date, fish_species)
+
+summary_temp_data_pa <- summary_temp_data %>%
+  ungroup() %>% 
+  select(Acartia:Tortanus_discaudatus, -Empty) %>% 
+  decostand(method = "pa")
+
+sum_totals <- vector(length = nrow(summary_temp_data_pa))
+#create an empty vector
+sum_totals <- rowSums(summary_temp_data_pa)
+#fill that vector with calculated row totals (total per stom.)
+sum_totals <- as.data.frame(sum_totals)
+
+temp_data_taxa_summary <- cbind(summary_temp_data_wide_info, sum_totals)
+
+count(temp_data_taxa_summary)
+
+temp_data_taxa_summary %>%
+  group_by(sample_site, sample_date, fish_species) %>%
+  summarise(mean(sum_totals)) %>%
+  View()
+#same calculations as the one above but totals taxa for each species-site-date combo
+
+temp_diet_matrix <- as.data.frame(temp_diet_matrix)
+rownames(temp_diet_matrix) <- NULL
+site_names_filtered <- as.character(site_names_filtered)
+species_names_filtered <- as.character(species_names_filtered)
+date_names_filtered <- as.character(date_names_filtered)
+
+temp_matrix_df <- cbind(site_names_filtered, species_names_filtered, date_names_filtered, temp_diet_matrix)
+
+#temp_df_dates <- left_join(, temporal_gfi_dates, by="semsp_id")
+
+# ***** NEED TO RESOLVE HOW TO PLOT THIS WITH DATES AND REGIONS AND WHATNOT *****
+
+temp_matrix_long <- pivot_longer(temp_matrix_df, cols=Acartia:Tortanus_discaudatus, names_to = "taxa")
+#calculation includes taxa biomass = 0 values so the mean is calculated correctly! :)
+
+temp_df_sum <- temp_matrix_long %>%
+  group_by(taxa, site_names_filtered, species_names_filtered, date_names_filtered) %>%
+  summarise(ave_rel_biomass=mean(value))
+
+temp_sum_wide <- spread(temp_df_sum, taxa, ave_rel_biomass)
+#note: this might be the best way to do a bar graph of diet comp (after grouping taxa)
+
+temp_sum_matrix <- temp_sum_wide %>%
+  ungroup() %>%
+  select(Acartia:Tortanus_discaudatus)
+
+temp_matrix_date <- as.character(temp_sum_wide$date_names_filtered)
+temp_matrix_site <- as.character(temp_sum_wide$site_names_filtered)
+temp_matrix_sp <- as.character(temp_sum_wide$species_names_filtered)
+temp_matrix_info <- cbind(temp_matrix_sp, temp_matrix_site, temp_matrix_date)
+
+temp_matrix_sqr <- temp_sum_matrix^2
+temp_matrix_row_sum <- rowSums(temp_matrix_sqr)
+temp_matrix_inverse <- 1/temp_matrix_row_sum
+#Levins NB is ave % utilization by sp and site/whatever, calc = 1/(preyi^2+preyj^2+...)
+#combine these into one line of code later? Idk, better to have more code than mistakes
+
+temp_nb_calc <- cbind(temp_matrix_info, temp_matrix_inverse)
+temp_nb_calc <- as.data.frame(temp_nb_calc) %>%
+  rename(site=temp_matrix_site, species=temp_matrix_sp, date=temp_matrix_date, nb=temp_matrix_inverse)
+temp_nb_calc$site <- factor(temp_nb_calc$site, levels = site_order)
+temp_nb_calc$species <- factor(temp_nb_calc$species, levels = species_order)
+temp_nb_calc$nb <- as.character(temp_nb_calc$nb)
+temp_nb_calc$nb <- as.numeric(temp_nb_calc$nb)
+#the niche breadth calculation was a factor for some reason... takes two steps to fix.
+
+temp_nb_standard <- (temp_matrix_inverse-1)/84
+#standardized Levins NB = (NB-1)/(N-1) where N is the number of categories (prey groups)
+temp_nb <- cbind(temp_matrix_info, temp_nb_standard)
+temp_nb <- as.data.frame(temp_nb) %>%
+  rename(site=temp_matrix_site, species=temp_matrix_sp, site_sp=temp_matrix_site_sp, nb=temp_nb_standard)
+temp_nb$site <- factor(temp_nb$site, levels = site_order)
+temp_nb$species <- factor(temp_nb$species, levels = species_order)
+temp_nb$nb <- as.character(temp_nb$nb)
+temp_nb$nb <- as.numeric(temp_nb$nb)
+#trends look the exact same for standarized and non-standarized, which is good news.
+
+temp_nb %>% 
+  ggplot(aes(site, nb))+
+  geom_line(aes(group=species, color=species))+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(x="Site", y="Levin's NB (Standardized)", title="Temporal Niche Breadth", color="Species")
+
+#try including empty stomachs, see if that changes it. Try less taxa categories too?
