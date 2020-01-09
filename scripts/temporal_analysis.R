@@ -130,6 +130,15 @@ for(n in date_site_names$date_site_names){
 date_site_names$date_site_names <- as.factor(date_site_names$date_site_names)
 #make vector with date id (for cluster dendrogram)
 
+date_site_names$date_site_names <- as.character(date_site_names$date_site_names)
+simple_date_site_names <- date_site_names$date_site_names
+simple_date_site_names <- vector(length = length(date_site_names$date_site_names))
+for(i in 1:length(date_site_names$date_site_names)){
+  simple_date_site_names[i] <- gsub('.{3}$', '', date_site_names$date_site_names[i])
+}
+simple_date_site_names <- as.factor(simple_date_site_names)
+#make vector with ids for site and date, but no year (for graphs)
+
 Total <- vector(length = nrow(diet_matrix))
 #create an empty vector
 
@@ -147,7 +156,7 @@ diet_proportions <- diet_matrix/diet_matrix$Total#*100
 #just realized that decostand function can calc and divide by totals...
 
 diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, date_names, site_sp_names,
-                        year_names, week_names, diet_proportions, semsp_names, date_site_names)
+                        year_names, week_names, diet_proportions, semsp_names, date_site_names, simple_date_site_names)
 #reattach all relevant labels now that total calculation is done
 
 #diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, date_names,
@@ -183,6 +192,8 @@ date_sites_filtered <- diets_filtered$date_site_names
 #vector for date and site id corresponding to 198 fish ids
 site_sp_names_filtered <- diets_filtered$site_sp_names
 #vector for species and site id corresponding to 198 fish ids
+simple_date_site_names_filtered <- diets_filtered$simple_date_site_names
+#vector for date and site id (no year) corresponding to 198 fish ids
 #NEED TO STREAMLINE THIS MESS OF CODE... Do it after filter?
 
 #create a matrix with ufns as row names
@@ -461,9 +472,11 @@ temp_diet_matrix <- as.data.frame(temp_diet_matrix)
 rownames(temp_diet_matrix) <- NULL
 site_names_filtered <- as.character(site_names_filtered)
 species_names_filtered <- as.character(species_names_filtered)
-date_names_filtered <- as.character(date_names_filtered)
+#date_names_filtered <- as.character(date_names_filtered)
+simple_date_site_names_filtered <- as.character(simple_date_site_names_filtered)
+year_names_filtered <- as.character(year_names_filtered)
 
-temp_matrix_df <- cbind(site_names_filtered, species_names_filtered, date_names_filtered, temp_diet_matrix)
+temp_matrix_df <- cbind(site_names_filtered, species_names_filtered, year_names_filtered, simple_date_site_names_filtered, temp_diet_matrix)
 
 #temp_df_dates <- left_join(, temporal_gfi_dates, by="semsp_id")
 
@@ -473,7 +486,7 @@ temp_matrix_long <- pivot_longer(temp_matrix_df, cols=Acartia:Tortanus_discaudat
 #calculation includes taxa biomass = 0 values so the mean is calculated correctly! :)
 
 temp_df_sum <- temp_matrix_long %>%
-  group_by(taxa, site_names_filtered, species_names_filtered, date_names_filtered) %>%
+  group_by(taxa, site_names_filtered, species_names_filtered, year_names_filtered, simple_date_site_names_filtered) %>%
   summarise(ave_rel_biomass=mean(value))
 
 temp_sum_wide <- spread(temp_df_sum, taxa, ave_rel_biomass)
@@ -483,11 +496,14 @@ temp_sum_matrix <- temp_sum_wide %>%
   ungroup() %>%
   select(Acartia:Tortanus_discaudatus)
 
-temp_matrix_date <- as.character(temp_sum_wide$date_names_filtered)
+#temp_matrix_date <- as.character(temp_sum_wide$)
+#change date to be site_date name IDs for ease of plotting... ***
 temp_matrix_site <- as.character(temp_sum_wide$site_names_filtered)
 temp_matrix_sp <- as.character(temp_sum_wide$species_names_filtered)
-temp_matrix_info <- cbind(temp_matrix_sp, temp_matrix_site, temp_matrix_date)
-
+temp_matrix_year <- as.character(temp_sum_wide$year_names_filtered)
+temp_matrix_date <- as.character(temp_sum_wide$simple_date_site_names_filtered)
+temp_matrix_info <- cbind(temp_matrix_sp, temp_matrix_site, temp_matrix_date, temp_matrix_year)
+#need to add year... ***
 temp_matrix_sqr <- temp_sum_matrix^2
 temp_matrix_row_sum <- rowSums(temp_matrix_sqr)
 temp_matrix_inverse <- 1/temp_matrix_row_sum
@@ -496,8 +512,8 @@ temp_matrix_inverse <- 1/temp_matrix_row_sum
 
 temp_nb_calc <- cbind(temp_matrix_info, temp_matrix_inverse)
 temp_nb_calc <- as.data.frame(temp_nb_calc) %>%
-  rename(site=temp_matrix_site, species=temp_matrix_sp, date=temp_matrix_date, nb=temp_matrix_inverse)
-temp_nb_calc$site <- factor(temp_nb_calc$site, levels = site_order)
+  rename(site=temp_matrix_site, species=temp_matrix_sp, year=temp_matrix_year, date=temp_matrix_date, nb=temp_matrix_inverse)
+#temp_nb_calc$site <- factor(temp_nb_calc$site, levels = site_order)
 temp_nb_calc$species <- factor(temp_nb_calc$species, levels = species_order)
 temp_nb_calc$nb <- as.character(temp_nb_calc$nb)
 temp_nb_calc$nb <- as.numeric(temp_nb_calc$nb)
@@ -507,18 +523,20 @@ temp_nb_standard <- (temp_matrix_inverse-1)/84
 #standardized Levins NB = (NB-1)/(N-1) where N is the number of categories (prey groups)
 temp_nb <- cbind(temp_matrix_info, temp_nb_standard)
 temp_nb <- as.data.frame(temp_nb) %>%
-  rename(site=temp_matrix_site, species=temp_matrix_sp, site_sp=temp_matrix_site_sp, nb=temp_nb_standard)
-temp_nb$site <- factor(temp_nb$site, levels = site_order)
+  rename(site=temp_matrix_site, species=temp_matrix_sp, year=temp_matrix_year, date=temp_matrix_date, nb=temp_nb_standard)
 temp_nb$species <- factor(temp_nb$species, levels = species_order)
 temp_nb$nb <- as.character(temp_nb$nb)
 temp_nb$nb <- as.numeric(temp_nb$nb)
 #trends look the exact same for standarized and non-standarized, which is good news.
 
 temp_nb %>% 
-  ggplot(aes(site, nb))+
+  ggplot(aes(date, nb))+
   geom_line(aes(group=species, color=species))+
   theme_bw()+
   theme(panel.grid=element_blank())+
-  labs(x="Site", y="Levin's NB (Standardized)", title="Temporal Niche Breadth", color="Species")
-
+  labs(x="Date", y="Levin's NB (Standardized)", title="Temporal Niche Breadth", color="Species")+
+  facet_grid(year~site, scales = "free_x")+
+  scale_x_discrete(labels=c("DI_Early"="May", "DI_June_Early"="Early June", "DI_June_Mid"="Mid-June",
+                            "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))
+ggsave("figs/temoral_NB_calc.png")
 #try including empty stomachs, see if that changes it. Try less taxa categories too?
