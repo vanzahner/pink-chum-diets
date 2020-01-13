@@ -31,6 +31,7 @@ spat_names<-read.csv("data/spatial_category_change.csv")
 spat_data$taxa_detail_calc <- as.character(spat_data$taxa_detail_calc) 
 spat_names$old_category <- as.character(spat_names$old_category)
 spat_names$new_category <- as.character(spat_names$new_category)
+#group together any taxa that occur in less than 3 stomachs
 
 #for loop that will go through all the organism names in the data spreadsheet 
 #and for each one it will go to the names spreadsheet and reassign the name accordingly
@@ -77,6 +78,7 @@ diet_matrix <- spat_data_wide %>%
   select(Acartia:Tortanus_discaudatus, -Empty)
 #create a dataframe with only taxa categories (delete "Empty" category)
 
+#creating vectors - how necessary is this step?? move up to set up? delete? change to df?
 spat_data_wide$ufn <- as.factor(spat_data_wide$ufn)
 #change ufn to factors for this dataframe (necessary?)
 ufn_names <- spat_data_wide$ufn
@@ -106,6 +108,7 @@ for(i in 1:length(semsp_names)){
 simple_semsp_names <- as.factor(simple_semsp_names)
 #make vector with semsp id (for cluster dendrogram)
 
+#do calculations to create diet data matrix:
 Total <- vector(length = nrow(diet_matrix))
 #create an empty vector
 
@@ -148,6 +151,7 @@ region_names_filtered <- diets_filtered$region_names
 simple_semsp_filtered <- diets_filtered$simple_semsp_names
 #vector with semsp labels corresponding to the 105 fish ids
 
+#fix this step, it shouldn't be duplicated in two sections and datasets...
 
 #create a matrix with ufns as row names
 matrix1<-as.matrix(diets_ufn)

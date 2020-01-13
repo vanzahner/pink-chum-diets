@@ -31,6 +31,7 @@ temp_names<-read.csv("data/temporal_category_change.csv")
 temp_data$taxa_detail_calc <- as.character(temp_data$taxa_detail_calc) 
 temp_names$old_category <- as.character(temp_names$old_category)
 temp_names$new_category <- as.character(temp_names$new_category)
+#group together any taxa that occur in less than 3 stomachs
 
 #for loop that will go through all the organism names in the data spreadsheet 
 #and for each one it will go to the names spreadsheet and reassign the name accordingly
@@ -75,6 +76,7 @@ diet_matrix <- temp_data_wide %>%
   select(Acartia:Tortanus_discaudatus, -Empty)
 #create a dataframe with only taxa categories (delete "Empty" category)
 
+#creating vectors - how necessary is this step?? move up to set up? delete? change to df?
 temp_data_wide$ufn <- as.factor(temp_data_wide$ufn)
 #change ufn to factors for this dataframe (necessary?)
 ufn_names <- temp_data_wide$ufn
@@ -194,7 +196,7 @@ site_sp_names_filtered <- diets_filtered$site_sp_names
 #vector for species and site id corresponding to 198 fish ids
 simple_date_site_names_filtered <- diets_filtered$simple_date_site_names
 #vector for date and site id (no year) corresponding to 198 fish ids
-#NEED TO STREAMLINE THIS MESS OF CODE... Do it after filter?
+#NEED TO STREAMLINE THIS MESS OF CODE... Do it after filter???
 
 #create a matrix with ufns as row names
 matrix1<-as.matrix(diets_ufn)
