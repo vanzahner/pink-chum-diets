@@ -72,6 +72,11 @@ temp_data_wide <- temp_biomass_data %>%
 sum(temp_data_wide$microscope_hours)
 #634 hours at the microscope for temporal alone... average time per stomach of 3.0 hours!
 
+simple_temp_data <- temp_data_wide %>%
+  ungroup() %>% 
+  select(ufn, fish_species, sample_site, Acartia:Tortanus_discaudatus#, -Empty
+  )
+
 write_csv(temp_data_wide, "temporal_diet_data_wide.csv")
 
 ##### Multivariate matrix prep #####
