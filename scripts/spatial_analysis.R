@@ -5,12 +5,8 @@
 rm(list=ls())
 #remove other R stuff
 
-library(readr)
-#read in files
-library(ggplot2)
-#graphs
 library(tidyverse)
-#data wrangling
+#data wrangling/graphs/read in data
 library(ggdendro)
 #dendrograms
 library(vegan)
@@ -42,13 +38,25 @@ for (n in spat_names$old_category) {
 spat_biomass_data <- spat_data %>%
   filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
                                 "Coscinodiscophycidae", "Phaeophyceae")) %>% 
+  filter(prey_weight!=0 & ufn!="U3501") %>% #u3501 is parasites and cope antenna empty
+  #gets rid of empties, delete line when want empties again... bad data mgmt, I know!
+  filter(!ufn %in% c(#"U5168", #only oikopleura <0.1 mg
+                     "U5282", #only harpacticoids <0.1 mg
+                     "U5161", #bunch of fish eggs and not much else...
+                     #"U5162", #? one with <0.5 mg prey
+                     "U5285", #single spider 3.5 mg
+                     "U5319" #one gammarid and fly larvae... < 5 mg
+                     )) %>% 
+  #gets rid of outliers for NMDS, so delete later when want to bring em back.
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
   summarise(Biomass=sum(prey_weight))
 #simplify dataset and combine any redundancies (rename QUADRA area later)
 
+# NEED TO FIX THESE DELETIONS OF OUTLIERS FOR NMDS ^^^^^ ***** #
+
 unique(spat_biomass_data$taxa_detail_calc)
-#161 taxa groups --> Simplified to 86! (what about lrg/sml calanoids?) and n=8 empties
+#161 taxa groups --> Simplified to 85! (what about lrg/sml calanoids?) and n=8 empties
 
 spat_numbers_taxa <- spat_biomass_data %>%
   ungroup() %>%
@@ -63,13 +71,11 @@ spat_data_wide <- spat_biomass_data %>%
 sum(spat_data_wide$microscope_hours)
 #432 hours at the microscope for spatial alone... average time per stomach of 3.6 hours!
 
-site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
-spat_data_wide$sample_site <- factor(spat_data_wide$sample_site, levels = site_order)
-#reorder sites from the default of alphabetical to west to east, like on the map
+simple_spat_data <- spat_data_wide %>%
+  select(ufn, fish_species, sample_site, work_area, Acartia:Tortanus_discaudatus#, -Empty
+         )
 
-species_order <- c("Pink", "Chum")
-spat_data_wide$fish_species <- factor(spat_data_wide$fish_species, levels = species_order)
-#reorder species from the default of alphabetical to pink then chum, for graph reasons
+write_csv(simple_spat_data, "processed/spatial_diet_data_wide.csv")
 
 ##### Multivariate matrix prep #####
 
@@ -133,7 +139,13 @@ diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names
 #REDO WITH RAW BIOMASS DATA (DELETE ONE OF THESE OPTIONS LATAER)
 
 diets_filtered <- diets_w_labels %>%
-  filter(Total!=0 & !ufn_names %in% c("U2978", "U3501", "U5168", "U5282", "U5283", "U5285"))
+  filter(Total!=0 & !ufn_names %in% c("U2978", #< 0.5 mg digested food = empty
+                                      "U3501", #2 parasites, 1 cope antenna, dig food = empty
+                                      #"U5168", #2 oikopleura heads (not empty? but < 0.1mg)
+                                      #"U5282", #3 harpacticoids (not empty? but < 0.1 mg)
+                                      "U5283"#, #< 0.1 mg digested food = empty
+                                      #"U5285" #1 spider... outlier but not empty. 3.5 mg.
+                                      ))
 #filter those out with that have 0 biomass (see columns for future labels)
 #manually chose those with 1 prey group = 100% because fullness is too low
 #need to figure out how to strategically go through what is "empty" later.

@@ -42,13 +42,20 @@ for (n in temp_names$old_category) {
 temp_biomass_data <- temp_data %>%
   filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
                                 "Coscinodiscophycidae", "Phaeophyceae")) %>% 
+  filter(prey_weight!=0) %>% 
+  #delete this later if want to include empty stomachs in whatever graphs or whatever
+  filter(!ufn %in% c("U2627", "U5143", #full of barnacles...
+                     "U5319", #gammarid
+                     "U5404" #single prey type <0.1 mg
+                     )) %>% 
+#getting rid of outliers for nmds... change later.
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, microscope_hours) %>%
   summarise(Biomass=sum(prey_weight))
 #simplify dataset and combine any redundancies
 
 unique(temp_biomass_data$taxa_detail_calc)
-#176 taxa groups (way too many?) --> Simplified to 101. n=7 empties (like 100% empty.)
+#176 taxa groups (way too many?) --> Simplified to 100. n=7 empties (like 100% empty.)
 
 temp_numbers_taxa <- temp_biomass_data %>%
   ungroup() %>%
@@ -65,9 +72,7 @@ temp_data_wide <- temp_biomass_data %>%
 sum(temp_data_wide$microscope_hours)
 #634 hours at the microscope for temporal alone... average time per stomach of 3.0 hours!
 
-species_order <- c("Pink", "Chum")
-temp_data_wide$fish_species <- factor(temp_data_wide$fish_species, levels = species_order)
-#reorder species from the default of alphabetical to pink then chum, for graph reasons
+write_csv(temp_data_wide, "temporal_diet_data_wide.csv")
 
 ##### Multivariate matrix prep #####
 
@@ -166,7 +171,12 @@ diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names
 #REDO WITH RAW BIOMASS DATA (DELETE ONE OF THESE OPTIONS LATAER)
 
 diets_filtered <- diets_w_labels %>%
-  filter(Total!=0 & !ufn_names %in% c("U2627", "U5435", "U5143", "U5346", "U5319", "U5400", "U5404"
+  filter(Total!=0 & !ufn_names %in% c("U2627", "U5143", #barnacles.
+                                      #"U5435", #mix up with acartia and jellies, fixed now!
+                                      "U5346", #nothing unusual, WHY IS IT LISTED HERE?
+                                      "U5319", #gammarid
+                                      "U5400", #empty, it's already filtered out
+                                      "U5404" #three lil'calanoids <0.1mg total
     #"U2978", "U3501", "U5168", "U5282", "U5283", "U5285"
     ))
 #*double check these later
@@ -482,8 +492,6 @@ temp_matrix_df <- cbind(site_names_filtered, species_names_filtered, year_names_
 
 #temp_df_dates <- left_join(, temporal_gfi_dates, by="semsp_id")
 
-# ***** NEED TO RESOLVE HOW TO PLOT THIS WITH DATES AND REGIONS AND WHATNOT *****
-
 temp_matrix_long <- pivot_longer(temp_matrix_df, cols=Acartia:Tortanus_discaudatus, names_to = "taxa")
 #calculation includes taxa biomass = 0 values so the mean is calculated correctly! :)
 
@@ -542,3 +550,4 @@ temp_nb %>%
                             "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))
 ggsave("figs/temoral_NB_calc.png")
 #try including empty stomachs, see if that changes it. Try less taxa categories too?
+##### 

@@ -46,12 +46,12 @@ Caprella_californica,1,Corophiida,,
 Caridea_Zoea,6,Caridea_Zoea,,
 Centropages_abdominalis,45,Centropages_abdominalis,,
 Chironomidae_Larvae,2,Arthropoda,,possibly change back later
-Cnidaria,58,Cnidaria,,
+Cnidaria,58,Gelatinous,,possibly change back later
 Coleoptera,1,Arthropoda,,possibly change back later
 Copepoda,1,Copepoda,,
 Coscinodiscophycidae,50,Coscinodiscophycidae,,
 Crustacea,12,Crustacea,,
-Ctenophora,12,Ctenophora,,
+Ctenophora,12,Gelatinous,,possibly change back later
 Culicomorpha,14,Culicomorpha,,
 Cumacea,3,Cumacea,,
 Cyclopoida,4,Cyclopoida,,
@@ -167,7 +167,7 @@ Sarsamphiascus,2,Harpacticoida,,
 Semibalanus_balanoides_Cyprid,4,Semibalanus_balanoides_Cyprid,,
 Senticaudata,7,Senticaudata,,
 Senticaudata_Juvenile,1,Senticaudata,,
-Siphonophorae,3,Cnidaria,,possibly change back later
+Siphonophorae,3,Gelatinous,,possibly change back later
 Spionidae_Nectochaete,20,Spionidae_Nectochaete,,
 Thalestridae,1,Harpacticoida,,
 Themisto_pacifica,24,Themisto_pacifica,,
