@@ -21,7 +21,7 @@ spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
 #read in spatial diet data
 
 #load in file with old and new taxa names to be assigned
-spat_names<-read.csv("data/spatial_category_change.csv") 
+spat_names<-read.csv("data/spatial_taxa_category_change.csv") 
 
 #for loop doesn't like data as factors
 spat_data$taxa_detail_calc <- as.character(spat_data$taxa_detail_calc) 
@@ -463,3 +463,21 @@ spat_nb %>%
 #try including empty stomachs, see if that changes it. Try less taxa categories too?
 
 ggsave("figs/spatial_NB_calc.png")
+
+##### Diet Composition Bar Graphs #####
+
+#load in file with old and new taxa names to be assigned
+spat_names<-read.csv("data/spatial_taxa_category_change.csv") 
+
+#for loop doesn't like data as factors
+spat_data$taxa_detail_calc <- as.character(spat_data$taxa_detail_calc) 
+spat_names$old_category <- as.character(spat_names$old_category)
+spat_names$new_category <- as.character(spat_names$new_category)
+#group together any taxa that occur in less than 3 stomachs
+
+#for loop that will go through all the organism names in the data spreadsheet 
+#and for each one it will go to the names spreadsheet and reassign the name accordingly
+for (n in spat_names$old_category) {
+  spat_data$taxa_detail_calc[which(spat_data$taxa_detail_calc %in% n)] <- spat_names$new_category[which(spat_names$old_category == n)]
+}
+

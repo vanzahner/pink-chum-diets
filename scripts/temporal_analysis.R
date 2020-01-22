@@ -25,7 +25,7 @@ temp_data <- read_csv("processed/temporal_pink_chum_diets.csv")
 #read in temporal diet data
 
 #load in file with old and new taxa names to be assigned
-temp_names<-read.csv("data/temporal_category_change.csv") 
+temp_names<-read.csv("data/temporal_taxa_category_change.csv") 
 
 #for loop doesn't like data as factors
 temp_data$taxa_detail_calc <- as.character(temp_data$taxa_detail_calc) 
