@@ -35,6 +35,14 @@ for (n in spat_names$old_category) {
   spat_data$taxa_detail_calc[which(spat_data$taxa_detail_calc %in% n)] <- spat_names$new_category[which(spat_names$old_category == n)]
 }
 
+site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
+spat_data$sample_site <- factor(spat_data$sample_site, levels = site_order)
+#reorder sites from the default of alphabetical to west to east, like on the map
+
+species_order <- c("Pink", "Chum")
+spat_data$fish_species <- factor(spat_data$fish_species, levels = species_order)
+#reorder species from the default of alphabetical to pink then chum, for graph reasons
+
 spat_biomass_data <- spat_data %>%
   filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
                                 "Coscinodiscophycidae", "Phaeophyceae")) %>% 
@@ -81,7 +89,7 @@ write_csv(simple_spat_data, "processed/spatial_diet_data_wide.csv")
 
 diet_matrix <- spat_data_wide %>%
   ungroup() %>%
-  select(Acartia:Tortanus_discaudatus, -Empty)
+  select(Acartia:Tortanus_discaudatus)#, -Empty)
 #create a dataframe with only taxa categories (delete "Empty" category)
 
 #creating vectors - how necessary is this step?? move up to set up? delete? change to df?
@@ -225,8 +233,10 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   geom_point(stat = "identity", aes(shape=species_names_filtered, fill=site_names_filtered), size=3)+#, color = "black")+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 22), name="Species")+
-  scale_fill_manual(values=c("#B2182B", "#E41A1C", "#F781BF",
-                             "#053061", "#A6CEE3", "#1F78B4"),
+  scale_fill_manual(values=c("#053061", "#1F78B4", "#A6CEE3", 
+                             "#F781BF", "#E41A1C", "#B2182B"
+                             ),
+                    
                     name="Region", guide="legend") +
   guides(fill= guide_legend(override.aes = list(shape=21)))+
   scale_colour_manual(values=c("#053061", "#B2182B")#,
@@ -329,6 +339,7 @@ spatial_gfi_data %>%
 
 ggsave("figs/spatial_GFI.png")
 #save figure into folder
+
 ##### Niche Breadth #####
 
 spat_data_wide_info <- spat_data_wide %>%
@@ -337,7 +348,9 @@ spat_data_wide_info <- spat_data_wide %>%
 
 spat_data_pa <- spat_data_wide %>%
   ungroup() %>% 
-  select(Acartia:Tortanus_discaudatus, -Empty) %>% 
+  select(Acartia:Tortanus_discaudatus
+         #, -Empty
+         ) %>% 
   decostand(method = "pa")
 
 totals <- vector(length = nrow(spat_data_pa))
@@ -382,7 +395,8 @@ summary_spat_data_wide_info <- summary_spat_data %>%
 
 summary_spat_data_pa <- summary_spat_data %>%
   ungroup() %>% 
-  select(Acartia:Tortanus_discaudatus, -Empty) %>% 
+  select(Acartia:Tortanus_discaudatus#, -Empty
+         ) %>% 
   decostand(method = "pa")
 
 sum_totals <- vector(length = nrow(summary_spat_data_pa))

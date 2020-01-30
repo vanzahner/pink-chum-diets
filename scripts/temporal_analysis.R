@@ -39,6 +39,14 @@ for (n in temp_names$old_category) {
   temp_data$taxa_detail_calc[which(temp_data$taxa_detail_calc %in% n)] <- temp_names$new_category[which(temp_names$old_category == n)]
 }
 
+site_order <- c("D07", "J07")
+temp_data$sample_site <- factor(temp_data$sample_site, levels = site_order)
+#reorder sites from the default of alphabetical to west to east, like on the map
+
+species_order <- c("Pink", "Chum")
+temp_data$fish_species <- factor(temp_data$fish_species, levels = species_order)
+#reorder species from the default of alphabetical to pink then chum, for graph reasons
+
 temp_biomass_data <- temp_data %>%
   filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
                                 "Coscinodiscophycidae", "Phaeophyceae")) %>% 
@@ -83,7 +91,9 @@ write_csv(simple_temp_data, "NMDS_EXAMPLE/temporal_diet_data_wide.csv")
 
 diet_matrix <- temp_data_wide %>%
   ungroup() %>%
-  select(Acartia:Tortanus_discaudatus, -Empty)
+  select(Acartia:Tortanus_discaudatus
+         #, -Empty
+         )
 #create a dataframe with only taxa categories (delete "Empty" category)
 
 #creating vectors - how necessary is this step?? move up to set up? delete? change to df?
@@ -419,7 +429,8 @@ temp_data_wide_info <- temporal_gfi_dates %>%
 
 temp_data_pa <- temporal_gfi_dates %>%
   ungroup() %>% 
-  select(Acartia:Tortanus_discaudatus, -Empty) %>% 
+  select(Acartia:Tortanus_discaudatus#, -Empty
+         ) %>% 
   decostand(method = "pa")
 
 totals <- vector(length = nrow(temp_data_pa))
@@ -466,7 +477,8 @@ summary_temp_data_wide_info <- summary_temp_data %>%
 
 summary_temp_data_pa <- summary_temp_data %>%
   ungroup() %>% 
-  select(Acartia:Tortanus_discaudatus, -Empty) %>% 
+  select(Acartia:Tortanus_discaudatus#, -Empty
+         ) %>% 
   decostand(method = "pa")
 
 sum_totals <- vector(length = nrow(summary_temp_data_pa))

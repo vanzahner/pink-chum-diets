@@ -27,14 +27,6 @@ fish <- left_join(fishdata, seinedata) %>%
   filter(taxa_detail_calc!="Goop")
 #transformed dataset with all 312 fish (spatial + temporal)
 
-site_order <- c("J02", "J08", "J06", "D11", "D09", "D07", "J07")
-fish$sample_site <- factor(fish$sample_site, levels = site_order)
-#reorder sites from the default of alphabetical to west to east, like on the map
-
-species_order <- c("Pink", "Chum")
-fish$fish_species <- factor(fish$fish_species, levels = species_order)
-#reorder species from the default of alphabetical to pink then chum, for graph reasons
-
 temp_fish <- filter(fish, analysis!="Spatial")
 #make datafile for only temporal analysis fish
 
