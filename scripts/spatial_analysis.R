@@ -480,8 +480,15 @@ ggsave("figs/spatial_NB_calc.png")
 
 ##### Diet Composition Bar Graphs #####
 
+#be careful * modifying the same data frame from above so don't do things out of order!
+
 #load in file with old and new taxa names to be assigned
-spat_names<-read.csv("data/spatial_taxa_category_change.csv") 
+spat_names<-read.csv("data/taxa_broad_groups_spatial.csv") 
+
+spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
+#RELOAD in spatial diet data (to reset original taxa categories. need to fix later.)
+
+spat_data$sample_site <- factor(spat_data$sample_site, levels = site_order)
 
 #for loop doesn't like data as factors
 spat_data$taxa_detail_calc <- as.character(spat_data$taxa_detail_calc) 
@@ -493,5 +500,64 @@ spat_names$new_category <- as.character(spat_names$new_category)
 #and for each one it will go to the names spreadsheet and reassign the name accordingly
 for (n in spat_names$old_category) {
   spat_data$taxa_detail_calc[which(spat_data$taxa_detail_calc %in% n)] <- spat_names$new_category[which(spat_names$old_category == n)]
-}
+  }
+#warning: number of items to replace is not a multiple of replacement length (but ok?)
 
+calanoid_fixing <- filter(spat_data, taxa_detail_calc=="Calanoids")
+
+no_calanoids <- anti_join(spat_data, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
+
+small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
+
+large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
+
+small_calanoids$taxa_detail_calc <- "Calanoids_Small"
+
+large_calanoids$taxa_detail_calc <- "Calanoids_Large"
+
+spat_data_fixed <- rbind(no_calanoids, small_calanoids, large_calanoids)
+
+#redo this step above in the set up? before renaming the taxa to broad groups (later)
+
+group_biomass <- spat_data_fixed %>%
+  group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id) %>%
+  summarise(prey_weight_sum=sum(prey_weight))
+#summarize biomass for each fish
+
+group_bio_wide <- group_biomass %>%
+  ungroup() %>%
+  select(ufn, fish_species, sample_site, taxa_detail_calc, prey_weight_sum) %>% 
+  group_by(ufn, fish_species, sample_site) %>% 
+  spread(key=taxa_detail_calc, value = prey_weight_sum, fill=0)
+#wide data set (might not need it, but it's a good double check that n=120!)  
+
+group_biomass %>%
+  ggplot(aes(sample_site, prey_weight_sum))+
+  geom_bar(aes(fill=taxa_detail_calc), stat = "identity", position = "fill")+
+  #scale_fill_manual(values = c("#FB9A99", "#E31A1C", "#FDBF6F",
+  #                             "#FF7F00", #bar, cal, dec, euph
+  #                             #"#FFFF99", #euph_eggs
+  #                             "#CAB3D6", #cladocerans
+  #                             "#6A3D9A", #echinoderms
+  #                             "#A6CEE3", "#1F78B4", #chae, gel
+  #                             "#33A02C", "grey60"))+#lar, oth
+  facet_wrap(~fish_species, dir = "v", scales = "free")+
+  ggtitle("Spatial Diets (2016)")+
+  theme_bw()+
+  scale_y_continuous(labels=scales::unit_format("%", 100))+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5))
+
+group_biomass %>%
+  ggplot(aes(sample_site, prey_weight_sum))+
+  geom_bar(aes(fill=taxa_detail_calc), stat="identity", position="fill")+
+  facet_wrap(~fish_species, dir="v")+
+  theme_bw()+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5))+
+  labs(title="Spatial Diet Composition", x="Sample Site", y="% Biomass")
+#delete useless categories later - this is pretty sweet progress fixing mistakes! 730pm
