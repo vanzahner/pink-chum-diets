@@ -493,8 +493,7 @@ count(temp_data_taxa_summary)
 
 temp_data_taxa_summary %>%
   group_by(sample_site, sample_date, fish_species) %>%
-  summarise(mean(sum_totals)) %>%
-  View()
+  summarise(mean(sum_totals))
 #same calculations as the one above but totals taxa for each species-site-date combo
 
 temp_diet_matrix <- as.data.frame(temp_diet_matrix)
@@ -567,4 +566,90 @@ temp_nb %>%
                             "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))
 ggsave("figs/temoral_NB_calc.png")
 #try including empty stomachs, see if that changes it. Try less taxa categories too?
-##### 
+
+##### Diet Composition Bar Graphs #####
+
+#be careful * modifying the same data frame from above so don't do things out of order!
+
+#load in file with old and new taxa names to be assigned
+temp_names<-read.csv("data/taxa_broad_groups_temporal.csv") 
+
+temp_data <- read_csv("processed/temporal_pink_chum_diets.csv")
+#RELOAD in temporal diet data (to reset original taxa categories. need to fix later.)
+
+temp_date_ids <- read_csv("data/temporal_date_id_categories_extensive.csv")
+#read in data to get relevant date ids for plotting (streamline above code too.)
+
+temp_data_merged <- left_join(temp_data, temp_date_ids)
+
+temp_data_merged$sample_site <- factor(temp_data_merged$sample_site, levels = site_order)
+
+#for loop doesn't like data as factors
+temp_data_merged$taxa_detail_calc <- as.character(temp_data_merged$taxa_detail_calc) 
+temp_names$old_category <- as.character(temp_names$old_category)
+temp_names$new_category <- as.character(temp_names$new_category)
+#group together any taxa that occur in less than 3 stomachs
+
+#for loop that will go through all the organism names in the data spreadsheet 
+#and for each one it will go to the names spreadsheet and reassign the name accordingly
+for (n in temp_names$old_category) {
+  temp_data_merged$taxa_detail_calc[which(temp_data_merged$taxa_detail_calc %in% n)] <- temp_names$new_category[which(temp_names$old_category == n)]
+}
+#warning: number of items to replace is not a multiple of replacement length (but ok?)
+
+calanoid_fixing <- filter(temp_data_merged, taxa_detail_calc=="Calanoids")
+
+no_calanoids <- anti_join(temp_data_merged, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
+
+small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
+
+large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
+
+small_calanoids$taxa_detail_calc <- "Calanoids_Small"
+
+large_calanoids$taxa_detail_calc <- "Calanoids_Large"
+
+temp_data_fixed <- rbind(no_calanoids, small_calanoids, large_calanoids)
+
+#redo this step above in the set up? before renaming the taxa to broad groups (later)
+
+group_biomass <- temp_data_fixed %>%
+  group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id, date_id_names) %>%
+  summarise(prey_weight_sum=sum(prey_weight))
+#summarize biomass for each fish
+
+#^need to properly average proportions first (*** this is just the quickie version! ***)
+
+group_bio_wide <- group_biomass %>%
+  ungroup() %>%
+  select(ufn, fish_species, sample_site, taxa_detail_calc, prey_weight_sum, date_id_names) %>% 
+  group_by(ufn, fish_species, sample_site, date_id_names, year) %>% 
+  spread(key=taxa_detail_calc, value = prey_weight_sum, fill=0)
+#wide data set (might not need it, but it's a good double check that n=120!)  
+
+group_biomass %>%
+  filter(date_id_names %in% c("DI_Early_15", "JS_June_Early_15", "DI_June_Early_15",
+                              "DI_June_Mid_15", "JS_June_Mid_15", "JS_Late_15")) %>% 
+  ggplot(aes(date_id_names, prey_weight_sum))+
+  geom_bar(aes(fill=taxa_detail_calc), stat="identity", position="fill")+
+  facet_grid(fish_species~sample_site, scales = "free")+
+  theme_bw()+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5))+
+  labs(title="Temporal Diet Composition", x="Sample Site", y="% Biomass")
+
+group_biomass %>%
+  filter(!date_id_names %in% c("DI_Early_15", "JS_June_Early_15", "DI_June_Early_15",
+                              "DI_June_Mid_15", "JS_June_Mid_15", "JS_Late_15")) %>%
+  ggplot(aes(date_id_names, prey_weight_sum))+
+  geom_bar(aes(fill=taxa_detail_calc), stat="identity", position="fill")+
+  facet_grid(fish_species~sample_site, scales = "free")+
+  theme_bw()+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5))+
+  labs(title="Temporal Diet Composition", x="Sample Site", y="% Biomass")
+#delete useless categories later - this is pretty sweet progress fixing mistakes! 830pm
