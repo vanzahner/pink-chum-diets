@@ -631,7 +631,8 @@ group_biomass %>%
   filter(date_id_names %in% c("DI_Early_15", "JS_June_Early_15", "DI_June_Early_15",
                               "DI_June_Mid_15", "JS_June_Mid_15", "JS_Late_15")) %>% 
   ggplot(aes(date_id_names, prey_weight_sum))+
-  geom_bar(aes(fill=taxa_detail_calc), stat="identity", position="fill")+
+  geom_bar(aes(fill=taxa_detail_calc), stat="identity"#, position="fill"
+           )+
   facet_grid(fish_species~sample_site, scales = "free")+
   theme_bw()+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
