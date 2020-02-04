@@ -623,7 +623,7 @@ group_biomass <- temp_data_fixed %>%
 group_bio_wide <- group_biomass %>%
   ungroup() %>%
   select(ufn, fish_species, sample_site, taxa_detail_calc, prey_weight_sum, date_id_names) %>% 
-  group_by(ufn, fish_species, sample_site, date_id_names, year) %>% 
+  group_by(ufn, fish_species, sample_site, date_id_names) %>% 
   spread(key=taxa_detail_calc, value = prey_weight_sum, fill=0)
 #wide data set (might not need it, but it's a good double check that n=120!)  
 
@@ -631,7 +631,7 @@ group_biomass %>%
   filter(date_id_names %in% c("DI_Early_15", "JS_June_Early_15", "DI_June_Early_15",
                               "DI_June_Mid_15", "JS_June_Mid_15", "JS_Late_15")) %>% 
   ggplot(aes(date_id_names, prey_weight_sum))+
-  geom_bar(aes(fill=taxa_detail_calc), stat="identity"#, position="fill"
+  geom_bar(aes(fill=taxa_detail_calc), stat="identity", position="fill"
            )+
   facet_grid(fish_species~sample_site, scales = "free")+
   theme_bw()+
