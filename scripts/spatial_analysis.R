@@ -192,6 +192,9 @@ eco.nmds.bc
 plot(eco.nmds.bc)
 #NO CONVERGENCE --> NEED TO FIX SOMEHOW (Simplify taxa groups even further?????)
 
+stressplot(eco.nmds.bc)
+#see how data scatters around line to see "fit"
+
 ##PERMANOVA - provides r2 and p values related to the nmds (are differences between factor levels (e.g. clusters) significant?)
 permanova_eco.bc<-adonis(spat_trans_matrix ~ region_names_filtered, permutations = 999, method="bray")
 permanova_eco.bc #significant! p = 0.001 so plot it
