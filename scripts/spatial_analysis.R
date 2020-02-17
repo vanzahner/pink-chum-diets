@@ -289,7 +289,7 @@ fishsp <- data_w_site_sp_combo %>%
   ungroup() %>%
   select(ufn=simple_semsp_names, Sp=site_sp_names)
 
-labs <- label(dendr)
+labs <- ggdendro::label(dendr)
 
 colnames(labs) <- c("x", "y", "ufn")
 
