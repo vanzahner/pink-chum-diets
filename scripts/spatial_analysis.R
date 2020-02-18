@@ -192,9 +192,6 @@ eco.nmds.bc
 plot(eco.nmds.bc)
 #NO CONVERGENCE --> NEED TO FIX SOMEHOW (Simplify taxa groups even further?????)
 
-stressplot(eco.nmds.bc)
-#see how data scatters around line to see "fit"
-
 ##PERMANOVA - provides r2 and p values related to the nmds (are differences between factor levels (e.g. clusters) significant?)
 permanova_eco.bc<-adonis(spat_trans_matrix ~ region_names_filtered, permutations = 999, method="bray")
 permanova_eco.bc #significant! p = 0.001 so plot it
@@ -289,7 +286,7 @@ fishsp <- data_w_site_sp_combo %>%
   ungroup() %>%
   select(ufn=simple_semsp_names, Sp=site_sp_names)
 
-labs <- ggdendro::label(dendr)
+labs <- label(dendr)
 
 colnames(labs) <- c("x", "y", "ufn")
 
@@ -536,6 +533,25 @@ group_bio_wide <- group_biomass %>%
 
 group_biomass %>%
   ggplot(aes(sample_site, prey_weight_sum))+
+  geom_bar(aes(fill=taxa_detail_calc), stat = "identity", position = "fill")+
+  #scale_fill_manual(values = c("#FB9A99", "#E31A1C", "#FDBF6F",
+  #                             "#FF7F00", #bar, cal, dec, euph
+  #                             #"#FFFF99", #euph_eggs
+  #                             "#CAB3D6", #cladocerans
+  #                             "#6A3D9A", #echinoderms
+  #                             "#A6CEE3", "#1F78B4", #chae, gel
+  #                             "#33A02C", "grey60"))+#lar, oth
+  facet_wrap(~fish_species, dir = "v", scales = "free")+
+  ggtitle("Spatial Diets (2016)")+
+  theme_bw()+
+  scale_y_continuous(labels=scales::unit_format("%", 100))+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5))
+
+group_biomass %>%
+  ggplot(aes(sample_site, prey_weight_sum))+
   geom_bar(aes(fill=taxa_detail_calc), stat="identity", position="fill")+
   facet_wrap(~fish_species, dir="v")+
   theme_bw()+
@@ -545,5 +561,3 @@ group_biomass %>%
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
   labs(title="Spatial Diet Composition", x="Sample Site", y="% Biomass")
 #delete useless categories later - this is pretty sweet progress fixing mistakes! 730pm
-
-ggsave("figs/spatial_prey_comp.png")
