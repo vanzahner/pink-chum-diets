@@ -26,3 +26,6 @@ zoop_data <- read_csv("data/zoop_comp_data_combined.csv")
 #zoop_data_ww <- read_csv("data/zoop_data_ww.csv")
 #J02 (JSPK1118) has taxa data but no wet weight. ignore all ww since J02 most important
 
+survey_data <- read_csv("data/survey_data.csv")
+#for secchi!
+

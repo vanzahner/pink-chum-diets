@@ -44,17 +44,17 @@ spat_data$fish_species <- factor(spat_data$fish_species, levels = species_order)
 #reorder species from the default of alphabetical to pink then chum, for graph reasons
 
 spat_biomass_data <- spat_data %>%
-  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
-                                "Coscinodiscophycidae", "Phaeophyceae")) %>% 
-  filter(prey_weight!=0 & ufn!="U3501") %>% #u3501 is parasites and cope antenna empty
+  #filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
+  #                              "Coscinodiscophycidae", "Phaeophyceae")) %>% 
+  #filter(prey_weight!=0 & ufn!="U3501") %>% #u3501 is parasites and cope antenna empty
   #gets rid of empties, delete line when want empties again... bad data mgmt, I know!
-  filter(!ufn %in% c(#"U5168", #only oikopleura <0.1 mg
-                     "U5282", #only harpacticoids <0.1 mg
-                     "U5161", #bunch of fish eggs and not much else...
-                     #"U5162", #? one with <0.5 mg prey
-                     "U5285", #single spider 3.5 mg
-                     "U5319" #one gammarid and fly larvae... < 5 mg
-                     )) %>% 
+  #filter(!ufn %in% c(#"U5168", #only oikopleura <0.1 mg
+  #                   "U5282", #only harpacticoids <0.1 mg
+  #                   "U5161", #bunch of fish eggs and not much else...
+  #                   #"U5162", #? one with <0.5 mg prey
+  #                   "U5285", #single spider 3.5 mg
+  #                   "U5319" #one gammarid and fly larvae... < 5 mg
+  #                   )) %>% 
   #gets rid of outliers for NMDS, so delete later when want to bring em back.
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
@@ -561,3 +561,95 @@ group_biomass %>%
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
   labs(title="Spatial Diet Composition", x="Sample Site", y="% Biomass")
 #delete useless categories later - this is pretty sweet progress fixing mistakes! 730pm
+
+##### Frequency of occurrence ######
+
+pa_diet_matrix <- spat_data_wide %>%
+  ungroup %>% 
+  select(Acartia:Tortanus_discaudatus) %>%
+  decostand(method="pa") 
+
+pa_diet_data <- cbind(spat_data_wide$sample_site, spat_data_wide$fish_species, pa_diet_matrix)%>%
+  rename(site_id=`spat_data_wide$sample_site`, fish_sp=`spat_data_wide$fish_species`)
+
+freq_occur_data <- pa_diet_data %>% 
+  group_by(site_id, fish_sp) %>%
+  summarise_all(list(sum)) #how to divide by 10??
+#freq occur for all taxa, sites and species (spatial)
+
+pa_diet_data <- cbind(spat_data_wide$work_area, spat_data_wide$fish_species, pa_diet_matrix)%>%
+  rename(region_id=`spat_data_wide$work_area`, fish_sp=`spat_data_wide$fish_species`)
+
+freq_occur_data <- pa_diet_data %>% 
+  group_by(region_id, fish_sp) %>%
+  summarise_all(list(sum))
+
+freq_matrix <- freq_occur_data %>%
+  ungroup() %>% 
+  select(-region_id, -fish_sp)
+
+View(freq_matrix/30*100)
+#freq occur for all taxa, region and species (spatial) - JS PI, JS CU, DI PI, DI CU
+
+pa_diet_data <- cbind(spat_data_wide$fish_species, pa_diet_matrix)%>%
+  rename(fish_sp=`spat_data_wide$fish_species`)
+
+freq_occur_data <- pa_diet_data %>% 
+  group_by(fish_sp) %>%
+  summarise_all(list(sum))
+
+freq_matrix <- freq_occur_data %>%
+  ungroup() %>% 
+  select(-fish_sp)
+
+View(freq_matrix/60*100)
+#freq occur for all taxa, species only (spatial) - first row is pink then chum
+
+pa_diet_data <- cbind(spat_data_wide$sample_site, pa_diet_matrix)%>%
+  rename(site_id=`spat_data_wide$sample_site`)
+
+freq_occur_data <- pa_diet_data %>% 
+  group_by(site_id) %>%
+  summarise_all(list(sum))
+
+freq_matrix <- freq_occur_data %>%
+  ungroup() %>% 
+  select(-site_id)
+
+calc_freq_matrix <- freq_matrix/20*100 #or could just do *5 but this is more clear: n=20, then as a %
+calc_freq_data <- cbind(sites=site_order, calc_freq_matrix)
+
+freq_data_long <- gather(calc_freq_data, "Taxa", "Frequency", Acartia:Tortanus_discaudatus)
+
+freq_data_long %>%
+  filter(Taxa %in% c("Calanus_marshallae", "Calanus_pacificus", "Euphausiidae",
+                     "Euphausiidae_Furcilia", "Calanoida", "Themisto_pacifica",
+                     "Eukrohnia_hamata", "Euphausia_pacifica", "Oikopleura",
+                     "Pseudocalanus")) %>%
+  View()
+#those with >75% occurrence by site, picked 'em out manually
+#freq occur for all taxa, site only (spatial) - J02, J08, J06, D11, D09, D07 (W to E)
+
+pa_diet_data <- cbind(spat_data_wide$work_area, pa_diet_matrix)%>%
+  rename(region_id=`spat_data_wide$work_area`)
+
+freq_occur_data <- pa_diet_data %>% 
+  group_by(region_id) %>%
+  summarise_all(list(sum))
+
+freq_matrix <- freq_occur_data %>%
+  ungroup() %>% 
+  select(-region_id)
+
+calc_freq_matrix <- freq_matrix/60*100
+
+calc_freq_data <- cbind(regions=c("JS", "DI"), calc_freq_matrix)
+
+freq_data_long <- gather(calc_freq_data, "Taxa", "Frequency", Acartia:Tortanus_discaudatus)
+
+freq_data_long %>%
+  filter(Taxa %in% c("Oikopleura", "Euphausiidae_Furcilia", "Calanoida",
+                     "Calanus_marshallae", "Calanus_pacificus", "Pseudocalanus")) %>%
+  View()
+those with >50% occurrence by region, picked 'em out manually
+#freq occur for all taxa, region only (spatial) - JS then DI ("Quadra", alphabetical)
