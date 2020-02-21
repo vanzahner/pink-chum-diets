@@ -680,3 +680,7 @@ group_bio_combo %>%
 #get rid of/change other copepods, decapods?, digested?, echin?, euphausiids (combine?), fish
 
 ggsave("figs/temporal_prey_comp_16.png")
+
+##### Frequency of occurrence #####
+
+#TBD - see spatial code (but figure out how to divide by number of rows in each group)

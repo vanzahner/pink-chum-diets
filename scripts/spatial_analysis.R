@@ -651,5 +651,10 @@ freq_data_long %>%
   filter(Taxa %in% c("Oikopleura", "Euphausiidae_Furcilia", "Calanoida",
                      "Calanus_marshallae", "Calanus_pacificus", "Pseudocalanus")) %>%
   View()
-those with >50% occurrence by region, picked 'em out manually
+#those with >50% occurrence by region, picked 'em out manually
 #freq occur for all taxa, region only (spatial) - JS then DI ("Quadra", alphabetical)
+##### PERMANOVA/SIMPER #####
+
+#need to deal with empties somehowwwww
+
+# OOH and idea for later: code habitat like how code updated taxa (streamlined!)
