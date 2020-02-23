@@ -13,6 +13,8 @@ library(vegan)
 #analysis
 library(RColorBrewer)
 #graph colors
+library(clustsig)
+#testing cluster grouping significance
 
 setwd("/Users/Vanessa/Desktop/msc_project")
 #set working directory
@@ -48,12 +50,12 @@ spat_biomass_data <- spat_data %>%
                                 "Coscinodiscophycidae", "Phaeophyceae")
          & prey_weight!=0
          & !ufn %in% c(#"U5168", #only oikopleura <0.1 mg. not outlier though...
-                     "U5282", #only harpacticoids <0.1 mg
-                     "U3501", #u3501 is parasites and cope antenna = empty
-                     "U5161", #bunch of fish eggs and not much else...
+                     #"U5282", #only harpacticoids <0.1 mg
+                     #"U3501", #u3501 is parasites and cope antenna = empty
+                     #"U5161", #bunch of fish eggs and not much else...
                      #"U5162", #? one with <0.5 mg prey
-                     "U5285", #single spider 3.5 mg
-                     "U5319" #one gammarid and fly larvae... < 5 mg
+                     #"U5285", #single spider 3.5 mg
+                     #"U5319" #one gammarid and fly larvae... < 5 mg
                      )) %>% 
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
@@ -194,21 +196,10 @@ spat_trans_matrix <- asin(sqrt(spat_diet_matrix))
 
 ##### NMDS (filtered; full taxa data) #####
 
-rankindex(region_names_filtered, spat_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
-#it says bray is best, then kul, then man, then euc, then gow.
-
 #region, proportion based dissimilarity - bray curtis
 eco.nmds.bc<- metaMDS(spat_trans_matrix,distance="bray",labels=region_names_filtered, trymax = 100, autotransform = FALSE)
 eco.nmds.bc
 plot(eco.nmds.bc)
-#NO CONVERGENCE --> NEED TO FIX SOMEHOW (Simplify taxa groups even further?????)
-
-##PERMANOVA - provides r2 and p values related to the nmds (are differences between factor levels (e.g. clusters) significant?)
-permanova_eco.bc<-adonis(spat_trans_matrix ~ region_names_filtered, permutations = 999, method="bray")
-permanova_eco.bc #significant! p = 0.001 so plot it
-permanova_eco.eu<-adonis(spat_trans_matrix ~ region_names_filtered, permutations = 999, method="euclidean")
-permanova_eco.eu #significant! p = 0.001 so plot it (has lower mean sqs and sum of sqs tho)
-#this is old code, will prob do anosim+simper not permanova...
 
 NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=region_names_filtered)
 #plot NMDS, only once (picking Bray because all similar), no presence absence
@@ -229,17 +220,6 @@ for(g in levels(NMDS.bc$group)){
                                                          veganCovEllipse(ord.bc[[g]]$cov,ord.bc[[g]]$center))),group=g))
 }
 
-brewer.pal(n = 5, name = "Set3")
-#medium blue "#80B1D3"
-brewer.pal(n = 8, name = "Set1")
-#red and pink "#E41A1C" "#F781BF"
-brewer.pal(n = 2, name = "Paired")
-#dark and light blue "#A6CEE3" "#1F78B4"
-brewer.pal(n = 4, name = "Dark2")
-#hot pink "#E7298A"
-brewer.pal(n=11, "RdBu")
-#darker red and darker blue "#B2182B" "#2166AC"
-
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   geom_point(stat = "identity", aes(shape=species_names_filtered, fill=site_names_filtered), size=3)+#, color = "black")+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
@@ -251,33 +231,26 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
                     name="Region", guide="legend") +
   guides(fill= guide_legend(override.aes = list(shape=21)))+
   scale_colour_manual(values=c("#053061", "#B2182B")#,
-                      #guide=FALSE
                       ) +
-  #scale_y_continuous(limits=c(-1,1),breaks=seq(-1,1,by=.5),name = "NMDS2, Proportion-based dissimilarity")+
-  #scale_x_continuous(limits=c(-0.85,0.65),breaks=seq(-0.85,0.65,by=.5),name = "NMDS1, Proportion-based dissimilarity")+
   theme_bw()+
   theme(axis.text.x=element_text(size=12),
         axis.title.x=element_text(size=12),
         axis.title.y=element_text(angle=90,size=12),
         axis.text.y=element_text(size=12),
         panel.grid.minor=element_blank(),panel.grid.major=element_blank()#,
-        #legend.position = "none"
         ) + coord_fixed() +
-  annotate("text",x=-2.5,y=1.5,label="(stress = 0.17)",size=4, hjust = -0.1)
+  annotate("text",x=-2.5,y=-1.5,label="(stress = 0.17)",size=4, hjust = -0.1)
 #NMDS graph for the different sites!
 
 a
 
 ggsave("figs/spatial_NMDS.png")
 
-##### Cluster (filtered?!? * , full taxa data) #####
-
-rankindex(species_names_filtered, spat_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
-#see which is best
+##### Cluster (filtered (no empties) , full taxa data) #####
 
 Bray_Curtis_Dissimilarity <- vegdist(spat_trans_matrix, method = "bray")
-bcclust <- hclust(Bray_Curtis_Dissimilarity)
-#make dendrogram data (heirarchical clustering by complete linkages method)
+bcclust <- hclust(Bray_Curtis_Dissimilarity, method = "average")
+#make dendrogram data (heirarchical clustering by average linkages method)
 
 dendr <- dendro_data(bcclust, type = "rectangle")
 #put it in ggdendro form
@@ -309,7 +282,6 @@ ggplot()+
   geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend, color="white"))+
   geom_text(data=label(dendr), aes(x=x, y=y, label=label, hjust=0, color=lab$Sp), size=4) +
   coord_flip() + scale_y_reverse(expand=c(0.2, 0)) +
-  #scale_colour_manual(values = c("#F781BF", "#1F78B4", "white"))+
   scale_colour_manual(values = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
                                  "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928", "grey50"))+
   theme(axis.line.y=element_blank(),
@@ -321,11 +293,15 @@ ggplot()+
   labs(title="Cluster By Fish ID")
 #plot the dendrogram data for the different fish ID's
 
-#NOTICE DIFF BY SITE AND SPECIES AND REGION AND GFI????? INVESTIGATE FURTHER!
-
 ggsave("figs/spatial_cluster.png", width=15, height=20)
+#cluster groups (top to bottom) DI CU; DI PI; J02 CU, J02 PI, J08 PI, J08 CU, J06 CU...
+#outliers scattered amongst other clusters: D11 and J06 (lowest fullness, most empty!)
 
-#next step compare dendrograms of pink and chum separately? (or other combos)
+simproftest <- simprof(spat_trans_matrix, method.cluster = "average", method.distance = "braycurtis", num.expected = 100, num.simulated = 99)
+
+simprof.plot(simproftest)
+
+ggsave("figs/spatial_cluster_significant.png", width=15, height=20)
 
 ##### GFI (unfiltered; no taxa data) #####
 
@@ -687,7 +663,8 @@ simper_site <- simper(spat_trans_matrix, site_names_filtered)
 summary(simper_site)
 #too much info? also: can do both species and region somehow?? (DI-CU etc. or no good?)
 
-permanova_diet <- adonis2(spat_trans_matrix ~ region_names_filtered/site_names_filtered/species_names_filtered, strata=site_names_filtered)
+permanova_diet <- adonis2(spat_trans_matrix ~ region_names_filtered/site_names_filtered/species_names_filtered,
+                          strata=region_names_filtered)
 permanova_diet
 #species explains 10% of variation, site explains 42%! and sp * site interaction = 13%.
 #DIFFERENT DEGREES OF FREEDOM... DOES THAT AFFECT ANALYSIS SOMEHOW??? NESTEDNESS?????
