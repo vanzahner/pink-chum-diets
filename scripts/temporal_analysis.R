@@ -684,3 +684,8 @@ ggsave("figs/temporal_prey_comp_16.png")
 ##### Frequency of occurrence #####
 
 #TBD - see spatial code (but figure out how to divide by number of rows in each group)
+
+# OOH and idea for later: code habitat like how code updated taxa (streamlined!)
+
+##### PERMANOVA/SIMPER #####
+

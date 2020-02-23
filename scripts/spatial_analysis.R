@@ -1,6 +1,6 @@
 # Spatial analysis code for MSc thesis on juvenile pink and chum salmon diets #
 
-##### SET UP #####
+##### Set up (data; libraries) #####
 
 rm(list=ls())
 #remove other R stuff
@@ -44,24 +44,27 @@ spat_data$fish_species <- factor(spat_data$fish_species, levels = species_order)
 #reorder species from the default of alphabetical to pink then chum, for graph reasons
 
 spat_biomass_data <- spat_data %>%
-  #filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
-  #                              "Coscinodiscophycidae", "Phaeophyceae")) %>% 
-  #filter(prey_weight!=0 & ufn!="U3501") %>% #u3501 is parasites and cope antenna empty
-  #gets rid of empties, delete line when want empties again... bad data mgmt, I know!
-  #filter(!ufn %in% c(#"U5168", #only oikopleura <0.1 mg
-  #                   "U5282", #only harpacticoids <0.1 mg
-  #                   "U5161", #bunch of fish eggs and not much else...
-  #                   #"U5162", #? one with <0.5 mg prey
-  #                   "U5285", #single spider 3.5 mg
-  #                   "U5319" #one gammarid and fly larvae... < 5 mg
-  #                   )) %>% 
-  #gets rid of outliers for NMDS, so delete later when want to bring em back.
+  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
+                                "Coscinodiscophycidae", "Phaeophyceae")
+         & prey_weight!=0
+         & !ufn %in% c(#"U5168", #only oikopleura <0.1 mg. not outlier though...
+                     "U5282", #only harpacticoids <0.1 mg
+                     "U3501", #u3501 is parasites and cope antenna = empty
+                     "U5161", #bunch of fish eggs and not much else...
+                     #"U5162", #? one with <0.5 mg prey
+                     "U5285", #single spider 3.5 mg
+                     "U5319" #one gammarid and fly larvae... < 5 mg
+                     )) %>% 
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
   summarise(Biomass=sum(prey_weight))
-#simplify dataset and combine any redundancies (rename QUADRA area later)
+#biomass long data filtering out useless categories, empty stomachs, strange outliers
 
-# NEED TO FIX THESE DELETIONS OF OUTLIERS FOR NMDS ^^^^^ ***** #
+spat_biomass_data_all_fish <- spat_data %>%
+  group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
+           year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
+  summarise(Biomass=sum(prey_weight))
+#biomass long data for all 120 fish, including empties and outliers!
 
 unique(spat_biomass_data$taxa_detail_calc)
 #161 taxa groups --> Simplified to 85! (what about lrg/sml calanoids?) and n=8 empties
@@ -75,6 +78,14 @@ spat_data_wide <- spat_biomass_data %>%
   select(ufn, semsp_id, fish_species, sample_date, sample_site, work_area, bolus_weight, weight, fork_length, taxa_detail_calc, Biomass, microscope_hours) %>% 
   group_by(ufn, fish_species, sample_site) %>% 
   spread(key=taxa_detail_calc, value=Biomass, fill = 0)
+#filtered wide data set that gets rid of empties and outliers for NMDS and whatnot
+
+spat_data_wide_all_fish <- spat_biomass_data_all_fish %>%
+  ungroup() %>% 
+  select(ufn, semsp_id, fish_species, sample_date, sample_site, work_area, bolus_weight, weight, fork_length, taxa_detail_calc, Biomass, microscope_hours) %>% 
+  group_by(ufn, fish_species, sample_site) %>% 
+  spread(key=taxa_detail_calc, value=Biomass, fill = 0)
+#unfiltered wide data set with all 120 fish, empties and all for freq. occur/gfi data
 
 sum(spat_data_wide$microscope_hours)
 #432 hours at the microscope for spatial alone... average time per stomach of 3.6 hours!
@@ -85,7 +96,7 @@ simple_spat_data <- spat_data_wide %>%
 
 write_csv(simple_spat_data, "processed/spatial_diet_data_wide.csv")
 
-##### Multivariate matrix prep #####
+##### Set up (matrix prep) #####
 
 diet_matrix <- spat_data_wide %>%
   ungroup() %>%
@@ -181,7 +192,7 @@ class(spat_diet_matrix)<-"numeric"
 spat_trans_matrix <- asin(sqrt(spat_diet_matrix))
 #need to rename in between matrices and dataframes better...
 
-##### NMDS #####
+##### NMDS (filtered; full taxa data) #####
 
 rankindex(region_names_filtered, spat_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
 #it says bray is best, then kul, then man, then euc, then gow.
@@ -259,7 +270,7 @@ a
 
 ggsave("figs/spatial_NMDS.png")
 
-##### Cluster #####
+##### Cluster (filtered?!? * , full taxa data) #####
 
 rankindex(species_names_filtered, spat_trans_matrix, indices = c("euc", "man", "gow", "bra", "kul"))
 #see which is best
@@ -316,9 +327,9 @@ ggsave("figs/spatial_cluster.png", width=15, height=20)
 
 #next step compare dendrograms of pink and chum separately? (or other combos)
 
-##### GFI #####
+##### GFI (unfiltered; no taxa data) #####
 
-spatial_gfi_data <- spat_data_wide %>%
+spatial_gfi_data <- spat_data_wide_all_fish %>%
   mutate(bolus_weight_g = bolus_weight/1000) %>%
   mutate(calc_gfi=bolus_weight_g/weight*100)
 #stomach bolus weight (grams) / fish body weight (grams), expressed as a percentage
@@ -340,7 +351,7 @@ spatial_gfi_data %>%
 ggsave("figs/spatial_GFI.png")
 #save figure into folder
 
-##### Niche Breadth #####
+##### Niche Breadth (filtered? full taxa data?) #####
 
 spat_data_wide_info <- spat_data_wide %>%
   ungroup() %>% 
@@ -476,36 +487,38 @@ spat_nb %>%
 
 #try including empty stomachs, see if that changes it. Try less taxa categories too?
 
+#come back to this later! ***** since we have a dataset for empties and for less taxa.
+
+#BUT... the less taxa is the code chunk BELOW this one, so reorder/be mindful of it.
+
 ggsave("figs/spatial_NB_calc.png")
 
-##### Diet Composition Bar Graphs #####
+##### Diet Composition Bar Graphs (unfiltered; broad taxa data) #####
 
-#be careful * modifying the same data frame from above so don't do things out of order!
+#load in file with old and new taxa names to be assigned (broader categories)
+broad_spat_names<-read.csv("data/taxa_broad_groups_spatial.csv") 
 
-#load in file with old and new taxa names to be assigned
-spat_names<-read.csv("data/taxa_broad_groups_spatial.csv") 
+broad_spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
+#RELOAD in spatial diet data (to reset original taxa categories)
 
-spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
-#RELOAD in spatial diet data (to reset original taxa categories. need to fix later.)
-
-spat_data$sample_site <- factor(spat_data$sample_site, levels = site_order)
+broad_spat_data$sample_site <- factor(broad_spat_data$sample_site, levels = site_order)
 
 #for loop doesn't like data as factors
-spat_data$taxa_detail_calc <- as.character(spat_data$taxa_detail_calc) 
-spat_names$old_category <- as.character(spat_names$old_category)
-spat_names$new_category <- as.character(spat_names$new_category)
+broad_spat_data$taxa_detail_calc <- as.character(broad_spat_data$taxa_detail_calc) 
+broad_spat_names$old_category <- as.character(broad_spat_names$old_category)
+broad_spat_names$new_category <- as.character(broad_spat_names$new_category)
 #group together any taxa that occur in less than 3 stomachs
 
 #for loop that will go through all the organism names in the data spreadsheet 
 #and for each one it will go to the names spreadsheet and reassign the name accordingly
-for (n in spat_names$old_category) {
-  spat_data$taxa_detail_calc[which(spat_data$taxa_detail_calc %in% n)] <- spat_names$new_category[which(spat_names$old_category == n)]
+for (n in broad_spat_names$old_category) {
+  broad_spat_data$taxa_detail_calc[which(broad_spat_data$taxa_detail_calc %in% n)] <- broad_spat_names$new_category[which(broad_spat_names$old_category == n)]
   }
 #warning: number of items to replace is not a multiple of replacement length (but ok?)
 
-calanoid_fixing <- filter(spat_data, taxa_detail_calc=="Calanoids")
+calanoid_fixing <- filter(broad_spat_data, taxa_detail_calc=="Calanoids")
 
-no_calanoids <- anti_join(spat_data, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
+no_calanoids <- anti_join(broad_spat_data, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
 
 small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
 
@@ -560,25 +573,27 @@ group_biomass %>%
         legend.text = element_text(size=12), legend.title = element_text(size=14),
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
   labs(title="Spatial Diet Composition", x="Sample Site", y="% Biomass")
-#delete useless categories later - this is pretty sweet progress fixing mistakes! 730pm
+#delete useless categories later
 
-##### Frequency of occurrence ######
+#also, try changing calanoids --> large calanoids + small calanoids for detailed data?
 
-pa_diet_matrix <- spat_data_wide %>%
+##### Frequency of occurrence (unfiltered; full taxa data)  ######
+
+pa_diet_matrix <- spat_data_wide_all_fish %>%
   ungroup %>% 
   select(Acartia:Tortanus_discaudatus) %>%
   decostand(method="pa") 
 
-pa_diet_data <- cbind(spat_data_wide$sample_site, spat_data_wide$fish_species, pa_diet_matrix)%>%
-  rename(site_id=`spat_data_wide$sample_site`, fish_sp=`spat_data_wide$fish_species`)
+pa_diet_data <- cbind(spat_data_wide_all_fish$sample_site, spat_data_wide_all_fish$fish_species, pa_diet_matrix)%>%
+  rename(site_id=`spat_data_wide_all_fish$sample_site`, fish_sp=`spat_data_wide_all_fish$fish_species`)
 
 freq_occur_data <- pa_diet_data %>% 
   group_by(site_id, fish_sp) %>%
   summarise_all(list(sum)) #how to divide by 10??
 #freq occur for all taxa, sites and species (spatial)
 
-pa_diet_data <- cbind(spat_data_wide$work_area, spat_data_wide$fish_species, pa_diet_matrix)%>%
-  rename(region_id=`spat_data_wide$work_area`, fish_sp=`spat_data_wide$fish_species`)
+pa_diet_data <- cbind(spat_data_wide_all_fish$work_area, spat_data_wide_all_fish$fish_species, pa_diet_matrix)%>%
+  rename(region_id=`spat_data_wide_all_fish$work_area`, fish_sp=`spat_data_wide_all_fish$fish_species`)
 
 freq_occur_data <- pa_diet_data %>% 
   group_by(region_id, fish_sp) %>%
@@ -591,8 +606,8 @@ freq_matrix <- freq_occur_data %>%
 View(freq_matrix/30*100)
 #freq occur for all taxa, region and species (spatial) - JS PI, JS CU, DI PI, DI CU
 
-pa_diet_data <- cbind(spat_data_wide$fish_species, pa_diet_matrix)%>%
-  rename(fish_sp=`spat_data_wide$fish_species`)
+pa_diet_data <- cbind(spat_data_wide_all_fish$fish_species, pa_diet_matrix)%>%
+  rename(fish_sp=`spat_data_wide_all_fish$fish_species`)
 
 freq_occur_data <- pa_diet_data %>% 
   group_by(fish_sp) %>%
@@ -605,8 +620,8 @@ freq_matrix <- freq_occur_data %>%
 View(freq_matrix/60*100)
 #freq occur for all taxa, species only (spatial) - first row is pink then chum
 
-pa_diet_data <- cbind(spat_data_wide$sample_site, pa_diet_matrix)%>%
-  rename(site_id=`spat_data_wide$sample_site`)
+pa_diet_data <- cbind(spat_data_wide_all_fish$sample_site, pa_diet_matrix)%>%
+  rename(site_id=`spat_data_wide_all_fish$sample_site`)
 
 freq_occur_data <- pa_diet_data %>% 
   group_by(site_id) %>%
@@ -630,8 +645,8 @@ freq_data_long %>%
 #those with >75% occurrence by site, picked 'em out manually
 #freq occur for all taxa, site only (spatial) - J02, J08, J06, D11, D09, D07 (W to E)
 
-pa_diet_data <- cbind(spat_data_wide$work_area, pa_diet_matrix)%>%
-  rename(region_id=`spat_data_wide$work_area`)
+pa_diet_data <- cbind(spat_data_wide_all_fish$work_area, pa_diet_matrix)%>%
+  rename(region_id=`spat_data_wide_all_fish$work_area`)
 
 freq_occur_data <- pa_diet_data %>% 
   group_by(region_id) %>%
@@ -653,8 +668,26 @@ freq_data_long %>%
   View()
 #those with >50% occurrence by region, picked 'em out manually
 #freq occur for all taxa, region only (spatial) - JS then DI ("Quadra", alphabetical)
-##### PERMANOVA/SIMPER #####
 
-#need to deal with empties somehowwwww
+##### PERMANOVA/SIMPER (filtered; full taxa data) #####
 
-# OOH and idea for later: code habitat like how code updated taxa (streamlined!)
+#need to deal with empties somehowwwww. try deleting empties first (unbalanced now):
+
+simper_reg <- simper(spat_trans_matrix, region_names_filtered)
+summary(simper_reg)
+#important prey for dissimilarity between regions
+#oikopleura, ctenophora, calanus marshallae, calanoida, cnidaria, calanus pacific, etc.
+
+simper_sp <- simper(spat_trans_matrix, species_names_filtered)
+summary(simper_sp)
+#important prey for dissimilarity between species
+#oikopleura, ctenophora, calanoida, calanus marshallae, cnidaria, calanus pacificus, etc
+
+simper_site <- simper(spat_trans_matrix, site_names_filtered)
+summary(simper_site)
+#too much info? also: can do both species and region somehow?? (DI-CU etc. or no good?)
+
+permanova_diet <- adonis2(spat_trans_matrix ~ region_names_filtered/site_names_filtered/species_names_filtered, strata=site_names_filtered)
+permanova_diet
+#species explains 10% of variation, site explains 42%! and sp * site interaction = 13%.
+#DIFFERENT DEGREES OF FREEDOM... DOES THAT AFFECT ANALYSIS SOMEHOW??? NESTEDNESS?????
