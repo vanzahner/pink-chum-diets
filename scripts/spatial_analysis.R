@@ -52,10 +52,11 @@ spat_biomass_data <- spat_data %>%
          & !ufn %in% c(#"U5168", #only oikopleura <0.1 mg. not outlier though...
                      #"U5282", #only harpacticoids <0.1 mg
                      #"U3501", #u3501 is parasites and cope antenna = empty
-                     #"U5161", #bunch of fish eggs and not much else...
+                     "U5161", #bunch of fish eggs and not much else...
                      #"U5162", #? one with <0.5 mg prey
-                     #"U5285", #single spider 3.5 mg
-                     #"U5319" #one gammarid and fly larvae... < 5 mg
+                     "U5285", #single spider 3.5 mg
+                     "U5284", #pteropods and other weird things < 3 mg
+                     "U5319" #one gammarid and fly larvae... < 5 mg
                      )) %>% 
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
@@ -301,8 +302,6 @@ simproftest <- simprof(spat_trans_matrix, method.cluster = "average", method.dis
 
 simprof.plot(simproftest)
 
-ggsave("figs/spatial_cluster_significant.png", width=15, height=20)
-
 ##### GFI (unfiltered; no taxa data) #####
 
 spatial_gfi_data <- spat_data_wide_all_fish %>%
@@ -327,7 +326,7 @@ spatial_gfi_data %>%
 ggsave("figs/spatial_GFI.png")
 #save figure into folder
 
-##### Niche Breadth (filtered? full taxa data?) #####
+##### Niche Breadth? (filtered; full taxa data) #####
 
 spat_data_wide_info <- spat_data_wide %>%
   ungroup() %>% 
