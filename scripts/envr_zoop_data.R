@@ -28,4 +28,3 @@ zoop_data <- read_csv("data/zoop_comp_data_combined.csv")
 
 survey_data <- read_csv("data/survey_data.csv")
 #for secchi!
-

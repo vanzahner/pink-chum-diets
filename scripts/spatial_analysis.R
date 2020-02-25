@@ -94,10 +94,7 @@ sum(spat_data_wide$microscope_hours)
 #432 hours at the microscope for spatial alone... average time per stomach of 3.6 hours!
 
 simple_spat_data <- spat_data_wide %>%
-  select(ufn, fish_species, sample_site, work_area, Acartia:Tortanus_discaudatus#, -Empty
-         )
-
-write_csv(simple_spat_data, "processed/spatial_diet_data_wide.csv")
+  select(ufn, fish_species, sample_site, work_area, Acartia:Tortanus_discaudatus)
 
 ##### Set up (matrix prep) #####
 
@@ -518,25 +515,6 @@ group_bio_wide <- group_biomass %>%
   group_by(ufn, fish_species, sample_site) %>% 
   spread(key=taxa_detail_calc, value = prey_weight_sum, fill=0)
 #wide data set (might not need it, but it's a good double check that n=120!)  
-
-group_biomass %>%
-  ggplot(aes(sample_site, prey_weight_sum))+
-  geom_bar(aes(fill=taxa_detail_calc), stat = "identity", position = "fill")+
-  #scale_fill_manual(values = c("#FB9A99", "#E31A1C", "#FDBF6F",
-  #                             "#FF7F00", #bar, cal, dec, euph
-  #                             #"#FFFF99", #euph_eggs
-  #                             "#CAB3D6", #cladocerans
-  #                             "#6A3D9A", #echinoderms
-  #                             "#A6CEE3", "#1F78B4", #chae, gel
-  #                             "#33A02C", "grey60"))+#lar, oth
-  facet_wrap(~fish_species, dir = "v", scales = "free")+
-  ggtitle("Spatial Diets (2016)")+
-  theme_bw()+
-  scale_y_continuous(labels=scales::unit_format("%", 100))+
-  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
-        axis.title = element_text(size=14), axis.text = element_text(size=12),
-        legend.text = element_text(size=12), legend.title = element_text(size=14),
-        title = element_text(size=16), plot.title = element_text(hjust=0.5))
 
 group_biomass %>%
   ggplot(aes(sample_site, prey_weight_sum))+
