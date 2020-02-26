@@ -1,5 +1,7 @@
 # Data wrangling code for MSc thesis on juvenile pink and chum salmon diets #
 
+##### Diet data set up #####
+
 rm(list=ls())
 #remove other R stuff
 
@@ -37,7 +39,7 @@ write_csv(spat_fish, path="processed/spatial_pink_chum_diets.csv")
 write_csv(temp_fish, path="processed/temporal_pink_chum_diets.csv")
 #write csv files for initial transformation and saving of diet data
 
-#ENV AND ZOOP DATA#
+##### Environmental data #####
 
 ysi_data <- read_csv("data/ysi.csv")
 
@@ -47,12 +49,6 @@ ysi_filtered <- ysi_data %>%
            survey_date>"2015-05-20"&
            survey_date<"2016-07-06")
 #need to filter out to only what's relevant to samples (then secchi next)
-
-zoop_data <- read_csv("data/zoop_comp_data_combined.csv")
-#need to resolve issues about missing data (JSPK 1154, which is for July 5, 2016 J07)
-
-zoop_data_ww <- read_csv("data/zoop_data_ww.csv")
-#J02 (JSPK1118) has taxa data but no wet weight. ignore all ww since J02 most important
 
 survey_data <- read_csv("data/survey_data.csv")
 #for secchi!
@@ -95,13 +91,25 @@ survey_filtered %>%
   theme(panel.grid=element_blank())+
   labs(title="Temperature (Spatial)")
 
+survey_filtered[18, 27] <- NA
+#delete erronous salinity value for D11 depth 1m (way fresher than the surface...)
+
 survey_filtered %>%
   filter(analysis!="Temporal") %>% 
   ggplot(aes(site_id, salinity))+
   geom_boxplot(aes(color=line_out_depth))+
+  scale_y_continuous(limits = c(24.5, 32.5))+
   theme_bw()+
   theme(panel.grid=element_blank())+
   labs(title="Salinity (Spatial)")
+
+##### Zoop data #####
+
+zoop_data <- read_csv("data/zoop_comp_data_combined.csv")
+#need to resolve issues about missing data (JSPK 1154, which is for July 5, 2016 J07)
+
+zoop_data_ww <- read_csv("data/zoop_data_ww.csv")
+#J02 (JSPK1118) has taxa data but no wet weight. ignore all ww since J02 most important
 
 zoop_data_ww$site <- factor(zoop_data_ww$site, levels = site_order)
 
@@ -111,7 +119,9 @@ sieve_order <- c("250", "1000", "2000")
 zoop_data_ww$sieve <- factor(zoop_data_ww$sieve, levels = sieve_order)
 
 zoop_data_ww %>%
-  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751")) %>%
+  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751"
+                         #, "QPK747" #biomass super high from diatom bloom - erronous
+                         )) %>%
   ggplot(aes(site, biomass))+
   geom_boxplot(aes(color=sieve))+
   theme_bw()+
@@ -133,7 +143,8 @@ for (n in zoop_names$old_category) {
 zoop_data$site <- factor(zoop_data$site, levels = site_order)
 
 zoop_data %>%
-  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118")) %>%
+  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118",
+                         "QPK747")) %>%
   ggplot(aes(site, abundance))+
   geom_bar(aes(fill=labID), stat="identity", position="fill")+
   theme_bw()+
@@ -141,10 +152,14 @@ zoop_data %>%
   labs(title="Zoop Composition (Spatial)")
 
 zoop_data %>%
-  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118")) %>%
+  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118",
+                         "QPK747")) %>%
   ggplot(aes(site, abundance))+
   geom_bar(aes(fill=labID), stat="identity", position="fill")+
   theme_bw()+
   theme(panel.grid=element_blank())+
   labs(title="Zoop Composition (Spatial)")+
   facet_wrap(~sieve)
+
+#next step: update zoop groups to match between zoops and diets (prey select, etc.)
+

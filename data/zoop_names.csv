@@ -1,573 +1,105 @@
 new_category,old_category
 Calanoid copepod,Acartia
-Calanoid copepod,Acartia
-Barnacle,Barnacle Nauplius
-Other,Bivalve veliger
-Calanoid copepod,Calanus marshallae
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Egg (fish)
-Other,Egg (oily)
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Euphausiid,Euphausiid calytopsis
-Cladoceran,Evadne
-Amphipod ,Gammarid
-Decapod ,Grapsidae
-Other,Halitholus
-Calanoid copepod,Paracalanus
-Cladoceran,Podon
-Other,Polyp
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Acartia
-Other,Aequorea victoria
-Barnacle,Barnacle Nauplius
-Other,Bivalve veliger
-Calanoid copepod,Calanus marshallae
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Egg (fish)
-Other,Egg (oily)
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Eucalanus
-Euphausiid,Euphausiid calytopsis
-Cladoceran,Evadne
-Other,Gastropod egg
-Other,Gastropod veliger
-Other,Halitholus
-Other,Harpacticoid spp
-Other,Hydromedusae
-Amphipod ,Hyperiid (themisto)
-Other,Leuckartiara
-Decapod ,Majidae
-Other,Microsetella
-Larvacean,Oikopleura
-Other,Oithona
-Decapod ,Pandalidae
-Decapod ,Pandalidae
-Calanoid copepod,Paracalanus
-Decapod ,Pinnotheridae
-Cladoceran,Podon
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Acartia
-Other,Aequorea victoria
+Gelatinous,Aequorea victoria
 Calanoid copepod,Aetidius divergens
-Barnacle,Barnacle Nauplius
-Other,Bryozoa
-Calanoid copepod,Calanus marshallae
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Other,Chaetognath
-Other,Chaetognath
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Egg (oily)
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Cladoceran,Evadne
-Other,Gastropod egg
-Other,Gastropod veliger
-Decapod ,Grapsidae
-Other,Harpacticoid spp
-Amphipod ,Hyperiid (themisto)
-Other,Leuckartiara
-Decapod ,Majidae
-Calanoid copepod,Metridia
-Larvacean,Oikopleura
-Decapod ,Pandalidae
-Decapod ,Pandalidae
-Calanoid copepod,Paracalanus
-Decapod ,Pinnotheridae
-Cladoceran,Podon
-Calanoid copepod,Pseudocalanus
-Other,Sarsia
-Calanoid copepod,Tortanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Acartia
-Other,Annatiara affinis
-Barnacle,Barnacle Nauplius
-Other,Bivalve veliger
-Other,Clytia
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Echinodermata
-Other,Egg (fish)
-Other,Egg (oily)
-Cladoceran,Evadne
-Other,Gastropod egg
-Other,Gastropod veliger
-Larvacean,Oikopleura
-Other,Pandeidae
-Other,Pandeidae
-Calanoid copepod,Paracalanus
-Cladoceran,Podon
-Cladoceran,Podon
-Other,Polychaete trocophore
-Calanoid copepod,Acartia
-Calanoid copepod,Acartia
-Other,Aequorea victoria
+Gelatinous,Aglantha digitale
+Gelatinous,Amphinema platytiedos
+Amphipod ,Amphipod
+Gelatinous,Annatiara affinis
 Decapod ,Anomuran
 Barnacle,Barnacle Nauplius
-Other,Bivalve veliger
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Other,Ctenophore
-Barnacle,Cyprid
-Other,Egg (oily)
-Other,Egg (oily)
-Cladoceran,Evadne
-Other,Flatworm
-Other,Gastropod
-Decapod ,Grapsidae
-Other,Hydrozoan
-Amphipod ,Hyperiid amphipod
-Larvacean,Oikopleura
-Calanoid copepod,Paracalanus parvus
-Cladoceran,Podon
-Calanoid copepod,Acartia
-Other,Annatiara affinis
-Barnacle,Barnacle Nauplius
-Other,Bivalve veliger
+Bivalves,Bivalve veliger
 Other,Bryozoa
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Barnacle,Cyprid
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Cladoceran,Evadne
-Other,Gastropod egg
-Decapod ,Majidae
-Decapod ,Majidae
-Larvacean,Oikopleura
-Other,Oithona
-Decapod ,Pandalidae
-Calanoid copepod,Paracalanus
-Cladoceran,Podon
-Calanoid copepod,Pseudocalanus
-Other,Amphinema platytiedos
-Other,Amphinema platytiedos
-Amphipod ,Amphipod
-Barnacle,Barnacle Nauplius
-Other,Bivalve veliger
+Calanoid copepod,Calanoid Copepod
+Calanoid copepod,Calanus copedite
 Calanoid copepod,Calanus marshallae
 Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Other,Clytia
-Other,Copepod nauplius
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Echinodermata
-Other,Egg (oily)
-Cladoceran,Evadne
-Amphipod ,Gammarid
-Other,Gastropod egg
-Other,Hydromedusae
-Calanoid copepod,Metridia
-Larvacean,Oikopleura
-Calanoid copepod,Paracalanus
-Other,Pleurobrachiidae
-Other,Pleurobrachiidae
-Cladoceran,Podon
-Other,Polychaete trocophore
-Other,Siphonophore pneumatophore
-Other,Spionidae
-Calanoid copepod,Acartia
-Other,Aequorea victoria
-Other,Amphinema platyhedos
-Other,Annatiara affinis
-Barnacle,Barnacle Nauplius
-Other,Bivalve veliger
-Other,Bryozoa
-Calanoid copepod,Centropages abdominalis
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Other,Ctenophore
-Other,Ctenophore
-Barnacle,Cyprid
-Other,Egg (fish)
-Other,Egg (oily)
-Cladoceran,Evadne
-Other,Gastropod egg
-Other,Hydromedusae
-Larvacean,Oikopleura
-Calanoid copepod,Paracalanus
-Cladoceran,Podon
-Calanoid copepod,Acartia
-Barnacle,Barnacle nauplius
-Decapod ,Cancridae
-Calanoid copepod,Centropages abdominalis
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Euphausiid egg
-Euphausiid,Euphausiid nauplius
-Other,Gastropod veliger
-Other,Halitholus
-Other,Leptomedusae
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Tortanus
-Other,Trocophore
-Calanoid copepod,Acartia
-Calanoid copepod,Calanus marshallae
-Calanoid copepod,Calanus pacificus
+Other,Caligus
 Decapod ,Callianassidae zoea
 Decapod ,Cancridae
+Decapod ,Cancridae megalopa
+Decapod ,Cancridae zoea
 Calanoid copepod,Centropages abdominalis
+Chaetognath,Chaetognath
+Gelatinous,Clytia
+Calanoid copepod,Copepod nauplius
+Calanoid copepod,Copepodite
+Cyclopoid Copepod,Corycaeus
+Decapod ,Crangonidae
+Gelatinous,Ctenophore
+Cyclopoid Copepod,Cyclopoid Copepod
+Gelatinous,Cydippid Ctenophore
+Other,Cyphonautes Larva
+Barnacle,Cyprid
+Barnacle,Cyprid Larva
 Decapod ,Decapoda
 Other,Diptera
-Other,Euphausiid egg
-Other,Fish egg
-Decapod ,Hippolytidae zoea
-Amphipod ,Hyperiid (themisto)
-Larvacean,Oikopleura
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Tortanus copedite
-Calanoid copepod,Acartia
-Barnacle,Barnacle nauplius
-Other,Bryozoa
-Calanoid copepod,Centropages abdominalis
-Other,Chaetognath
-Other,Copepod nauplius
-Other,Corycaeus
+Other,Echinodermata
 Other,Egg
-Calanoid copepod,Eplabidocera longipedata
-Other,Euphausiid egg
-Euphausiid,Euphausiid nauplius
-Cladoceran,Evadne
-Other,Gastropod veliger
-Larvacean,Oikopleura
-Other,Oithona
-Cladoceran,Podon
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Tortanus copedite
-Other,Leuckartiara spp
-Decapod ,Porcellanidae
-Calanoid copepod,Calanus marshallae
-Calanoid copepod,Calanus pacificus
+Other,Egg (fish)
+Other,Egg (oily)
 Calanoid copepod,Epilabidocera longipedata
+Calanoid copepod,Eucalanus
+Euphausiid,Euphausiid calytopsis
+Other,Euphausiid egg
+Euphausiid,Euphausiid furcilia larvae
+Euphausiid,Euphausiid nauplius
+Gelatinous,Euphysa
+Cladoceran,Evadne
+Cladoceran,Evadne sp.
+Decapod ,Fabia subquadrata zoea
+Other,Fish egg
+Other,Flatworm
+Amphipod ,Gammarid
+Other,Gastropod
+Other,Gastropod egg
+Other,Gastropod veliger
+Decapod ,Grapsidae
+Gelatinous,Halimedusa typus
+Gelatinous,Halitholus
+Other,Harpacticoid
+Other,Harpacticoid spp
+Decapod ,Hippolytidae zoea
+Gelatinous,Hydromedusae
+Gelatinous,Hydrozoan
 Amphipod ,Hyperiid (themisto)
-Other,Leptomedusae
+Amphipod ,Hyperiid amphipod
+Gelatinous,Leptomedusae
+Gelatinous,Leuckartiara
+Gelatinous,Leuckartiara spp
 Decapod ,Majidae
 Calanoid copepod,Metridia
-Calanoid copepod,Acartia
-Barnacle,Barnacle nauplius
-Other,Bivalve veliger
-Other,Bryozoa
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Other,Egg (oily)
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Euphausiid,Euphausiid calytopsis
-Cladoceran,Evadne
-Other,Leptomedusae
+Other,Microsetella
+Barnacle,Nauplius Larva
 Larvacean,Oikopleura
-Other,Oithona
+Larvacean,Oikopleura sp.
+Cyclopoid Copepod,Oithona
+Cyclopoid Copepod,Oncaea
+Decapod ,Pandalidae
+Gelatinous,Pandeidae
 Calanoid copepod,Paracalanus
-Cladoceran,Podon
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Calanus marshallae
-Decapod ,Cancridae megalopa
-Decapod ,Cancridae zoea
-Calanoid copepod,Centropages abdominalis
-Other,Chaetognath
-Other,Clytia
-Other,Corycaeus
-Other,Ctenophore
-Calanoid copepod,Epilabidocera longipedata
+Calanoid copepod,Paracalanus parvus
 Decapod ,Pinnotheridae
+Gelatinous,Pleurobrachiidae
 Other,Pleuronectidae (fish)
-Other,Siphonophore
-Calanoid copepod,Tortanus
-Calanoid copepod,Calanus marshallae
-Calanoid copepod,Calanus pacificus
-Decapod ,Cancridae megalopa
-Decapod ,Cancridae zoea
-Calanoid copepod,Centropages abdominalis
-Other,chaetognath
-Calanoid copepod,Epilabidocera longipedata
-Euphausiid,Euphausiid furcilia larvae
-Decapod ,Fabia subquadrata zoea
-Calanoid copepod,Tortanus
-Calanoid copepod,Acartia
-Calanoid copepod,Aetidius divergens
-Barnacle,Barnacle nauplius
-Calanoid copepod,Calanus copedite
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Egg (oily)
-Calanoid copepod,Epilabidocera longipedata
-Larvacean,Oikopleura
-Other,Oithona
-Other,Oncaea
-Calanoid copepod,Paracalanus
-Decapod ,Pinnotheridae
+Other,Pleuronectidae (Hippoglossus stenolepis?)
+Other,Pluteus Larva
 Cladoceran,Podon
 Other,Polychaete (spionid nectochaete)
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Tortanus
-Other,Aglantha digitale
-Decapod ,Cancridae
-Other,Clytia
-Decapod ,Pinnotheridae
-Other,Sarsia
-Calanoid copepod,Calanus marshallae
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Other,Leuckartiara spp
-Decapod ,Majidae
-Calanoid copepod,Metridia
-Decapod ,Pandalidae
-Decapod ,Pinnotheridae
+Other,Polychaete trocophore
+Gelatinous,Polyp
 Decapod ,Porcellanidae
-Other,Sarsia
-Calanoid copepod,Tortanus
-Calanoid copepod,Acartia
-Other,Aglantha digitale
-Barnacle,Barnacle nauplius
-Other,Bryozoa
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Echinodermata
-Other,Egg (oily)
-Calanoid copepod,Epilabidocera longipedata
-Euphausiid,Euphausiid calytopsis
-Cladoceran,Evadne
-Other,Gastropod egg
-Decapod ,Majidae
-Larvacean,Oikopleura
-Other,Oithona
-Decapod ,Pandalidae
-Calanoid copepod,Paracalanus
-Cladoceran,Podon
 Calanoid copepod,Pseudocalanus
-Calanoid copepod,Tortanus
-Other,Aglantha digitale
-Other,Annatiara affinis
-Other,Caligus
-Other,Chaetognath
-Other,Clytia
-Other,Ctenophore
-Calanoid copepod,Eucalanus
-Other,Leptomedusae
-Other,Leuckartiara spp
-Calanoid copepod,Aetidius divergens
-Other,Aglantha digitale
-Other,Annatiara affinis
-Calanoid copepod,Calanus marshallae
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Other,Chaetognath
-Other,Clytia
-Other,Egg (fish)
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Eucalanus
-Amphipod ,Hyperiid (themisto)
-Other,Leuckartiara spp
-Calanoid copepod,Metridia
-Decapod ,Pandalidae
-Decapod ,Pinnotheridae
-Calanoid copepod,Pseudocalanus
+Gelatinous,Sarsia
+Gelatinous,Siphonophore
+Gelatinous,Siphonophore pneumatophore
+Other,Spionidae
 Other,Syllidae
 Calanoid copepod,Tortanus
-Calanoid copepod,Acartia
-Calanoid copepod,Aetidius divergens
+Calanoid copepod,Tortanus copedite
+Other,Trochophore Larva
+Other,Trocophore
+Other,Veliger Larva
+Gelatinous,Amphinema platyhedos
 Barnacle,Barnacle nauplius
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Egg (oily)
-Calanoid copepod,Epilabidocera longipedata
-Euphausiid,Euphausiid calytopsis
-Cladoceran,Evadne
-Amphipod ,Gammarid
-Other,Gastropod egg
-Other,Gastropod veliger
-Other,Harpacticoid
-Other,Hydromedusae
-Calanoid copepod,Metridia
-Larvacean,Oikopleura
-Other,Oithona
-Decapod ,Pandalidae
-Calanoid copepod,Paracalanus
-Calanoid copepod,Pseudocalanus
-Calanoid copepod,Tortanus
-Other,Aequorea victoria
-Other,Amphinema platyhedos
-Other,Ctenophore
-Other,Clytia
-Other,Egg (fish)
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Decapod ,Pandalidae
-Calanoid copepod,Acartia
-Barnacle,Barnacle nauplius
-Other,Bivalve veliger
-Other,Bryozoa
-Other,Clytia
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Echinodermata
-Other,Egg (oily)
-Euphausiid,Euphausiid calytopsis
-Cladoceran,Evadne
-Other,Gastropod egg
-Larvacean,Oikopleura
-Calanoid copepod,Paracalanus
-Cladoceran,Podon
-Other,Aequorea victoria
-Other,Halimedusa typus
-Other,Sarsia
-Other,Egg (fish)
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Other,Halimedusa typus
-Calanoid copepod,Acartia
-Barnacle,Barnacle nauplius
-Other,Bivalve veliger
-Other,Bryozoa
-Decapod ,Cancridae
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Barnacle,Cyprid
-Other,Egg (oily)
-Euphausiid,Euphausiid calytopsis
-Cladoceran,Evadne
-Other,Gastropod egg
-Larvacean,Oikopleura
-Calanoid copepod,Paracalanus
-Cladoceran,Podon
-Other,Spionidae
-Other,Amphinema platyhedos
-Decapod ,Cancridae
-Other,Clytia
-Other,Euphysa
-Other,Leptomedusae
-Decapod ,Pinnotheridae
-Other,Pleuronectidae (Hippoglossus stenolepis?)
-Other,Aglantha digitale
-Other,Amphinema platyhedos
-Calanoid copepod,Calanus marshallae
-Calanoid copepod,Calanus pacificus
-Decapod ,Cancridae
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Other,Chaetognath
-Other,Clytia
-Other,Ctenophore
-Other,Egg (fish)
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Epilabidocera longipedata
-Calanoid copepod,Eucalanus
-Other,Halimedusa typus
-Amphipod ,Hyperiid (themisto)
-Decapod ,Majidae
-Calanoid copepod,Metridia
-Decapod ,Pandalidae
-Decapod ,Pinnotheridae
-Other,Sarsia
-Calanoid copepod,Tortanus
-Calanoid copepod,Tortanus
-Calanoid copepod,Acartia
-Barnacle,Barnacle nauplius
-Other,Bivalve veliger
-Calanoid copepod,Calanus pacificus
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Calanoid copepod,Centropages abdominalis
-Other,Chaetognath
-Other,Copepod nauplius
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Calanoid copepod,Copepodite
-Other,Corycaeus
-Decapod ,Crangonidae
-Barnacle,Cyprid
-Other,Egg (oily)
-Euphausiid,Euphausiid calytopsis
-Cladoceran,Evadne
-Other,Gastropod egg
-Other,Gastropod veliger
-Other,Hydromedusae
-Decapod ,Majidae
-Larvacean,Oikopleura
-Other,Oithona
-Decapod ,Pandalidae
-Calanoid copepod,Paracalanus
-Cladoceran,Podon
-Other,Polychaete trocophore
-Calanoid copepod,Pseudocalanus
-Other,Spionidae
-Calanoid copepod,Tortanus
+Chaetognath,chaetognath
