@@ -645,3 +645,13 @@ permanova_diet <- adonis2(spat_trans_matrix ~ region_names_filtered/site_names_f
 permanova_diet
 #species explains 10% of variation, site explains 42%! and sp * site interaction = 13%.
 #DIFFERENT DEGREES OF FREEDOM... DOES THAT AFFECT ANALYSIS SOMEHOW??? NESTEDNESS?????
+
+##### Prey Selectivity #####
+
+#read in zoop data
+
+#ivlev's index (-1 to 1) = (prey-zoop)/(prey+zoop) using proportional data
+
+#have to use relative abundance data (calculate diet matrix), be wary of jellies
+
+#to do: prey selectivity, bio-env, diversity metrics and others?? see diet workshop doc.
