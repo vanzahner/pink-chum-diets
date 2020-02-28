@@ -19,14 +19,14 @@ library(clustsig)
 setwd("/Users/Vanessa/Desktop/msc_project")
 #set working directory
 
-spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
+spat_data_raw <- read_csv("processed/spatial_pink_chum_diets.csv")
 #read in spatial diet data
 
 #load in file with old and new taxa names to be assigned
 spat_names<-read.csv("data/spatial_taxa_category_change.csv") 
 
 #for loop doesn't like data as factors
-spat_data$taxa_detail_calc <- as.character(spat_data$taxa_detail_calc) 
+spat_data_raw$taxa_detail_calc <- as.character(spat_data_raw$taxa_detail_calc) 
 spat_names$old_category <- as.character(spat_names$old_category)
 spat_names$new_category <- as.character(spat_names$new_category)
 #group together any taxa that occur in less than 3 stomachs
@@ -34,8 +34,16 @@ spat_names$new_category <- as.character(spat_names$new_category)
 #for loop that will go through all the organism names in the data spreadsheet 
 #and for each one it will go to the names spreadsheet and reassign the name accordingly
 for (n in spat_names$old_category) {
-  spat_data$taxa_detail_calc[which(spat_data$taxa_detail_calc %in% n)] <- spat_names$new_category[which(spat_names$old_category == n)]
+  spat_data_raw$taxa_detail_calc[which(spat_data_raw$taxa_detail_calc %in% n)] <- spat_names$new_category[which(spat_names$old_category == n)]
 }
+
+calanoid_fixing <- filter(spat_data_raw, taxa_detail_calc=="Calanoida")
+no_calanoids <- anti_join(spat_data_raw, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
+small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
+large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
+small_calanoids$taxa_detail_calc <- "Calanoids_Small"
+large_calanoids$taxa_detail_calc <- "Calanoids_Large"
+spat_data <- rbind(no_calanoids, small_calanoids, large_calanoids)
 
 site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
 spat_data$sample_site <- factor(spat_data$sample_site, levels = site_order)
@@ -244,7 +252,7 @@ a
 
 ggsave("figs/spatial_NMDS.png")
 
-##### Cluster (filtered (no empties) , full taxa data) #####
+##### Cluster (filtered; full taxa data) #####
 
 Bray_Curtis_Dissimilarity <- vegdist(spat_trans_matrix, method = "bray")
 bcclust <- hclust(Bray_Curtis_Dissimilarity, method = "average")
@@ -489,17 +497,11 @@ for (n in broad_spat_names$old_category) {
 #warning: number of items to replace is not a multiple of replacement length (but ok?)
 
 calanoid_fixing <- filter(broad_spat_data, taxa_detail_calc=="Calanoids")
-
 no_calanoids <- anti_join(broad_spat_data, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
-
 small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
-
 large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
-
 small_calanoids$taxa_detail_calc <- "Calanoids_Small"
-
 large_calanoids$taxa_detail_calc <- "Calanoids_Large"
-
 spat_data_fixed <- rbind(no_calanoids, small_calanoids, large_calanoids)
 
 #redo this step above in the set up? before renaming the taxa to broad groups (later)
@@ -629,29 +631,196 @@ freq_data_long %>%
 simper_reg <- simper(spat_trans_matrix, region_names_filtered)
 summary(simper_reg)
 #important prey for dissimilarity between regions
-#oikopleura, ctenophora, calanus marshallae, calanoida, cnidaria, calanus pacific, etc.
+#oikopleura, ctenophora, calanus marshallae, cnidaria, calanoid_L, calanus pacific, etc.
 
 simper_sp <- simper(spat_trans_matrix, species_names_filtered)
 summary(simper_sp)
 #important prey for dissimilarity between species
-#oikopleura, ctenophora, calanoida, calanus marshallae, cnidaria, calanus pacificus, etc
+#oikopleura, ctenophora, calanus marshallae, calanoid_L, cnidaria, calanus pacificus, etc
 
 simper_site <- simper(spat_trans_matrix, site_names_filtered)
-summary(simper_site)
+#summary(simper_site)
 #too much info? also: can do both species and region somehow?? (DI-CU etc. or no good?)
 
-permanova_diet <- adonis2(spat_trans_matrix ~ region_names_filtered/site_names_filtered/species_names_filtered,
+permanova_diet <- adonis2(spat_trans_matrix ~ site_names_filtered*species_names_filtered,
                           strata=region_names_filtered)
 permanova_diet
 #species explains 10% of variation, site explains 42%! and sp * site interaction = 13%.
 #DIFFERENT DEGREES OF FREEDOM... DOES THAT AFFECT ANALYSIS SOMEHOW??? NESTEDNESS?????
 
-##### Prey Selectivity #####
+##### Prey Selectivity (filtered; broad taxa data) #####
 
+zoop_data <- read_csv("data/zoop_comp_data_combined.csv")
 #read in zoop data
+zoop_names <- read_csv("data/zoop_names.csv")
+#read in zoop name data
 
+#for loop doesn't like data as factors
+zoop_data$labID <- as.character(zoop_data$labID) 
+zoop_names$old_category <- as.character(zoop_names$old_category)
+zoop_names$zoop_category_general <- as.character(zoop_names$zoop_category_general)
+#for loop that will go through all the organism names in the data spreadsheet 
+#and for each one it will go to the names spreadsheet and reassign the name accordingly
+for (n in zoop_names$old_category) {
+  zoop_data$labID[which(zoop_data$labID %in% n)] <- zoop_names$zoop_category_general[which(zoop_names$old_category == n)]
+}
+
+zoop_data_merged <- zoop_data %>%
+  select(sampleID, site, labID, totcount) %>% 
+  group_by(sampleID, site, labID) %>%
+  summarise(totalcount= sum(totcount))
+
+zoop_data_available <- zoop_data_merged %>%
+  spread(key=labID, value=totalcount, fill=0) %>%
+  ungroup() %>% 
+  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118", "QPK747")) %>%
+  mutate("Cumacean"=0, "Isopods"=0, "Ostracods"=0) %>% 
+  select(site, Amphipods:Cladocerans, Cumacean,
+         Cyclopoids:Insects, Isopods,
+         Larvaceans, Ostracods,
+         Polychaetes)
+
+colnames(zoop_data_available)
+
+#load in file with old and new taxa names to be assigned (broader categories)
+prey_spat_names<-read.csv("data/spatial_taxa_category_change.csv") 
+
+prey_spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
+#RELOAD in spatial diet data (to reset original taxa categories)
+
+prey_spat_data$sample_site <- factor(prey_spat_data$sample_site, levels = site_order)
+
+#for loop doesn't like data as factors
+prey_spat_data$taxa_detail_calc <- as.character(prey_spat_data$taxa_detail_calc) 
+prey_spat_names$old_category <- as.character(prey_spat_names$old_category)
+prey_spat_names$prey_category_general <- as.character(prey_spat_names$prey_category_general)
+#group together any taxa that occur in less than 3 stomachs
+
+#for loop that will go through all the organism names in the data spreadsheet 
+#and for each one it will go to the names spreadsheet and reassign the name accordingly
+for (n in prey_spat_names$old_category) {
+  prey_spat_data$taxa_detail_calc[which(prey_spat_data$taxa_detail_calc %in% n)] <- prey_spat_names$prey_category_general[which(prey_spat_names$old_category == n)]
+}
+
+prey_spat_data$sample_site <- factor(prey_spat_data$sample_site, levels = site_order)
+#reorder sites from the default of alphabetical to west to east, like on the map
+
+calanoid_fixing <- filter(prey_spat_data, taxa_detail_calc=="Calanoids")
+no_calanoids <- anti_join(prey_spat_data, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
+small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
+large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
+small_calanoids$taxa_detail_calc <- "Calanoids_Small"
+large_calanoids$taxa_detail_calc <- "Calanoids_Large"
+prey_data <- rbind(no_calanoids, small_calanoids, large_calanoids)
+
+prey_data_merged <- prey_data %>%
+  filter(bolus_weight!=0) %>% 
+  select(ufn, site=sample_site, fish_species, taxa_detail_calc, prey_abund) %>%
+  group_by(ufn, site, fish_species, taxa_detail_calc) %>%
+  summarise(abd=sum(prey_abund)) %>% 
+  spread(key = taxa_detail_calc, value=abd, fill=0) %>%
+  mutate("Bryozoa"=0) %>%
+  ungroup() %>% 
+  select(fish_species, site, Amphipods:Bivalves, Bryozoa,
+         Calanoids_Large:Decapods, Echinoderms:Ostracods, Polychaetes) %>%
+  arrange(site)
+
+colnames(prey_data_merged)
+
+prey_data_merged$site <- as.character(prey_data_merged$site)
+
+ivlevdata <- list()
+
+ivlevdata$diet <- as.data.frame(prey_data_merged)
+
+ivlevdata$avail <- as.data.frame(zoop_data_available)
+
+myindices <- Electivity(Diet=ivlevdata$diet, Available = ivlevdata$avail, Indices = c("Ivlev"))
+
+ivlevindex <- myindices$Ivlev
+
+ivlevindex[is.na(ivlevindex)] <- 0
+
+addingregions <- data.frame(Available=c("J02", "J08", "J06", "D11", "D09", "D07"),
+                            Region=c("Johnstone Strait", "Johnstone Strait", "Johnstone Strait",
+                                     "Discovery Islands", "Discovery Islands", "Discovery Islands"))
+
+ivlevregions <- left_join(ivlevindex, addingregions, by="Available")
+
+aveivlev <- ivlevregions %>%
+  gather(key="Taxa", value="Ivlev", Amphipods:Polychaetes) %>% 
+  group_by(Region, Record, Available, 
+           Taxa) %>%
+  summarise(preysel=mean(Ivlev))
 #ivlev's index (-1 to 1) = (prey-zoop)/(prey+zoop) using proportional data
 
-#have to use relative abundance data (calculate diet matrix), be wary of jellies
+aveivlev$Record <- factor(aveivlev$Record, levels = species_order)
 
-#to do: prey selectivity, bio-env, diversity metrics and others?? see diet workshop doc.
+aveivlev %>%
+  filter(Available=="D11") %>%
+  #filter(Region=="Johnstone Strait") %>% 
+  ggplot(aes(Taxa, preysel))+
+  geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
+  coord_flip()+
+  theme_bw()#+
+  #theme(panel.grid = element_blank())
+
+#BY SIZE CLASS:
+
+size_order <- c("<1", "1 to 2", "2 to 5", "5 to 10", ">10")
+
+zoop_size_data <- select(zoop_data, sampleID, site, size_class=sizeclass, totcount) %>%
+  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118", "QPK747")) %>%
+  group_by(site, size_class) %>% 
+  summarize(abundance=sum(totcount)) %>%
+  spread(key=size_class, value=abundance, fill=0)
+
+prey_size_data <- select(prey_spat_data, ufn, fish_species, site=sample_site, size_class, prey_abund) %>%
+  group_by(fish_species, site, size_class) %>%
+  summarise(abundance=sum(prey_abund))%>%
+  spread(key=size_class, value=abundance, fill=0)
+
+prey_size_data$site <- as.character(prey_size_data$site)
+
+ivlevsize <- list()
+
+ivlevsize$diet <- as.data.frame(prey_size_data)
+
+ivlevsize$avail <- as.data.frame(zoop_size_data)
+
+sizeindices <- Electivity(Diet=ivlevsize$diet, Available = ivlevsize$avail, Indices = c("Ivlev"))
+
+sizeindex <- sizeindices$Ivlev
+
+sizeindex[is.na(sizeindex)] <- 0
+
+sizeregions <- left_join(sizeindex, addingregions, by="Available")
+
+avesize <- sizeregions %>%
+  gather(key="Size", value="Index", `<1`:`5 to 10`) %>% 
+  group_by(Region, Record,# Available, 
+           Size) %>%
+  summarise(preysel=mean(Index))
+#ivlev's index (-1 to 1) = (prey-zoop)/(prey+zoop) using proportional data
+
+avesize$Record <- factor(avesize$Record, levels = species_order)
+avesize$Size <- factor(avesize$Size, levels=size_order)
+
+avesize %>%
+  #filter(Available=="D07") %>%
+  filter(Region=="Discovery Islands") %>% 
+  ggplot(aes(Size, preysel))+
+  geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
+  coord_flip()+
+  theme_bw()
+##### Diversity Indices (filtered; full taxa data?) #####
+
+#compare pink and chum diet diversity (and zoop diversity as well?)
+
+#need to decide on groups - get rid of anything too coarsely defined?
+
+##### BIO-ENV (filtered? full taxa data?) #####
+
+#even if the NMDS graph is too tough to figure out at first, punch in the calculation!
+
+#diet matrix (dissimilarity?) and env: temp, sal, secchi, fl, gfi, adipose, other shit?
