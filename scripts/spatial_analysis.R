@@ -15,6 +15,8 @@ library(RColorBrewer)
 #graph colors
 library(clustsig)
 #testing cluster grouping significance
+library(dietr)
+#selectivity indices
 
 setwd("/Users/Vanessa/Desktop/msc_project")
 #set working directory
@@ -757,7 +759,7 @@ aveivlev <- ivlevregions %>%
 aveivlev$Record <- factor(aveivlev$Record, levels = species_order)
 
 aveivlev %>%
-  filter(Available=="D11") %>%
+  filter(Available=="D07") %>%
   #filter(Region=="Johnstone Strait") %>% 
   ggplot(aes(Taxa, preysel))+
   geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
@@ -808,7 +810,7 @@ avesize$Size <- factor(avesize$Size, levels=size_order)
 
 avesize %>%
   #filter(Available=="D07") %>%
-  filter(Region=="Discovery Islands") %>% 
+  filter(Region=="Johnstone Strait") %>% 
   ggplot(aes(Size, preysel))+
   geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
   coord_flip()+
