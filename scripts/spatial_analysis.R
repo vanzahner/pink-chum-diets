@@ -24,63 +24,60 @@ setwd("/Users/Vanessa/Desktop/msc_project")
 spat_data_raw <- read_csv("processed/spatial_pink_chum_diets.csv")
 #read in spatial diet data
 
-#load in file with old and new taxa names to be assigned
-spat_names<-read.csv("data/spatial_taxa_category_change.csv") 
-
-#for loop doesn't like data as factors
-spat_data_raw$taxa_detail_calc <- as.character(spat_data_raw$taxa_detail_calc) 
-spat_names$old_category <- as.character(spat_names$old_category)
-spat_names$new_category <- as.character(spat_names$new_category)
-#group together any taxa that occur in less than 3 stomachs
-
-#for loop that will go through all the organism names in the data spreadsheet 
-#and for each one it will go to the names spreadsheet and reassign the name accordingly
-for (n in spat_names$old_category) {
-  spat_data_raw$taxa_detail_calc[which(spat_data_raw$taxa_detail_calc %in% n)] <- spat_names$new_category[which(spat_names$old_category == n)]
-}
-
 calanoid_fixing <- filter(spat_data_raw, taxa_detail_calc=="Calanoida")
 no_calanoids <- anti_join(spat_data_raw, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
 small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
 large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
 small_calanoids$taxa_detail_calc <- "Calanoids_Small"
 large_calanoids$taxa_detail_calc <- "Calanoids_Large"
-spat_data <- rbind(no_calanoids, small_calanoids, large_calanoids)
+spat_diet_data <- rbind(no_calanoids, small_calanoids, large_calanoids)
 
 site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
-spat_data$sample_site <- factor(spat_data$sample_site, levels = site_order)
+spat_diet_data$sample_site <- factor(spat_diet_data$sample_site, levels = site_order)
 #reorder sites from the default of alphabetical to west to east, like on the map
 
 species_order <- c("Pink", "Chum")
-spat_data$fish_species <- factor(spat_data$fish_species, levels = species_order)
+spat_diet_data$fish_species <- factor(spat_diet_data$fish_species, levels = species_order)
 #reorder species from the default of alphabetical to pink then chum, for graph reasons
 
-spat_biomass_data <- spat_data %>%
+spat_data_mod <- spat_diet_data
+#make copy of data, in case want to access unmodified version
+
+#load in file with old and new taxa names to be assigned
+spat_names<-read.csv("data/spatial_taxa_category_change.csv", stringsAsFactors=FALSE) 
+
+#for loop that will reassign all the organism names in the data spreadsheet 
+for (n in spat_names$old_category) {
+  spat_data_mod$taxa_detail_calc[which(spat_data_mod$taxa_detail_calc %in% n)] <- spat_names$new_category[which(spat_names$old_category == n)]
+}
+
+spat_biomass_data <- spat_data_mod %>%
   filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
-                                "Coscinodiscophycidae", "Phaeophyceae")
+                                "Coscinodiscophycidae", "Phaeophyceae", "Objects")
          & prey_weight!=0
-         & !ufn %in% c(#"U5168", #only oikopleura <0.1 mg. not outlier though...
-                     #"U5282", #only harpacticoids <0.1 mg
-                     #"U3501", #u3501 is parasites and cope antenna = empty
-                     "U5161", #bunch of fish eggs and not much else...
-                     #"U5162", #? one with <0.5 mg prey
-                     "U5285", #single spider 3.5 mg
-                     "U5284", #pteropods and other weird things < 3 mg
-                     "U5319" #one gammarid and fly larvae... < 5 mg
-                     )) %>% 
+         & !ufn %in% c("U2978", #< 0.5 mg digested food = empty
+                       "U5283", #< 0.1 mg digested food = empty
+                       "U3501", #u3501 is parasites and cope antenna = empty
+                       #"U5282", #only harpacticoids <0.1 mg
+                       #"U5168", #only oikopleura <0.1 mg. not outlier though...
+                       "U5161", #bunch of fish eggs and not much else...
+                       "U5285", #single spider 3.5 mg
+                       "U5319", #one gammarid and fly larvae... < 5 mg
+                       "U5284" #pteropods and other weird things < 3 mg
+                       )) %>%
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
   summarise(Biomass=sum(prey_weight))
-#biomass long data filtering out useless categories, empty stomachs, strange outliers
+#biomass long data filtering out useless categories, empty stomachs (11), outliers (4)
 
-spat_biomass_data_all_fish <- spat_data %>%
+spat_biomass_data_all_fish <- spat_data_mod %>%
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, work_area, microscope_hours) %>%
   summarise(Biomass=sum(prey_weight))
 #biomass long data for all 120 fish, including empties and outliers!
 
 unique(spat_biomass_data$taxa_detail_calc)
-#161 taxa groups --> Simplified to 85! (what about lrg/sml calanoids?) and n=8 empties
+#161 taxa groups --> Simplified to 86! (separated lrg/sml calanoids)
 
 spat_numbers_taxa <- spat_biomass_data %>%
   ungroup() %>%
@@ -110,8 +107,8 @@ simple_spat_data <- spat_data_wide %>%
 
 diet_matrix <- spat_data_wide %>%
   ungroup() %>%
-  select(Acartia:Tortanus_discaudatus)#, -Empty)
-#create a dataframe with only taxa categories (delete "Empty" category)
+  select(Acartia:Tortanus_discaudatus)
+#create a dataframe with only taxa categories
 
 #creating vectors - how necessary is this step?? move up to set up? delete? change to df?
 spat_data_wide$ufn <- as.factor(spat_data_wide$ufn)
@@ -139,26 +136,10 @@ simple_semsp_names <- vector(length = length(semsp_names))
 for(i in 1:length(semsp_names)){
   simple_semsp_names[i] <- substring(semsp_names[i], first=12)
 }
-
 simple_semsp_names <- as.factor(simple_semsp_names)
 #make vector with semsp id (for cluster dendrogram)
 
-#do calculations to create diet data matrix:
-Total <- vector(length = nrow(diet_matrix))
-#create an empty vector
-
-Total <- rowSums(diet_matrix)
-#fill that vector with calculated row totals (total per stom.)
-
-diet_matrix <- cbind(diet_matrix, Total)
-#add that vector as a column to the matrix
-
-diet_proportions <- data.frame()
-#create empty dataframe to fill with transformed data!
-
-diet_proportions <- diet_matrix/diet_matrix$Total#*100
-#divide entire dataframe by row totals (total column should all = 100)
-#just realized that decostand function can calc and divide by totals...
+diet_proportions <- decostand(diet_matrix, method="total")
 
 diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names, region_names, diet_proportions)
 #reattach all relevant labels now that total calculation is done
@@ -167,32 +148,9 @@ diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names
 #                        diet_matrix, semsp_names)
 #REDO WITH RAW BIOMASS DATA (DELETE ONE OF THESE OPTIONS LATAER)
 
-diets_filtered <- diets_w_labels %>%
-  filter(Total!=0 & !ufn_names %in% c("U2978", #< 0.5 mg digested food = empty
-                                      "U3501", #2 parasites, 1 cope antenna, dig food = empty
-                                      #"U5168", #2 oikopleura heads (not empty? but < 0.1mg)
-                                      #"U5282", #3 harpacticoids (not empty? but < 0.1 mg)
-                                      "U5283"#, #< 0.1 mg digested food = empty
-                                      #"U5285" #1 spider... outlier but not empty. 3.5 mg.
-                                      ))
-#filter those out with that have 0 biomass (see columns for future labels)
-#manually chose those with 1 prey group = 100% because fullness is too low
-#need to figure out how to strategically go through what is "empty" later.
-
-diets_ufn <- diets_filtered %>%
+diets_ufn <- diets_w_labels %>%
   select(simple_semsp_names, Acartia:Tortanus_discaudatus)
 #drop total=100 column and other label columns to have numerical matrix
-
-site_names_filtered <- diets_filtered$site_names
-#vector with site labels corresponding to the 105 fish ids
-species_names_filtered <- diets_filtered$species_names
-#vector with species labels corresponding to the 105 fish ids
-region_names_filtered <- diets_filtered$region_names
-#vector with region labels corresponding to the 105 fish ids
-simple_semsp_filtered <- diets_filtered$simple_semsp_names
-#vector with semsp labels corresponding to the 105 fish ids
-
-#fix this step, it shouldn't be duplicated in two sections and datasets...
 
 #create a matrix with ufns as row names
 matrix1<-as.matrix(diets_ufn)
@@ -205,14 +163,14 @@ spat_trans_matrix <- asin(sqrt(spat_diet_matrix))
 ##### NMDS (filtered; full taxa data) #####
 
 #region, proportion based dissimilarity - bray curtis
-eco.nmds.bc<- metaMDS(spat_trans_matrix,distance="bray",labels=region_names_filtered, trymax = 100, autotransform = FALSE)
+eco.nmds.bc<- metaMDS(spat_trans_matrix,distance="bray",labels=region_names, trymax = 100, autotransform = FALSE)
 eco.nmds.bc
 plot(eco.nmds.bc)
 
-NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=region_names_filtered)
+NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=region_names)
 #plot NMDS, only once (picking Bray because all similar), no presence absence
 
-ord.bc<-ordiellipse(eco.nmds.bc,region_names_filtered,display="sites",kind="sd", conf = 0.95, label=T)
+ord.bc<-ordiellipse(eco.nmds.bc,region_names,display="sites",kind="sd", conf = 0.95, label=T)
 #Ellipses are standard deviation, no scaling of data (can use standard error, scaling, and confidence limit options)
 
 veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
@@ -229,7 +187,7 @@ for(g in levels(NMDS.bc$group)){
 }
 
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
-  geom_point(stat = "identity", aes(shape=species_names_filtered, fill=site_names_filtered), size=3)+#, color = "black")+
+  geom_point(stat = "identity", aes(shape=species_names, fill=site_names), size=3)+#, color = "black")+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 22), name="Species")+
   scale_fill_manual(values=c("#053061", "#1F78B4", "#A6CEE3", 
@@ -247,7 +205,7 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
         axis.text.y=element_text(size=12),
         panel.grid.minor=element_blank(),panel.grid.major=element_blank()#,
         ) + coord_fixed() +
-  annotate("text",x=-2.5,y=-1.5,label="(stress = 0.17)",size=4, hjust = -0.1)
+  annotate("text",x=2,y=-1.7,label="(stress = 0.16)",size=4, hjust = -0.1)
 #NMDS graph for the different sites!
 
 a
@@ -264,15 +222,15 @@ dendr <- dendro_data(bcclust, type = "rectangle")
 #put it in ggdendro form
 
 #making labels with site and species for dendro:
-simple_semsp_filtered <- as.character(simple_semsp_filtered)
-site_sp_names <- vector(length = length(simple_semsp_filtered))
-for(i in 1:length(simple_semsp_filtered)){
-  site_sp_names[i] <- substring(simple_semsp_filtered[i], first=1, last=6)
+simple_semsp_names <- as.character(simple_semsp_names)
+site_sp_names <- vector(length = length(simple_semsp_names))
+for(i in 1:length(simple_semsp_names)){
+  site_sp_names[i] <- substring(simple_semsp_names[i], first=1, last=6)
 }
 site_sp_names <- as.factor(site_sp_names)
 #make vector with semsp id (for cluster dendrogram)
 
-data_w_site_sp_combo <- cbind(diets_filtered, site_sp_names)
+data_w_site_sp_combo <- cbind(diets_w_labels, site_sp_names)
 
 fishsp <- data_w_site_sp_combo %>%
   ungroup() %>%
@@ -283,8 +241,6 @@ labs <- label(dendr)
 colnames(labs) <- c("x", "y", "ufn")
 
 lab <- left_join(labs, fishsp, by = "ufn")
-
-brewer.pal(n=12, "Paired")
 
 ggplot()+
   geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend, color="white"))+
@@ -305,9 +261,9 @@ ggsave("figs/spatial_cluster.png", width=15, height=20)
 #cluster groups (top to bottom) DI CU; DI PI; J02 CU, J02 PI, J08 PI, J08 CU, J06 CU...
 #outliers scattered amongst other clusters: D11 and J06 (lowest fullness, most empty!)
 
-simproftest <- simprof(spat_trans_matrix, method.cluster = "average", method.distance = "braycurtis", num.expected = 100, num.simulated = 99)
-
-simprof.plot(simproftest)
+#simproftest <- simprof(spat_trans_matrix, method.cluster = "average", method.distance = "braycurtis", num.expected = 100, num.simulated = 99)
+#simprof.plot(simproftest)
+#takes a long time to run this code...
 
 ##### GFI (unfiltered; no taxa data) #####
 
@@ -409,17 +365,17 @@ spat_data_taxa_summary %>%
 
 spat_diet_matrix <- as.data.frame(spat_diet_matrix)
 rownames(spat_diet_matrix) <- NULL
-site_names_filtered <- as.character(site_names_filtered)
-species_names_filtered <- as.character(species_names_filtered)
+site_names <- as.character(site_names)
+species_names <- as.character(species_names)
 site_sp_names <- as.character(site_sp_names)
 
-spat_matrix_df <- cbind(site_names_filtered, species_names_filtered, site_sp_names, spat_diet_matrix)
+spat_matrix_df <- cbind(site_names, species_names, site_sp_names, spat_diet_matrix)
 
 spat_matrix_long <- pivot_longer(spat_matrix_df, cols=Acartia:Tortanus_discaudatus, names_to = "taxa")
 #calculation includes taxa biomass = 0 values so the mean is calculated correctly! :)
 
 spat_df_sum <- spat_matrix_long %>%
-  group_by(taxa, site_names_filtered, species_names_filtered, site_sp_names) %>%
+  group_by(taxa, site_names, species_names, site_sp_names) %>%
   summarise(ave_rel_biomass=mean(value))
 
 spat_sum_wide <- spread(spat_df_sum, taxa, ave_rel_biomass)
@@ -430,8 +386,8 @@ spat_sum_matrix <- spat_sum_wide %>%
   select(Acartia:Tortanus_discaudatus)
 
 spat_matrix_site_sp <- as.character(spat_sum_wide$site_sp_names)
-spat_matrix_site <- as.character(spat_sum_wide$site_names_filtered)
-spat_matrix_sp <- as.character(spat_sum_wide$species_names_filtered)
+spat_matrix_site <- as.character(spat_sum_wide$site_names)
+spat_matrix_sp <- as.character(spat_sum_wide$species_names)
 spat_matrix_info <- cbind(spat_matrix_sp, spat_matrix_site, spat_matrix_site_sp)
 
 spat_matrix_sqr <- spat_sum_matrix^2
@@ -477,41 +433,27 @@ ggsave("figs/spatial_NB_calc.png")
 
 ##### Diet Composition Bar Graphs (unfiltered; broad taxa data) #####
 
-#load in file with old and new taxa names to be assigned (broader categories)
-broad_spat_names<-read.csv("data/taxa_broad_groups_spatial.csv") 
+#spat_names$old_category = lab ID
+#spat_names$new_category = stats ID
+#spat_names$prey_category = matched to zoops
+#spat_names$prey_group = broad groups (no other)
+#spat_names$prey_group_less = broad groups (w/other)
+#need to update these names later
 
-broad_spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
-#RELOAD in spatial diet data (to reset original taxa categories)
+spat_data_copy <- spat_diet_data
 
-broad_spat_data$sample_site <- factor(broad_spat_data$sample_site, levels = site_order)
-
-#for loop doesn't like data as factors
-broad_spat_data$taxa_detail_calc <- as.character(broad_spat_data$taxa_detail_calc) 
-broad_spat_names$old_category <- as.character(broad_spat_names$old_category)
-broad_spat_names$new_category <- as.character(broad_spat_names$new_category)
-#group together any taxa that occur in less than 3 stomachs
-
-#for loop that will go through all the organism names in the data spreadsheet 
-#and for each one it will go to the names spreadsheet and reassign the name accordingly
-for (n in broad_spat_names$old_category) {
-  broad_spat_data$taxa_detail_calc[which(broad_spat_data$taxa_detail_calc %in% n)] <- broad_spat_names$new_category[which(broad_spat_names$old_category == n)]
+#for loop that will reassign all the organism names in the data spreadsheet 
+for (n in spat_names$old_category) {
+  spat_data_copy$taxa_detail_calc[which(spat_data_copy$taxa_detail_calc %in% n)] <- spat_names$prey_group_less[which(spat_names$old_category == n)]
   }
-#warning: number of items to replace is not a multiple of replacement length (but ok?)
 
-calanoid_fixing <- filter(broad_spat_data, taxa_detail_calc=="Calanoids")
-no_calanoids <- anti_join(broad_spat_data, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
-small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
-large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
-small_calanoids$taxa_detail_calc <- "Calanoids_Small"
-large_calanoids$taxa_detail_calc <- "Calanoids_Large"
-spat_data_fixed <- rbind(no_calanoids, small_calanoids, large_calanoids)
-
-#redo this step above in the set up? before renaming the taxa to broad groups (later)
-
-group_biomass <- spat_data_fixed %>%
+group_biomass <- spat_data_copy %>%
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id) %>%
   summarise(prey_weight_sum=sum(prey_weight))
 #summarize biomass for each fish
+
+site_biomass <- group_biomass %>%
+  group_by()
 
 group_bio_wide <- group_biomass %>%
   ungroup() %>%
@@ -521,8 +463,10 @@ group_bio_wide <- group_biomass %>%
 #wide data set (might not need it, but it's a good double check that n=120!)  
 
 group_biomass %>%
+  filter(taxa_detail_calc!="Digested") %>% 
   ggplot(aes(sample_site, prey_weight_sum))+
-  geom_bar(aes(fill=taxa_detail_calc), stat="identity", position="fill")+
+  geom_bar(aes(fill=taxa_detail_calc), stat="identity"#, position="fill"
+           )+
   facet_wrap(~fish_species, dir="v")+
   theme_bw()+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
@@ -531,8 +475,6 @@ group_biomass %>%
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
   labs(title="Spatial Diet Composition", x="Sample Site", y="% Biomass")
 #delete useless categories later
-
-#also, try changing calanoids --> large calanoids + small calanoids for detailed data?
 
 ##### Frequency of occurrence (unfiltered; full taxa data)  ######
 
@@ -649,6 +591,12 @@ permanova_diet <- adonis2(spat_trans_matrix ~ site_names_filtered*species_names_
 permanova_diet
 #species explains 10% of variation, site explains 42%! and sp * site interaction = 13%.
 #DIFFERENT DEGREES OF FREEDOM... DOES THAT AFFECT ANALYSIS SOMEHOW??? NESTEDNESS?????
+
+anosim_diet <- anosim(x=spat_trans_matrix, grouping=c(species_names_filtered, site_names_filtered), strata = region_names_filtered, distance = "bray")
+
+summary(anosim_diet)
+
+plot(anosim_diet)
 
 ##### Prey Selectivity (filtered; broad taxa data) #####
 
