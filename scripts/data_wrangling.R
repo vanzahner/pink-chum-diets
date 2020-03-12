@@ -77,7 +77,7 @@ survey_filtered$site_id <- factor(survey_filtered$site_id, levels = site_order)
 survey_filtered %>%
   filter(analysis!="Temporal") %>% 
   ggplot(aes(site_id, secchi))+
-  geom_boxplot(aes())+
+  geom_line(aes(group=line_out_depth))+
   theme_bw()+
   theme(panel.grid=element_blank())+
   labs(title="Secchi Depth (Spatial)")
@@ -86,7 +86,7 @@ survey_filtered %>%
 survey_filtered %>%
   filter(analysis!="Temporal") %>% 
   ggplot(aes(site_id, temperature))+
-  geom_boxplot(aes(color=line_out_depth))+
+  geom_line(aes(group=line_out_depth, color=line_out_depth))+
   theme_bw()+
   theme(panel.grid=element_blank())+
   labs(title="Temperature (Spatial)")
@@ -95,9 +95,11 @@ survey_filtered[18, 27] <- NA
 #delete erronous salinity value for D11 depth 1m (way fresher than the surface...)
 
 survey_filtered %>%
+  filter(line_out_depth==0) %>% 
   filter(analysis!="Temporal") %>% 
   ggplot(aes(site_id, salinity))+
-  geom_boxplot(aes(color=line_out_depth))+
+  geom_line(aes(group=line_out_depth#, color=line_out_depth
+                ))+
   scale_y_continuous(limits = c(24.5, 32.5))+
   theme_bw()+
   theme(panel.grid=element_blank())+

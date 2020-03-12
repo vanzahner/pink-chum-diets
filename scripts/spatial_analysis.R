@@ -452,15 +452,21 @@ group_biomass <- spat_data_copy %>%
   summarise(prey_weight_sum=sum(prey_weight))
 #summarize biomass for each fish
 
-site_biomass <- group_biomass %>%
-  group_by()
-
 group_bio_wide <- group_biomass %>%
   ungroup() %>%
   select(ufn, fish_species, sample_site, taxa_detail_calc, prey_weight_sum) %>% 
   group_by(ufn, fish_species, sample_site) %>% 
   spread(key=taxa_detail_calc, value = prey_weight_sum, fill=0)
 #wide data set (might not need it, but it's a good double check that n=120!)  
+
+group_bio_mat <- group_bio_wide %>%
+  ungroup() %>% 
+  select(-c(ufn, fish_species, sample_site, Digested)) %>%
+  decostand(method="total") %>%
+  mutate(site=group_bio_wide$sample_site, fish=group_bio_wide$fish_species) %>%
+  gather(key="taxa", value="rel_bio", Calanoids_Large:Other) %>% 
+  group_by(site, fish) %>%
+  summarise()
 
 group_biomass %>%
   filter(taxa_detail_calc!="Digested") %>% 
