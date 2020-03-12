@@ -196,8 +196,8 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
                     
                     name="Region", guide="legend") +
   guides(fill= guide_legend(override.aes = list(shape=21)))+
-  scale_colour_manual(values=c("#053061", "#B2182B")#,
-                      ) +
+  labs(x=NULL, y=NULL, title = "Diet Dissimilarity NMDS")+
+  scale_colour_manual(values=c("#053061", "#B2182B"), name="Region") +
   theme_bw()+
   theme(axis.text.x=element_text(size=12),
         axis.title.x=element_text(size=12),
@@ -205,7 +205,7 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
         axis.text.y=element_text(size=12),
         panel.grid.minor=element_blank(),panel.grid.major=element_blank()#,
         ) + coord_fixed() +
-  annotate("text",x=2,y=-1.7,label="(stress = 0.16)",size=4, hjust = -0.1)
+  annotate("text",x=1.5,y=-1.7,label="(stress = 0.16)",size=4, hjust = -0.1)
 #NMDS graph for the different sites!
 
 a
