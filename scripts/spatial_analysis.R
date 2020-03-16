@@ -578,27 +578,33 @@ freq_data_long %>%
 
 #need to deal with empties somehowwwww. try deleting empties first (unbalanced now):
 
-simper_reg <- simper(spat_trans_matrix, region_names_filtered)
+simper_reg <- simper(spat_trans_matrix, region_names)
 summary(simper_reg)
 #important prey for dissimilarity between regions
 #oikopleura, ctenophora, calanus marshallae, cnidaria, calanoid_L, calanus pacific, etc.
 
-simper_sp <- simper(spat_trans_matrix, species_names_filtered)
+simper_sp <- simper(spat_trans_matrix, species_names)
 summary(simper_sp)
 #important prey for dissimilarity between species
 #oikopleura, ctenophora, calanus marshallae, calanoid_L, cnidaria, calanus pacificus, etc
 
-simper_site <- simper(spat_trans_matrix, site_names_filtered)
+simper_site <- simper(spat_trans_matrix, site_names)
 #summary(simper_site)
 #too much info? also: can do both species and region somehow?? (DI-CU etc. or no good?)
 
-permanova_diet <- adonis2(spat_trans_matrix ~ site_names_filtered*species_names_filtered,
-                          strata=region_names_filtered)
+permanova_diet <- adonis2(spat_trans_matrix ~ site_names*species_names,
+                          strata=region_names)
 permanova_diet
 #species explains 10% of variation, site explains 42%! and sp * site interaction = 13%.
 #DIFFERENT DEGREES OF FREEDOM... DOES THAT AFFECT ANALYSIS SOMEHOW??? NESTEDNESS?????
 
-anosim_diet <- anosim(x=spat_trans_matrix, grouping=c(species_names_filtered, site_names_filtered), strata = region_names_filtered, distance = "bray")
+anosim_diet <- anosim(x=spat_trans_matrix, grouping=c(species_names
+                                                      #, 
+                                                      #site_names
+                                                      ), strata = 
+                        site_names
+                        #region_names
+                      , distance = "bray")
 
 summary(anosim_diet)
 

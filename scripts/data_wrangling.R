@@ -130,6 +130,8 @@ zoop_data_ww %>%
   theme(panel.grid=element_blank())+
   labs(title="Zoop Biomass (Spatial)")
 
+ggsave("figs/zoop_biomass_spatial.png")
+
 zoop_names <- read_csv("data/zoop_names.csv")
 
 #for loop doesn't like data as factors
@@ -153,6 +155,8 @@ zoop_data %>%
   theme(panel.grid=element_blank())+
   labs(title="Zoop Composition (Spatial)")
 
+ggsave("figs/zoop_comp_spatial.png")
+
 zoop_data %>%
   filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118",
                          "QPK747")) %>%
@@ -162,6 +166,8 @@ zoop_data %>%
   theme(panel.grid=element_blank())+
   labs(title="Zoop Composition (Spatial)")+
   facet_wrap(~sieve)
+
+ggsave("figs/zoop_comp_size_spatial.png")
 
 #next step: update zoop groups to match between zoops and diets (prey select, etc.)
 
