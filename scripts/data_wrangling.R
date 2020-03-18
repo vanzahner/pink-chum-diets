@@ -146,11 +146,21 @@ for (n in zoop_names$old_category) {
 
 zoop_data$site <- factor(zoop_data$site, levels = site_order)
 
+taxa_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids",# "Insects",
+                 "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognath", "Other")
+
+color_levels <- c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",# "#B2DF8A",
+                  "#33A02C", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
+#red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
+
+zoop_data$labID <- factor(zoop_data$labID, levels = taxa_levels)
+
 zoop_data %>%
   filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118",
                          "QPK747")) %>%
   ggplot(aes(site, abundance))+
   geom_bar(aes(fill=labID), stat="identity", position="fill")+
+  scale_fill_manual(values=color_levels)+
   theme_bw()+
   theme(panel.grid=element_blank())+
   labs(title="Zoop Composition (Spatial)")
@@ -162,6 +172,7 @@ zoop_data %>%
                          "QPK747")) %>%
   ggplot(aes(site, abundance))+
   geom_bar(aes(fill=labID), stat="identity", position="fill")+
+  scale_fill_manual(values=color_levels)+
   theme_bw()+
   theme(panel.grid=element_blank())+
   labs(title="Zoop Composition (Spatial)")+

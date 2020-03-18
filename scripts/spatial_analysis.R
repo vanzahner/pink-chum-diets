@@ -440,7 +440,10 @@ ggsave("figs/spatial_NB_calc.png")
 #spat_names$prey_group_less = broad groups (w/other)
 #need to update these names later
 
-spat_data_copy <- spat_diet_data
+#spat_data_copy <- spat_diet_data
+spat_data_copy <- spat_data_raw
+spat_data_copy$sample_site <- factor(spat_data_copy$sample_site, levels = site_order)
+spat_data_copy$fish_species <- factor(spat_data_copy$fish_species, levels = species_order)
 
 #for loop that will reassign all the organism names in the data spreadsheet 
 for (n in spat_names$old_category) {
@@ -464,16 +467,36 @@ group_bio_mat <- group_bio_wide %>%
   select(-c(ufn, fish_species, sample_site, Digested)) %>%
   decostand(method="total") %>%
   mutate(site=group_bio_wide$sample_site, fish=group_bio_wide$fish_species) %>%
-  gather(key="taxa", value="rel_bio", Calanoids_Large:Other) %>% 
-  group_by(site, fish) %>%
-  summarise()
+  gather(key="taxa", value="rel_bio", Calanoids:Other) %>% 
+  group_by(site, fish, taxa) %>%
+  summarise(rel_bio=mean(rel_bio))
 
-group_biomass %>%
-  filter(taxa_detail_calc!="Digested") %>% 
-  ggplot(aes(sample_site, prey_weight_sum))+
-  geom_bar(aes(fill=taxa_detail_calc), stat="identity"#, position="fill"
+group_bio_mat %>%
+  group_by(site, fish) %>%
+  summarise(sum_bio=sum(rel_bio))
+
+#taxa_levels <- c("Calanoids", "Cyclopoids", "Euphausiids", "Decapods", "Harpacticoids",
+#                 "Insects", "Larvaceans", "Gelatinous", "Chaetognath", "Other")
+
+#color_levels <- c("#E31A1C", "#FB9A99", "#FF7F00", "#FDBF6F", "#33A02C",
+#                  "#B2DF8A", "#1F78B4", "#A6CEE3", "#6A3D9A", "#CAB2D6")
+#red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
+
+taxa_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids", "Insects",
+                 "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognath", "Other")
+
+color_levels <- c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", "#B2DF8A",
+                  "#33A02C", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
+#red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
+
+group_bio_mat$taxa <- factor(group_bio_mat$taxa, levels = taxa_levels)
+
+group_bio_mat %>%
+  ggplot(aes(site, rel_bio))+
+  geom_bar(aes(fill=taxa), stat="identity", position="fill"
            )+
-  facet_wrap(~fish_species, dir="v")+
+  scale_fill_manual(values = color_levels)+
+  facet_wrap(~fish, dir="v")+
   theme_bw()+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
         axis.title = element_text(size=14), axis.text = element_text(size=12),
@@ -481,6 +504,8 @@ group_biomass %>%
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
   labs(title="Spatial Diet Composition", x="Sample Site", y="% Biomass")
 #delete useless categories later
+
+ggsave("figs/taxa_comp_spatial.png")
 
 ##### Frequency of occurrence (unfiltered; full taxa data)  ######
 
