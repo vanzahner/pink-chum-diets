@@ -680,13 +680,13 @@ prey_spat_data$sample_site <- factor(prey_spat_data$sample_site, levels = site_o
 #for loop doesn't like data as factors
 prey_spat_data$taxa_detail_calc <- as.character(prey_spat_data$taxa_detail_calc) 
 prey_spat_names$old_category <- as.character(prey_spat_names$old_category)
-prey_spat_names$prey_category_general <- as.character(prey_spat_names$prey_category_general)
+prey_spat_names$prey_group <- as.character(prey_spat_names$prey_group)
 #group together any taxa that occur in less than 3 stomachs
 
 #for loop that will go through all the organism names in the data spreadsheet 
 #and for each one it will go to the names spreadsheet and reassign the name accordingly
 for (n in prey_spat_names$old_category) {
-  prey_spat_data$taxa_detail_calc[which(prey_spat_data$taxa_detail_calc %in% n)] <- prey_spat_names$prey_category_general[which(prey_spat_names$old_category == n)]
+  prey_spat_data$taxa_detail_calc[which(prey_spat_data$taxa_detail_calc %in% n)] <- prey_spat_names$prey_group[which(prey_spat_names$old_category == n)]
 }
 
 prey_spat_data$sample_site <- factor(prey_spat_data$sample_site, levels = site_order)
@@ -744,13 +744,19 @@ aveivlev <- ivlevregions %>%
 aveivlev$Record <- factor(aveivlev$Record, levels = species_order)
 
 aveivlev %>%
-  filter(Available=="D07") %>%
+  filter(Taxa %in% c("Larvaceans", "Insects", "Harpacticoids", "Gelatinous",
+                     "Euphausiids", "Decapods", "Cyclopoids", #"Cladocerans",
+                     "Chaetognath", "Calanoids_Small", "Calanoids_Large")) %>% 
+  #filter(Available=="D07") %>%
   #filter(Region=="Johnstone Strait") %>% 
   ggplot(aes(Taxa, preysel))+
   geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
+  facet_wrap(~Available)+
   coord_flip()+
   theme_bw()#+
   #theme(panel.grid = element_blank())
+
+#reorder sites and taxa (see notebook for details)
 
 #BY SIZE CLASS:
 
@@ -800,6 +806,7 @@ avesize %>%
   geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
   coord_flip()+
   theme_bw()
+
 ##### Diversity Indices (filtered; full taxa data?) #####
 
 #compare pink and chum diet diversity (and zoop diversity as well?)
