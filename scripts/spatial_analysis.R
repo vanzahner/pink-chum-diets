@@ -743,19 +743,40 @@ aveivlev <- ivlevregions %>%
 
 aveivlev$Record <- factor(aveivlev$Record, levels = species_order)
 
+prey_order <- c("Cyclopoids", "Calanoids_Small", "Calanoids_Large",
+                "Decapods", "Euphausiids", "Insects", "Harpacticoids",
+                "Gelatinous", "Larvaceans", "Chaetognaths")
+
+aveivlev$Taxa <- factor(aveivlev$Taxa, levels = prey_order)
+
+aveivlev$Available <- factor(aveivlev$Available, levels = site_order)
+
 aveivlev %>%
+  filter(Available %in% c("D07", "D09", "D11")) %>% 
   filter(Taxa %in% c("Larvaceans", "Insects", "Harpacticoids", "Gelatinous",
-                     "Euphausiids", "Decapods", "Cyclopoids", #"Cladocerans",
-                     "Chaetognath", "Calanoids_Small", "Calanoids_Large")) %>% 
-  #filter(Available=="D07") %>%
-  #filter(Region=="Johnstone Strait") %>% 
+                     "Euphausiids", "Decapods", "Cyclopoids", "Chaetognath",
+                     "Calanoids_Small", "Calanoids_Large")) %>%  
   ggplot(aes(Taxa, preysel))+
   geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
-  facet_wrap(~Available)+
+  facet_wrap(~Available, dir="v")+
   coord_flip()+
-  theme_bw()#+
-  #theme(panel.grid = element_blank())
+  theme_bw()
 
+ggsave("figs/DI_spatial_prey_sel.png")
+
+aveivlev %>%
+  filter(Available %in% c("J02", "J08", "J06")) %>% 
+  filter(Taxa %in% c("Larvaceans", "Insects", "Harpacticoids", "Gelatinous",
+                     "Euphausiids", "Decapods", "Cyclopoids", "Chaetognath",
+                     "Calanoids_Small", "Calanoids_Large")) %>% 
+  ggplot(aes(Taxa, preysel))+
+  geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
+  facet_wrap(~Available, dir= "v")+
+  coord_flip()+
+  theme_bw()
+
+ggsave("figs/JS_spatial_prey_sel.png")
+  
 #reorder sites and taxa (see notebook for details)
 
 #BY SIZE CLASS:
@@ -806,6 +827,11 @@ avesize %>%
   geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
   coord_flip()+
   theme_bw()
+
+##### Feeding habits #####
+
+
+
 
 ##### Diversity Indices (filtered; full taxa data?) #####
 
