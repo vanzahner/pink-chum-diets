@@ -757,6 +757,7 @@ aveivlev %>%
                      "Euphausiids", "Decapods", "Cyclopoids", "Chaetognath",
                      "Calanoids_Small", "Calanoids_Large")) %>%  
   ggplot(aes(Taxa, preysel))+
+  ggtitle("Prey Selectivity - Discovery Islands")+
   geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
   facet_wrap(~Available, dir="v")+
   coord_flip()+
@@ -770,6 +771,7 @@ aveivlev %>%
                      "Euphausiids", "Decapods", "Cyclopoids", "Chaetognath",
                      "Calanoids_Small", "Calanoids_Large")) %>% 
   ggplot(aes(Taxa, preysel))+
+  ggtitle("Prey Selectivity - Johnstone Strait")+
   geom_bar(aes(fill=Record), stat="identity", position = "dodge")+
   facet_wrap(~Available, dir= "v")+
   coord_flip()+
