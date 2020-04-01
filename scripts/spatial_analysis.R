@@ -846,3 +846,65 @@ avesize %>%
 #even if the NMDS graph is too tough to figure out at first, punch in the calculation!
 
 #diet matrix (dissimilarity?) and env: temp, sal, secchi, fl, gfi, adipose, other shit?
+##### Percent Overlap ##### 
+
+summed_data <- spat_data_mod %>%
+  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
+                                "Coscinodiscophycidae", "Phaeophyceae", "Objects")) %>%
+  select(fish_species, sample_site, taxa_detail_calc, prey_weight) %>%
+  group_by(fish_species, sample_site, taxa_detail_calc) %>%
+  summarise(totalw=sum(prey_weight)) %>%
+  spread(key=taxa_detail_calc, value=totalw, fill=0) 
+
+sites <- summed_data$sample_site
+salmon <- summed_data$fish_species
+
+summed_matrix <- summed_data %>%
+  ungroup() %>% 
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method="total")
+
+proportional_sums <- cbind(sites, salmon, summed_matrix)
+
+J02sim <- proportional_sums %>%
+  filter(sites=="J02") %>% 
+  select(-c(sites, salmon)) %>%
+  #pink is top row, chum is bottom (doesn't actually matter)
+  summarise_all(min) %>%
+  rowSums() # 59.8 % almost significant... Hmm.
+# 60 %
+
+J08sim <- proportional_sums %>%
+  filter(sites=="J08") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 14.1 %
+# 14 %
+
+J06sim <- proportional_sums %>%
+  filter(sites=="J06") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 4.8 %
+# 5 %
+
+D11sim <- proportional_sums %>%
+  filter(sites=="D11") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 21.7 %
+# 22 %
+
+D09sim <- proportional_sums %>%
+  filter(sites=="D09") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 33.0 %
+# 33 %
+
+D07sim <- proportional_sums %>%
+  filter(sites=="D07") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 24.9 %
+# 25 %

@@ -1,27 +1,21 @@
 # pink-chum-diets
 
-MSc work on juvenile pink and chum :fish:
+MSc work on juvenile pink and chum diets :fish:
 
-i.e. Code related to Discovery Islands-Johnstone Strait research
+Code related to Discovery Islands-Johnstone Strait research
 
 ___
 
-### To do list:
+## Results
 
-* Add raw data :white_check_mark:
+Will soon make RMD files to view figures easier
 
-  * UFN metadata :white_check_mark:
+## Writing
 
-  * Diet data :white_check_mark:
+Thesis outline working [draft] (https://docs.google.com/document/d/1VHpTD-HMOT4UoWGVyzIf6o4CD7lsLE3uaXuN_DRD_hI/edit)
 
-* Clean current R scripts
+More detailed thesis outline draft (will be added soon)
 
-  * Organize
-  
-  * Upload :white_check_mark:
+Chapter 1 working draft (will be added soon)
 
-* Create folders for results, etc. :white_check_mark:
-
-* Update description for project
-
-* Anything else recommended [here](https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1005510)
+Chapter 2 working draft (not yet started)
