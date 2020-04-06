@@ -39,6 +39,12 @@ write_csv(spat_fish, path="processed/spatial_pink_chum_diets.csv")
 write_csv(temp_fish, path="processed/temporal_pink_chum_diets.csv")
 #write csv files for initial transformation and saving of diet data
 
+#fish %>%
+#  filter(subsample=="N") %>% 
+#  group_by(ufn) %>%
+#  summarise(most=sum(prey_abund)) %>%
+#  View()
+
 ##### Environmental data #####
 
 ysi_data <- read_csv("data/ysi.csv")
@@ -70,7 +76,7 @@ survey_filtered <- survey_ysi %>%
 
 survey_filtered$line_out_depth <- as.character(survey_filtered$line_out_depth)
 
-site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
+site_order <- c("J02", "J08", "J07", "J06", "D11", "D09", "D07")
 survey_filtered$site_id <- factor(survey_filtered$site_id, levels = site_order)
 #reorder sites from the default of alphabetical to west to east, like on the map
 
@@ -180,5 +186,13 @@ zoop_data %>%
 
 ggsave("figs/zoop_comp_size_spatial.png")
 
-#next step: update zoop groups to match between zoops and diets (prey select, etc.)
+#Temporal zoops:
 
+zoop_data_ww %>%
+  filter(site %in% c("J07", "D07")) %>%
+  ggplot(aes(site, biomass))+
+  geom_boxplot(aes(color=sieve))+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(title="Zoop Biomass (Temporal)")
+#rearrange by date laterrrrr and repeat for temporal zoop composition yo
