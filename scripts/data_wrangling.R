@@ -76,7 +76,7 @@ survey_filtered <- survey_ysi %>%
 
 survey_filtered$line_out_depth <- as.character(survey_filtered$line_out_depth)
 
-site_order <- c("J02", "J08", "J07", "J06", "D11", "D09", "D07")
+site_order <- c("J02", "J08", "J06", "D11", "D09", "D07", "J07")
 survey_filtered$site_id <- factor(survey_filtered$site_id, levels = site_order)
 #reorder sites from the default of alphabetical to west to east, like on the map
 
@@ -113,7 +113,7 @@ survey_filtered %>%
 
 ##### Zoop data #####
 
-zoop_data <- read_csv("data/zoop_comp_data_combined.csv")
+zoop_data_raw <- read_csv("data/zoop_comp_data_combined.csv")
 #need to resolve issues about missing data (JSPK 1154, which is for July 5, 2016 J07)
 
 zoop_data_ww <- read_csv("data/zoop_data_ww.csv")
@@ -140,6 +140,11 @@ ggsave("figs/zoop_biomass_spatial.png")
 
 zoop_names <- read_csv("data/zoop_names.csv")
 
+zoop_data_raw$site <- factor(zoop_data_raw$site, levels = site_order)
+
+zoop_data <- zoop_data_raw
+#make a copy before transforming further
+
 #for loop doesn't like data as factors
 zoop_data$labID <- as.character(zoop_data$labID) 
 zoop_names$old_category <- as.character(zoop_names$old_category)
@@ -149,8 +154,6 @@ zoop_names$new_category <- as.character(zoop_names$new_category)
 for (n in zoop_names$old_category) {
   zoop_data$labID[which(zoop_data$labID %in% n)] <- zoop_names$new_category[which(zoop_names$old_category == n)]
 }
-
-zoop_data$site <- factor(zoop_data$site, levels = site_order)
 
 taxa_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids",# "Insects",
                  "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognath", "Other")
@@ -190,9 +193,71 @@ ggsave("figs/zoop_comp_size_spatial.png")
 
 zoop_data_ww %>%
   filter(site %in% c("J07", "D07")) %>%
-  ggplot(aes(site, biomass))+
+  ggplot(aes(date_name, biomass))+
   geom_boxplot(aes(color=sieve))+
+  facet_grid(year~site, scales="free_x")+
   theme_bw()+
   theme(panel.grid=element_blank())+
   labs(title="Zoop Biomass (Temporal)")
-#rearrange by date laterrrrr and repeat for temporal zoop composition yo
+#note: June_Early 2015 D07 has two samples (June 5 and 7 2015)
+# June 5th (the Chum date) has high gel. June 5th (pink date) has low gel.
+#neither has non-gelatinous 2000 um. unlike June_Mid 2016 J07, has gel+non.
+
+ggsave("figs/zoop_biomass_temporal.png")
+
+zoop_temp <- zoop_data_raw
+#make another copy of data
+
+#temporal zoop category change:
+#for loop doesn't like data as factors
+zoop_temp$labID <- as.character(zoop_temp$labID) 
+zoop_names$old_category <- as.character(zoop_names$old_category)
+zoop_names$temp_category <- as.character(zoop_names$temp_category)
+#for loop that will go through all the organism names in the data spreadsheet 
+#and for each one it will go to the names spreadsheet and reassign the name accordingly
+for (n in zoop_names$old_category) {
+  zoop_temp$labID[which(zoop_temp$labID %in% n)] <- zoop_names$temp_category[which(zoop_names$old_category == n)]
+}
+
+#taxa_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids",# "Insects",
+#                 "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognath", "Other")
+
+#color_levels <- c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",# "#B2DF8A",
+#                  "#33A02C", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
+#red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
+
+#zoop_data$labID <- factor(zoop_data$labID, levels = taxa_levels)
+
+zoop_temp %>%
+  filter(site %in% c("J07", "D07")) %>%
+  ggplot(aes(date_name, abundance))+
+  geom_bar(aes(fill=labID), stat="identity", position="fill")+
+#  scale_fill_manual(values=color_levels)+
+  facet_grid(year~site, scales="free_x")+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(title="Zoop Composition (Temporal)")
+
+ggsave("figs/zoop_comp_temporal.png")
+#too much other... need to change groups. Add cladocerans for example?
+
+zoop_temp %>%
+  filter(site == "D07") %>%
+  ggplot(aes(date_name, abundance))+
+  geom_bar(aes(fill=labID), stat="identity", position="fill")+
+  scale_fill_manual(values=color_levels)+
+  facet_grid(year~sieve, scales="free_x")+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(title="Zoop Composition (D07 Temporal)")
+
+zoop_temp %>%
+  filter(site == "J07") %>%
+  ggplot(aes(date_name, abundance))+
+  geom_bar(aes(fill=labID), stat="identity", position="fill")+
+  scale_fill_manual(values=color_levels)+
+  facet_grid(year~sieve, scales="free_x")+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(title="Zoop Composition (J07 Temporal)")
+#don't need these size breakdowns, it's all small zoop dominated. (spat too?)

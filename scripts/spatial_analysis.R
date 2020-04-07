@@ -24,13 +24,15 @@ setwd("/Users/Vanessa/Desktop/msc_project")
 spat_data_raw <- read_csv("processed/spatial_pink_chum_diets.csv")
 #read in spatial diet data
 
-calanoid_fixing <- filter(spat_data_raw, taxa_detail_calc=="Calanoida")
-no_calanoids <- anti_join(spat_data_raw, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
-small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
-large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
-small_calanoids$taxa_detail_calc <- "Calanoids_Small"
-large_calanoids$taxa_detail_calc <- "Calanoids_Large"
-spat_diet_data <- rbind(no_calanoids, small_calanoids, large_calanoids)
+#calanoid_fixing <- filter(spat_data_raw, taxa_detail_calc=="Calanoida")
+#no_calanoids <- anti_join(spat_data_raw, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
+#small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
+#large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
+#small_calanoids$taxa_detail_calc <- "Calanoids_Small"
+#large_calanoids$taxa_detail_calc <- "Calanoids_Large"
+#spat_diet_data <- rbind(no_calanoids, small_calanoids, large_calanoids)
+
+spat_diet_data <- spat_data_raw # no dig. calanoid size differentiation *
 
 site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
 spat_diet_data$sample_site <- factor(spat_diet_data$sample_site, levels = site_order)
@@ -866,27 +868,20 @@ summed_matrix <- summed_data %>%
 
 proportional_sums <- cbind(sites, salmon, summed_matrix)
 
-J02sim <- proportional_sums %>%
-  filter(sites=="J02") %>% 
+D07sim <- proportional_sums %>%
+  filter(sites=="D07") %>% 
   select(-c(sites, salmon)) %>%
-  #pink is top row, chum is bottom (doesn't actually matter)
   summarise_all(min) %>%
-  rowSums() # 59.8 % almost significant... Hmm.
-# 60 %
+  rowSums() # 24.9 %
+# 25 %
 
-J08sim <- proportional_sums %>%
-  filter(sites=="J08") %>% 
+D09sim <- proportional_sums %>%
+  filter(sites=="D09") %>% 
   select(-c(sites, salmon)) %>%
   summarise_all(min) %>%
-  rowSums() # 14.1 %
-# 14 %
-
-J06sim <- proportional_sums %>%
-  filter(sites=="J06") %>% 
-  select(-c(sites, salmon)) %>%
-  summarise_all(min) %>%
-  rowSums() # 4.8 %
-# 5 %
+  rowSums() # 33.0 %
+# 33 %
+# ?
 
 D11sim <- proportional_sums %>%
   filter(sites=="D11") %>% 
@@ -895,16 +890,26 @@ D11sim <- proportional_sums %>%
   rowSums() # 21.7 %
 # 22 %
 
-D09sim <- proportional_sums %>%
-  filter(sites=="D09") %>% 
+J02sim <- proportional_sums %>%
+  filter(sites=="J02") %>% 
   select(-c(sites, salmon)) %>%
+  #pink is top row, chum is bottom (doesn't actually matter)
   summarise_all(min) %>%
-  rowSums() # 33.0 %
-# 33 %
+  rowSums() # 59.8 % almost significant... Hmm.
+# 60 %
 
-D07sim <- proportional_sums %>%
-  filter(sites=="D07") %>% 
+J06sim <- proportional_sums %>%
+  filter(sites=="J06") %>% 
   select(-c(sites, salmon)) %>%
   summarise_all(min) %>%
-  rowSums() # 24.9 %
-# 25 %
+  rowSums() # 4.8 %
+# 5 %
+# ?
+
+J08sim <- proportional_sums %>%
+  filter(sites=="J08") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 14.1 %
+# 14 %
+
