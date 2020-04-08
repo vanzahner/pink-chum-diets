@@ -291,6 +291,13 @@ spatial_gfi_data %>%
 ggsave("figs/spatial_GFI.png")
 #save figure into folder
 
+gfi_table <- spatial_gfi_data %>%
+  filter(is.na(calc_gfi)==FALSE) %>%
+  group_by(fish_species, sample_site) %>% 
+  summarise(mean=mean(calc_gfi), sd=sd(calc_gfi))
+
+write_csv(gfi_table, "spatial_gfi_means.csv")
+
 ##### Niche Breadth? (filtered; full taxa data) #####
 
 spat_data_wide_info <- spat_data_wide %>%
