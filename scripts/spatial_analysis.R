@@ -285,7 +285,7 @@ spatial_gfi_data %>%
         axis.title = element_text(size=14), axis.text = element_text(size=12),
         legend.text = element_text(size=12), legend.title = element_text(size=14),
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
-  annotate("text",x=5,y=7,label="Empty n = 12",size=4, hjust = -0.1)
+  annotate("text",x=5,y=10,label="Empty n = 12",size=4, hjust = -0.1)
 #GFI for spatial (1 weight=NA, which is why warning message pops up after printing)
 
 ggsave("figs/spatial_GFI.png")
@@ -294,9 +294,16 @@ ggsave("figs/spatial_GFI.png")
 gfi_table <- spatial_gfi_data %>%
   filter(is.na(calc_gfi)==FALSE) %>%
   group_by(fish_species, sample_site) %>% 
-  summarise(mean=mean(calc_gfi), sd=sd(calc_gfi))
+  summarise(mean=mean(calc_gfi), median=median(calc_gfi), sd=sd(calc_gfi))
 
-write_csv(gfi_table, "spatial_gfi_means.csv")
+write_csv(gfi_table, "processed/spatial_gfi_means.csv")
+
+gfi_summary <- spatial_gfi_data %>%
+  filter(is.na(calc_gfi)==FALSE) %>%
+  filter(sample_site != "J02") %>% 
+  group_by(fish_species, work_area
+           ) %>%
+  summarise(mean=mean(calc_gfi), median=median(calc_gfi), sd=sd(calc_gfi))
 
 ##### Niche Breadth? (filtered; full taxa data) #####
 
