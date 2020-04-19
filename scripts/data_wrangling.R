@@ -240,24 +240,5 @@ zoop_temp %>%
 
 ggsave("figs/zoop_comp_temporal.png")
 #too much other... need to change groups. Add cladocerans for example?
+#keep colors same as last groupings, but add yellow+brown and rearrange?
 
-zoop_temp %>%
-  filter(site == "D07") %>%
-  ggplot(aes(date_name, abundance))+
-  geom_bar(aes(fill=labID), stat="identity", position="fill")+
-  scale_fill_manual(values=color_levels)+
-  facet_grid(year~sieve, scales="free_x")+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Zoop Composition (D07 Temporal)")
-
-zoop_temp %>%
-  filter(site == "J07") %>%
-  ggplot(aes(date_name, abundance))+
-  geom_bar(aes(fill=labID), stat="identity", position="fill")+
-  scale_fill_manual(values=color_levels)+
-  facet_grid(year~sieve, scales="free_x")+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Zoop Composition (J07 Temporal)")
-#don't need these size breakdowns, it's all small zoop dominated. (spat too?)

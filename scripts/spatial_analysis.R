@@ -300,6 +300,7 @@ write_csv(gfi_table, "processed/spatial_gfi_means.csv")
 
 gfi_summary <- spatial_gfi_data %>%
   filter(is.na(calc_gfi)==FALSE) %>%
+  filter(calc_gfi!=0) %>% 
   filter(sample_site != "J02") %>% 
   group_by(fish_species, work_area
            ) %>%
