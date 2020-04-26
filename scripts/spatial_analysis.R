@@ -17,6 +17,8 @@ library(clustsig)
 #testing cluster grouping significance
 library(dietr)
 #selectivity indices
+library(fishualize)
+#salmon color palette!
 
 setwd("/Users/Vanessa/Desktop/msc_project")
 #set working directory
@@ -274,18 +276,31 @@ spatial_gfi_data <- spat_data_wide_all_fish %>%
   mutate(calc_gfi=bolus_weight_g/weight*100)
 #stomach bolus weight (grams) / fish body weight (grams), expressed as a percentage
 
-spatial_gfi_data %>% 
+fishualize(option="Oncorhynchus_keta", n=5)
+fishualize(option="Oncorhynchus_gorbuscha", n=5)
+
+fishcolors %>%
+  View()
+
+spatial_gfi_overlap <- left_join(spatial_gfi_data, per_overlap, by="sample_site")
+
+spatial_gfi_overlap %>% 
   #filter(sample_site %in% c("J06", "D11", "D09", "D07")) %>% 
   ggplot(aes(sample_site, calc_gfi))+
   geom_boxplot(aes(fill=fish_species))+
   labs(title="Spatial Gut Fullness Index", y="GFI (% Body Weight)", fill="Species",
        x="Sample Site")+
   theme_bw()+
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  geom_line(aes(y=overlap*10, x=sample_site, group=NA), color="darkred")+
+  scale_y_continuous(sec.axis = sec_axis(~.*10, name="Species Diet Overlap (%)"))+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
         axis.title = element_text(size=14), axis.text = element_text(size=12),
         legend.text = element_text(size=12), legend.title = element_text(size=14),
-        title = element_text(size=16), plot.title = element_text(hjust=0.5))+
-  annotate("text",x=5,y=10,label="Empty n = 12",size=4, hjust = -0.1)
+        title = element_text(size=16), plot.title = element_text(hjust=0.5),
+        axis.title.y.right = element_text(color = "darkred"),
+        legend.position = c(0.85, 0.85), legend.background = element_rect(color = "grey50"))#+
+#  annotate("text",x=5,y=10,label="Empty n = 12", size=4, hjust = -0.1)
 #GFI for spatial (1 weight=NA, which is why warning message pops up after printing)
 
 ggsave("figs/spatial_GFI.png")
@@ -928,3 +943,10 @@ J08sim <- proportional_sums %>%
   rowSums() # 14.1 %
 # 14 %
 
+per_overlap <- data.frame(sample_site=c("J02", "J08", "J06", "D11", "D09", "D07"),
+                          overlap=c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim))
+
+per_overlap$sample_site <- factor(per_overlap$sample_site, levels = site_order)
+
+duplicateddata <- data.frame(sample_site=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 20),
+                             overlap=rep(c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim), 20))
