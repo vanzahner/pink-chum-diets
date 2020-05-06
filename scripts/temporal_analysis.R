@@ -2,33 +2,34 @@
 
 ##### SET UP #####
 
-rm(list=ls())
-#remove other R stuff
-
-library(readr)
-#read in files
-library(ggplot2)
-#graphs
 library(tidyverse)
-#data wrangling
+#data wrangling/graphs/read in data
 library(ggdendro)
 #dendrograms
 library(vegan)
 #analysis
 library(RColorBrewer)
 #graph colors
+library(clustsig)
+#testing cluster grouping significance
+library(dietr)
+#selectivity indices
+library(fishualize)
+#salmon color palette!
+library(here)
+#project oriented workflow
 
-setwd("/Users/Vanessa/Desktop/msc_project")
-#set working directory
+here()
+#check working directory (should be msc_project)
 
-temp_data_raw <- read_csv("processed/temporal_pink_chum_diets.csv")
+temp_data_raw <- read_csv(here("processed", "temporal_pink_chum_diets.csv"))
 #read in temporal diet data
 
 temp_data <- temp_data_raw
 #make a copy for modifying the taxanomic groups
 
 #load in file with old and new taxa names to be assigned
-temp_names<-read.csv("data/temporal_taxa_category_change.csv") 
+temp_names<-read.csv(here("data", "temporal_taxa_category_change.csv"))
 
 #for loop doesn't like data as factors
 temp_data$taxa_detail_calc <- as.character(temp_data$taxa_detail_calc) 
@@ -55,10 +56,10 @@ temp_biomass_data <- temp_data %>%
                                 "Coscinodiscophycidae", "Phaeophyceae")) %>% 
   filter(prey_weight!=0) %>% 
   #delete empty stomachs?
-  filter(!ufn %in% c("U2627", "U5143", #full of barnacles...
-                     "U5319", #gammarid
-                     "U5404" #single prey type <0.1 mg
-                     )) %>% 
+  #filter(!ufn %in% c("U2627", "U5143", #full of barnacles...
+  #                   "U5319", #gammarid
+  #                   "U5404" #single prey type <0.1 mg
+  #                   )) %>% 
 #getting rid of outliers for nmds... change later.
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,
            year, sampling_week, bolus_weight, weight, fork_length, microscope_hours) %>%
@@ -67,6 +68,14 @@ temp_biomass_data <- temp_data %>%
 
 unique(temp_biomass_data$taxa_detail_calc)
 #176 taxa groups (way too many?) --> Simplified to 100. n=7 empties (like 100% empty.)
+
+temp_data_raw_sum <-temp_data_raw %>%
+  group_by(ufn, taxa_detail_calc) %>%
+  summarise(Biomass=sum(prey_weight))
+
+taxa_numbers_raw <- temp_data_raw_sum %>%
+  ungroup() %>%
+  count(taxa_detail_calc)
 
 temp_numbers_taxa <- temp_biomass_data %>%
   ungroup() %>%
@@ -88,7 +97,7 @@ simple_temp_data <- temp_data_wide %>%
   select(ufn, fish_species, sample_site, Acartia:Tortanus_discaudatus#, -Empty
   )
 
-write_csv(simple_temp_data, "NMDS_EXAMPLE/temporal_diet_data_wide.csv")
+write_csv(simple_temp_data, here("NMDS_EXAMPLE", "temporal_diet_data_wide.csv"))
 
 ##### Multivariate matrix prep #####
 
@@ -311,9 +320,11 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
 #NMDS graph for the different sites!
 
 a
-#NEXT STEP: COLOR ACCORDING TO DATE ID - USE PAIRED COLORS FOR DIFF YEARS AS IN CLUSTER
 
-ggsave("figs/temporal_NMDS_detailed.png")
+ggsave(here("figs", "temporal", "temporal_NMDS_detailed.png"))
+
+#update colors to be blue=JS, red=DI and pink=light colors and chum=dark
+#update shapes to be early-mid-late = circle/diamond/triangle (order tbd)
 
 ##### Cluster #####
 
@@ -372,7 +383,7 @@ ggplot()+
   labs(title="Cluster By Fish ID")
 #plot the dendrogram data for the different fish ID's
 
-ggsave("figs/temporal_cluster_site_and_species.png", width=20, height=10)
+ggsave(here("figs", "temporal", "temporal_cluster_site_and_species.png"), width=20, height=10)
 
 ##### GFI #####
 
@@ -408,6 +419,7 @@ temporal_gfi_dates %>%
   labs(title="Temporal Gut Fullness Index", y="GFI (% Body Weight)", fill="Species",
        x=NULL)+
   theme_bw()+
+  scale_fill_manual(values=c("#d294af", "#516959"))+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
         axis.title = element_text(size=14), axis.text.y = element_text(size=12),
         legend.text = element_text(size=12), legend.title = element_text(size=14),
@@ -424,7 +436,7 @@ temporal_gfi_dates %>%
   )
 #GFI for temporal (1 weight=NA, which is why warning message pops up after printing)
 
-ggsave("figs/temporal_GFI.png")
+ggsave(here("figs", "temporal", "temporal_GFI.png"))
 #save figure into folder
 
 ##### Niche Breadth #####

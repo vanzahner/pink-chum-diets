@@ -90,12 +90,23 @@ survey_filtered %>%
 #line out depth exact same for 0 and 1 m.
 
 survey_filtered %>%
+  filter(line_out_depth==0) %>% 
   filter(analysis!="Temporal") %>% 
   ggplot(aes(site_id, temperature))+
-  geom_line(aes(group=line_out_depth, color=line_out_depth))+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Temperature (Spatial)")
+  geom_line(aes(group=NA))+
+  theme_bw(base_size = 12)+
+  geom_line(aes(y=salinity/2, x=site_id, group=NA), color="red")+
+  scale_y_continuous(sec.axis = sec_axis(~.*2, name= "Salinity (‰)"))+
+  theme(axis.title.y.right = element_text(color = "red"),
+        panel.grid=element_blank(),
+        axis.text.y.right = element_text(color="red"),
+        axis.text.y.left = element_text(color="black"),
+        axis.text.x = element_text(color="black"),
+        #axis.ticks.length = unit(-0.05, "in"),
+        #axis.text.y = element_text(margin=unit(c(0.3,0.3,0.3,0.3), "cm")), 
+        axis.ticks.x = element_blank())+
+  labs(y="Temperature (°C)", x="Site" #title="Temperature (Spatial)"
+       )
 
 survey_filtered[18, 27] <- NA
 #delete erronous salinity value for D11 depth 1m (way fresher than the surface...)

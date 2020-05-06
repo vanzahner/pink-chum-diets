@@ -54,8 +54,8 @@ Diptera_Pupae,Diptera_Larvae,Insecta,Insects,Insects,Nearshore,Non-gelatinous,In
 Ditrichocorycaeus_anglicus,Ditrichocorycaeus_anglicus,Ditrichocorycaeus,Cyclopoids,Cyclopoids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
 Ditrichocorycaeus_anglicus_Copepodite,Ditrichocorycaeus_anglicus_Copepodite,Ditrichocorycaeus,Cyclopoids,Cyclopoids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
 Empty,Empty,Empty,Digested,Digested,Other,Non-gelatinous,NVM,Other,Other
-Epilabidocera_amphrites,Epilabidocera_amphrites,Epilabidocera_amphrites,Calanoids_Large,Calanoids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
-Epilabidocera_amphrites_Copepodite,Calanoida_Larvae,Epilabidocera_amphrites,Calanoids_Small,Calanoids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
+Epilabidocera_longipedata,Epilabidocera_longipedata,Epilabidocera_amphrites,Calanoids_Large,Calanoids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
+Epilabidocera_longipedata_Copepodite,Calanoida_Larvae,Epilabidocera_amphrites,Calanoids_Small,Calanoids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
 Eualus_suckleyi_Zoea_I,Caridea_Zoea,Thoridae_Zoea,Decapods,Decapods,Nearshore,Non-gelatinous,Crustacean,Meroplankton,Crustacean
 Eucalanus,Eucalanus,Eucalanus,Calanoids_Large,Calanoids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
 Eucalanus_bungii,Eucalanus_bungii,Eucalanus,Calanoids_Large,Calanoids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
@@ -68,8 +68,8 @@ Euphausiidae_Furcilia,Euphausiidae_Furcilia,Euphausiidae_Furcilia,Euphausiids,Eu
 Euphausiidae_Juvenile,Euphausiidae,Euphausiidae,Euphausiids,Euphausiids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
 Euphausiidae_Nauplii,Euphausiidae_Nauplii,Euphausiidae_Nauplii,Euphausiids,Euphausiids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
 Eurytemora_affinis,Calanoida,Eurytemora_affinis,Calanoids_Small,Calanoids,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
-Evadne,Podonidae,Evadne,Cladocerans,Other,Nearshore,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
-Evadne_tergestina,Podonidae,Evadne,Cladocerans,Other,Nearshore,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
+Evadne,Podonidae,Podonidae,Cladocerans,Other,Nearshore,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
+Pseudevadne_tergestina,Podonidae,Podonidae,Cladocerans,Other,Nearshore,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
 Fabia_subquadrata_Zoea_III,Pinnotheridae_Larvae,Fabia_subquadrata_Zoea,Decapods,Decapods,Nearshore,Non-gelatinous,Crustacean,Meroplankton,Crustacean
 Glass_Object,Objects,Objects,Detritus,Other,Other,Non-gelatinous,NVM,Other,Other
 Harpacticoida,Harpacticoida,Harpacticoida,Harpacticoids,Harpacticoids,Nearshore,Non-gelatinous,Crustacean,Nearshore_crust,Crustacean
@@ -138,7 +138,7 @@ Pleocyemata_Zoea,Pleocyemata_Larvae,Decapoda_Larvae,Decapods,Decapods,Nearshore,
 Pleuronectidae_Egg,Pleuronectidae_Egg,Fish_Egg,Eggs,Other,Nearshore,Non-gelatinous,Fish,,Other
 Pleuronichthys_coenosus_Egg,Pleuronectidae_Egg,Fish_Egg,Eggs,Other,Nearshore,Non-gelatinous,Fish,,Other
 Podon_leuckartii,Podon,Podon,Cladocerans,Other,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
-Podon_polyphemoides,Podon,Podon,Cladocerans,Other,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
+Pleopis_polyphemoides,Podon,Podon,Cladocerans,Other,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
 Podonidae,Podonidae,Evadne,Cladocerans,Other,Pelagic,Non-gelatinous,Crustacean,Pelagic_crust,Crustacean
 Polychaeta_Nectochaete,Polychaeta_Nectochaete,Polychaeta,Polychaetes,Other,Nearshore,Non-gelatinous,NVM,,Other
 Porcelain_Object,Objects,Objects,Detritus,Other,Nearshore,Non-gelatinous,NVM,Other,Other

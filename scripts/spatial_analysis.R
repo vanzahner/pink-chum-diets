@@ -2,9 +2,6 @@
 
 ##### Set up (data; libraries) #####
 
-rm(list=ls())
-#remove other R stuff
-
 library(tidyverse)
 #data wrangling/graphs/read in data
 library(ggdendro)
@@ -19,6 +16,8 @@ library(dietr)
 #selectivity indices
 library(fishualize)
 #salmon color palette!
+library(here)
+#project oriented workflow
 
 setwd("/Users/Vanessa/Desktop/msc_project")
 #set working directory
@@ -83,6 +82,14 @@ spat_biomass_data_all_fish <- spat_data_mod %>%
 unique(spat_biomass_data$taxa_detail_calc)
 #161 taxa groups --> Simplified to 86! (separated lrg/sml calanoids)
 
+spat_data_raw_sum <-spat_data_raw %>%
+  group_by(ufn, taxa_detail_calc) %>%
+  summarise(Biomass=sum(prey_weight))
+
+spat_numbers_raw <- spat_data_raw_sum %>%
+  ungroup() %>%
+  count(taxa_detail_calc)
+
 spat_numbers_taxa <- spat_biomass_data %>%
   ungroup() %>%
   count(taxa_detail_calc)
@@ -129,8 +136,13 @@ species_names <- spat_data_wide$fish_species
 species_names <- as.factor(species_names)
 #make vector with fish species labels (as factors) too
 
+spat_data_wide$work_area[which(spat_data_wide$work_area=="QUADRA")] <- "Discovery Islands"
+spat_data_wide$work_area[which(spat_data_wide$work_area=="JOHNSTONE STRAIT")] <- "Johnstone Strait"
+region_levels <- c("Johnstone Strait", "Discovery Islands")
 region_names <- spat_data_wide$work_area
-region_names <- as.factor(region_names)
+#region_names <- as.factor(region_names)
+spat_data_wide$work_area <- factor(spat_data_wide$work_area, levels = region_levels)
+
 #make vector with region labels (as factors) too
 
 semsp_names <- spat_data_wide$semsp_id
@@ -193,28 +205,30 @@ for(g in levels(NMDS.bc$group)){
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   geom_point(stat = "identity", aes(shape=species_names, fill=site_names), size=3)+#, color = "black")+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
-  scale_shape_manual(values=c(21, 22), name="Species")+
+  scale_shape_manual(values=c(21, 24), name="Species")+
   scale_fill_manual(values=c("#053061", "#1F78B4", "#A6CEE3", 
                              "#F781BF", "#E41A1C", "#B2182B"
                              ),
                     
-                    name="Region", guide="legend") +
-  guides(fill= guide_legend(override.aes = list(shape=21)))+
-  labs(x=NULL, y=NULL, title = "Diet Dissimilarity NMDS")+
+                    name="Site", guide="legend") +
+  guides(fill= guide_legend(override.aes = list(shape=21)))+#, order = 2),
+        #shape=guide_legend(order = 1))+
+  labs(x="NMDS 1", y="NMDS 2"#, title = "Diet Dissimilarity NMDS"
+       )+
   scale_colour_manual(values=c("#053061", "#B2182B"), name="Region") +
   theme_bw()+
   theme(axis.text.x=element_text(size=12),
         axis.title.x=element_text(size=12),
         axis.title.y=element_text(angle=90,size=12),
         axis.text.y=element_text(size=12),
-        panel.grid.minor=element_blank(),panel.grid.major=element_blank()#,
-        ) + coord_fixed() +
-  annotate("text",x=1.5,y=-1.7,label="(stress = 0.16)",size=4, hjust = -0.1)
+        panel.grid.minor=element_blank(),panel.grid.major=element_blank(),
+        axis.ticks = element_blank()) + coord_fixed() +
+  annotate("text",x=1.5,y=-1.7,label="(stress = 0.17)",size=4, hjust = 0)
 #NMDS graph for the different sites!
 
 a
 
-ggsave("figs/spatial_NMDS.png")
+ggsave("figs/spatial/spatial_NMDS.png")
 
 ##### Cluster (filtered; full taxa data) #####
 
@@ -224,6 +238,13 @@ bcclust <- hclust(Bray_Curtis_Dissimilarity, method = "average")
 
 dendr <- dendro_data(bcclust, type = "rectangle")
 #put it in ggdendro form
+
+bcd <- as.dendrogram(bcclust)
+#put it in dendextend form...
+
+bcd <- bcclust %>% 
+  as.dendrogram() %>% 
+  set("leaves_col")
 
 #making labels with site and species for dendro:
 simple_semsp_names <- as.character(simple_semsp_names)
@@ -247,27 +268,119 @@ colnames(labs) <- c("x", "y", "ufn")
 lab <- left_join(labs, fishsp, by = "ufn")
 
 ggplot()+
-  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend, color="white"))+
-  geom_text(data=label(dendr), aes(x=x, y=y, label=label, hjust=0, color=lab$Sp), size=4) +
+  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend#, color="NA"
+                                          ))+
+  geom_text(data=label(dendr), aes(x=x, y=y, label=label, hjust=0, color=lab$Sp), size=5) +
   coord_flip() + scale_y_reverse(expand=c(0.2, 0)) +
-  scale_colour_manual(values = c("#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
-                                 "#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928", "grey50"))+
+  scale_colour_manual(values = c(#"#053061", "#1F78B4", "#A6CEE3", 
+                                 #"#F781BF", "#E41A1C", "#B2182B",
+                                 
+                                 "#B2182B","#B2182B","#E41A1C","#E41A1C",
+                                 "#F781BF","#F781BF","#053061","#053061",
+      "lightseagreen", "lightseagreen",                          # "#A6CEE3","#A6CEE3",
+                                 "#1F78B4","#1F78B4"#, "grey50"
+    #"#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
+    #"#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928", "grey50"
+    ),
+                      name="Site and Species")+
   theme(axis.line.y=element_blank(),
         axis.ticks.y=element_blank(),
         axis.text.y=element_blank(),
         axis.title.y=element_blank(),
-        panel.background=element_rect(fill="black"),
-        panel.grid=element_blank(), legend.position = "bottom")+
-  labs(title="Cluster By Fish ID")
+        axis.text = element_text(size=24),
+        axis.title = element_text(size=26),
+        legend.text = element_text(size=24),
+        legend.title = element_text(size=26),
+        #panel.background=element_rect(fill="black"),
+        panel.grid=element_blank(), legend.position = "right")+
+  labs(#title="Cluster By Fish ID"
+       y="Dissimilarity")
 #plot the dendrogram data for the different fish ID's
+
+library(dendextend)
 
 ggsave("figs/spatial_cluster.png", width=15, height=20)
 #cluster groups (top to bottom) DI CU; DI PI; J02 CU, J02 PI, J08 PI, J08 CU, J06 CU...
 #outliers scattered amongst other clusters: D11 and J06 (lowest fullness, most empty!)
 
+plot(bcd, xlab="Dissimilarity", horiz = TRUE)
+
 #simproftest <- simprof(spat_trans_matrix, method.cluster = "average", method.distance = "braycurtis", num.expected = 100, num.simulated = 99)
 #simprof.plot(simproftest)
 #takes a long time to run this code...
+
+##### Percent Overlap ##### 
+
+summed_data <- spat_data_mod %>%
+  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
+                                "Coscinodiscophycidae", "Phaeophyceae", "Objects")) %>%
+  select(fish_species, sample_site, taxa_detail_calc, prey_weight) %>%
+  group_by(fish_species, sample_site, taxa_detail_calc) %>%
+  summarise(totalw=sum(prey_weight)) %>%
+  spread(key=taxa_detail_calc, value=totalw, fill=0) 
+
+sites <- summed_data$sample_site
+salmon <- summed_data$fish_species
+
+summed_matrix <- summed_data %>%
+  ungroup() %>% 
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method="total")
+
+proportional_sums <- cbind(sites, salmon, summed_matrix)
+
+D07sim <- proportional_sums %>%
+  filter(sites=="D07") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 24.9 %
+# 25 %
+
+D09sim <- proportional_sums %>%
+  filter(sites=="D09") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 33.0 %
+# 33 %
+# ?
+
+D11sim <- proportional_sums %>%
+  filter(sites=="D11") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 21.7 %
+# 22 %
+
+J02sim <- proportional_sums %>%
+  filter(sites=="J02") %>% 
+  select(-c(sites, salmon)) %>%
+  #pink is top row, chum is bottom (doesn't actually matter)
+  summarise_all(min) %>%
+  rowSums() # 59.8 % almost significant... Hmm.
+# 60 %
+
+J06sim <- proportional_sums %>%
+  filter(sites=="J06") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 4.8 %
+# 5 %
+# ?
+
+J08sim <- proportional_sums %>%
+  filter(sites=="J08") %>% 
+  select(-c(sites, salmon)) %>%
+  summarise_all(min) %>%
+  rowSums() # 14.1 %
+# 14 %
+
+per_overlap <- data.frame(sample_site=c("J02", "J08", "J06", "D11", "D09", "D07"),
+                          overlap=c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim))
+
+per_overlap$sample_site <- factor(per_overlap$sample_site, levels = site_order)
+
+duplicateddata <- data.frame(sample_site=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 20),
+                             overlap=rep(c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim), 20))
 
 ##### GFI (unfiltered; no taxa data) #####
 
@@ -287,23 +400,25 @@ spatial_gfi_overlap <- left_join(spatial_gfi_data, per_overlap, by="sample_site"
 spatial_gfi_overlap %>% 
   #filter(sample_site %in% c("J06", "D11", "D09", "D07")) %>% 
   ggplot(aes(sample_site, calc_gfi))+
+  #stat_boxplot(geom ='errorbar', width = 0.6) +
   geom_boxplot(aes(fill=fish_species))+
-  labs(title="Spatial Gut Fullness Index", y="GFI (% Body Weight)", fill="Species",
-       x="Sample Site")+
+  labs(#title="Spatial Gut Fullness Index",
+       y="Gut Fullness Index", fill="Species",
+       x="Site")+
   theme_bw()+
   scale_fill_manual(values=c("#d294af", "#516959"))+
   geom_line(aes(y=overlap*10, x=sample_site, group=NA), color="darkred")+
-  scale_y_continuous(sec.axis = sec_axis(~.*10, name="Species Diet Overlap (%)"))+
-  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
-        axis.title = element_text(size=14), axis.text = element_text(size=12),
+  scale_y_continuous(sec.axis = sec_axis(~.*10, name="Diet Overlap (%)"))+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16), axis.ticks.x = element_blank(),
+        axis.title = element_text(size=14), axis.text = element_text(size=12, color="black"),
         legend.text = element_text(size=12), legend.title = element_text(size=14),
         title = element_text(size=16), plot.title = element_text(hjust=0.5),
-        axis.title.y.right = element_text(color = "darkred"),
+        axis.title.y.right = element_text(color = "darkred"), axis.text.y.right = element_text(color="darkred"),
         legend.position = c(0.85, 0.85), legend.background = element_rect(color = "grey50"))#+
 #  annotate("text",x=5,y=10,label="Empty n = 12", size=4, hjust = -0.1)
 #GFI for spatial (1 weight=NA, which is why warning message pops up after printing)
 
-ggsave("figs/spatial_GFI.png")
+ggsave("figs/spatial/spatial_GFI.png")
 #save figure into folder
 
 gfi_table <- spatial_gfi_data %>%
@@ -525,19 +640,23 @@ group_bio_mat$taxa <- factor(group_bio_mat$taxa, levels = taxa_levels)
 
 group_bio_mat %>%
   ggplot(aes(site, rel_bio))+
-  geom_bar(aes(fill=taxa), stat="identity", position="fill"
+  geom_bar(aes(fill=taxa), stat="identity", position="fill"#, labels=scales::percent()
            )+
-  scale_fill_manual(values = color_levels)+
+  scale_fill_manual(values = color_levels, name="Prey Groups")+
   facet_wrap(~fish, dir="v")+
+  scale_y_continuous(labels= scales::percent)+
   theme_bw()+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.ticks.x = element_blank(), axis.text.x = element_text(color="black"),
+        axis.text.y=element_text(color="black"),
         axis.title = element_text(size=14), axis.text = element_text(size=12),
         legend.text = element_text(size=12), legend.title = element_text(size=14),
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
-  labs(title="Spatial Diet Composition", x="Sample Site", y="% Biomass")
+  labs(#title="Spatial Diet Composition", 
+       x="Site", y="Relative Biomass")
 #delete useless categories later
 
-ggsave("figs/taxa_comp_spatial.png")
+ggsave("figs/spatial/taxa_comp_spatial.png")
 
 ##### Frequency of occurrence (unfiltered; full taxa data)  ######
 
@@ -878,75 +997,3 @@ avesize %>%
 #even if the NMDS graph is too tough to figure out at first, punch in the calculation!
 
 #diet matrix (dissimilarity?) and env: temp, sal, secchi, fl, gfi, adipose, other shit?
-##### Percent Overlap ##### 
-
-summed_data <- spat_data_mod %>%
-  filter(!taxa_detail_calc%in%c("Detritus", "Parasites", "Digested_food",
-                                "Coscinodiscophycidae", "Phaeophyceae", "Objects")) %>%
-  select(fish_species, sample_site, taxa_detail_calc, prey_weight) %>%
-  group_by(fish_species, sample_site, taxa_detail_calc) %>%
-  summarise(totalw=sum(prey_weight)) %>%
-  spread(key=taxa_detail_calc, value=totalw, fill=0) 
-
-sites <- summed_data$sample_site
-salmon <- summed_data$fish_species
-
-summed_matrix <- summed_data %>%
-  ungroup() %>% 
-  select(Acartia:Tortanus_discaudatus) %>% 
-  decostand(method="total")
-
-proportional_sums <- cbind(sites, salmon, summed_matrix)
-
-D07sim <- proportional_sums %>%
-  filter(sites=="D07") %>% 
-  select(-c(sites, salmon)) %>%
-  summarise_all(min) %>%
-  rowSums() # 24.9 %
-# 25 %
-
-D09sim <- proportional_sums %>%
-  filter(sites=="D09") %>% 
-  select(-c(sites, salmon)) %>%
-  summarise_all(min) %>%
-  rowSums() # 33.0 %
-# 33 %
-# ?
-
-D11sim <- proportional_sums %>%
-  filter(sites=="D11") %>% 
-  select(-c(sites, salmon)) %>%
-  summarise_all(min) %>%
-  rowSums() # 21.7 %
-# 22 %
-
-J02sim <- proportional_sums %>%
-  filter(sites=="J02") %>% 
-  select(-c(sites, salmon)) %>%
-  #pink is top row, chum is bottom (doesn't actually matter)
-  summarise_all(min) %>%
-  rowSums() # 59.8 % almost significant... Hmm.
-# 60 %
-
-J06sim <- proportional_sums %>%
-  filter(sites=="J06") %>% 
-  select(-c(sites, salmon)) %>%
-  summarise_all(min) %>%
-  rowSums() # 4.8 %
-# 5 %
-# ?
-
-J08sim <- proportional_sums %>%
-  filter(sites=="J08") %>% 
-  select(-c(sites, salmon)) %>%
-  summarise_all(min) %>%
-  rowSums() # 14.1 %
-# 14 %
-
-per_overlap <- data.frame(sample_site=c("J02", "J08", "J06", "D11", "D09", "D07"),
-                          overlap=c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim))
-
-per_overlap$sample_site <- factor(per_overlap$sample_site, levels = site_order)
-
-duplicateddata <- data.frame(sample_site=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 20),
-                             overlap=rep(c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim), 20))
