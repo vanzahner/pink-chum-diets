@@ -2,24 +2,23 @@
 
 ##### Diet data set up #####
 
-rm(list=ls())
-#remove other R stuff
-
 library(readr)
 #read in files
 library(tidyverse)
 #data wrangling
+library(here)
+#project workflow
 
-setwd("/Users/Vanessa/Desktop/msc_project")
-#set working directory
+here()
+#check working directory "msc_project"
 
-raw_data <- read_csv("data/pink_chum_diets_raw_data.csv")
+raw_data <- read_csv(here("data","pink_chum_diets_raw_data.csv"))
 #read in raw data file
 
-metadata <- read_csv("data/pink_chum_fish_info_filtered_data.csv")
+metadata <- read_csv(here("data","pink_chum_fish_info_filtered_data.csv"))
 #new version - edited hakai_id to be ufn (NEED DATA DICTIONARY AND CHANGELOG!*)
 
-seinedata <- read_csv("data/pink_chum_seine_raw_data.csv")
+seinedata <- read_csv(here("data","pink_chum_seine_raw_data.csv"))
 #seine data for lat long info (column names fixed, lat and long were mixed up!)
 
 fishdata <- left_join(raw_data, metadata, by=c("ufn", "semsp_id"))
@@ -35,8 +34,8 @@ temp_fish <- filter(fish, analysis!="Spatial")
 spat_fish <- filter(fish, analysis!="Temporal")
 #make datafile for only spatial analysis fish
 
-write_csv(spat_fish, path="processed/spatial_pink_chum_diets.csv")
-write_csv(temp_fish, path="processed/temporal_pink_chum_diets.csv")
+write_csv(spat_fish, here("processed", "spatial_pink_chum_diets.csv"))
+write_csv(temp_fish, here("processed", "temporal_pink_chum_diets.csv"))
 #write csv files for initial transformation and saving of diet data
 
 #fish %>%
@@ -47,7 +46,7 @@ write_csv(temp_fish, path="processed/temporal_pink_chum_diets.csv")
 
 ##### Environmental data #####
 
-ysi_data <- read_csv("data/ysi.csv")
+ysi_data <- read_csv(here("data","ysi.csv"))
 
 ysi_filtered <- ysi_data %>%
   filter(site_id %in% c("D07", "J07", "D09", "D11", 
@@ -56,7 +55,7 @@ ysi_filtered <- ysi_data %>%
            survey_date<"2016-07-06")
 #need to filter out to only what's relevant to samples (then secchi next)
 
-survey_data <- read_csv("data/survey_data.csv")
+survey_data <- read_csv(here("data","survey_data.csv"))
 #for secchi!
 
 fish_rename <- rename(fish, survey_id=jsp_survey_id)
@@ -124,10 +123,10 @@ survey_filtered %>%
 
 ##### Zoop data #####
 
-zoop_data_raw <- read_csv("data/zoop_comp_data_combined.csv")
+zoop_data_raw <- read_csv(here("data","zoop_comp_data_combined.csv"))
 #need to resolve issues about missing data (JSPK 1154, which is for July 5, 2016 J07)
 
-zoop_data_ww <- read_csv("data/zoop_data_ww.csv")
+zoop_data_ww <- read_csv(here("data","zoop_data_ww.csv"))
 #J02 (JSPK1118) has taxa data but no wet weight. ignore all ww since J02 most important
 
 zoop_data_ww$site <- factor(zoop_data_ww$site, levels = site_order)
@@ -147,9 +146,9 @@ zoop_data_ww %>%
   theme(panel.grid=element_blank())+
   labs(title="Zoop Biomass (Spatial)")
 
-ggsave("figs/zoop_biomass_spatial.png")
+ggsave(here("figs", "spatial", "zoop_biomass_spatial.png"))
 
-zoop_names <- read_csv("data/zoop_names.csv")
+zoop_names <- read_csv(here("data","zoop_names.csv"))
 
 zoop_data_raw$site <- factor(zoop_data_raw$site, levels = site_order)
 
@@ -185,7 +184,7 @@ zoop_data %>%
   theme(panel.grid=element_blank())+
   labs(title="Zoop Composition (Spatial)")
 
-ggsave("figs/zoop_comp_spatial.png")
+ggsave(here("figs", "spatial", "zoop_comp_spatial.png"))
 
 zoop_data %>%
   filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118",
@@ -198,7 +197,7 @@ zoop_data %>%
   labs(title="Zoop Composition (Spatial)")+
   facet_wrap(~sieve)
 
-ggsave("figs/zoop_comp_size_spatial.png")
+ggsave(here("figs", "spatial", "zoop_comp_size_spatial.png"))
 
 #Temporal zoops:
 
@@ -214,7 +213,7 @@ zoop_data_ww %>%
 # June 5th (the Chum date) has high gel. June 5th (pink date) has low gel.
 #neither has non-gelatinous 2000 um. unlike June_Mid 2016 J07, has gel+non.
 
-ggsave("figs/zoop_biomass_temporal.png")
+ggsave(here("figs", "temporal", "zoop_biomass_temporal.png"))
 
 zoop_temp <- zoop_data_raw
 #make another copy of data
@@ -249,7 +248,7 @@ zoop_temp %>%
   theme(panel.grid=element_blank())+
   labs(title="Zoop Composition (Temporal)")
 
-ggsave("figs/zoop_comp_temporal.png")
+ggsave(here("figs", "temporal", "zoop_comp_temporal.png"))
 #too much other... need to change groups. Add cladocerans for example?
 #keep colors same as last groupings, but add yellow+brown and rearrange?
 

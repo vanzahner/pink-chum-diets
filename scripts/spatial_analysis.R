@@ -19,10 +19,10 @@ library(fishualize)
 library(here)
 #project oriented workflow
 
-setwd("/Users/Vanessa/Desktop/msc_project")
-#set working directory
+here()
+#check msc_project working directory
 
-spat_data_raw <- read_csv("processed/spatial_pink_chum_diets.csv")
+spat_data_raw <- read_csv(here("processed", "spatial_pink_chum_diets.csv"))
 #read in spatial diet data
 
 #calanoid_fixing <- filter(spat_data_raw, taxa_detail_calc=="Calanoida")
@@ -47,7 +47,7 @@ spat_data_mod <- spat_diet_data
 #make copy of data, in case want to access unmodified version
 
 #load in file with old and new taxa names to be assigned
-spat_names<-read.csv("data/spatial_taxa_category_change.csv", stringsAsFactors=FALSE) 
+spat_names<-read.csv(here("data","spatial_taxa_category_change.csv"), stringsAsFactors=FALSE) 
 
 #for loop that will reassign all the organism names in the data spreadsheet 
 for (n in spat_names$old_category) {
@@ -228,7 +228,7 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
 
 a
 
-ggsave("figs/spatial/spatial_NMDS.png")
+ggsave(here("figs","spatial","spatial_NMDS.png"))
 
 ##### Cluster (filtered; full taxa data) #####
 
@@ -299,7 +299,7 @@ ggplot()+
 
 library(dendextend)
 
-ggsave("figs/spatial_cluster.png", width=15, height=20)
+ggsave(here("figs", "spatial", "spatial_cluster.png"), width=15, height=20)
 #cluster groups (top to bottom) DI CU; DI PI; J02 CU, J02 PI, J08 PI, J08 CU, J06 CU...
 #outliers scattered amongst other clusters: D11 and J06 (lowest fullness, most empty!)
 
@@ -418,7 +418,7 @@ spatial_gfi_overlap %>%
 #  annotate("text",x=5,y=10,label="Empty n = 12", size=4, hjust = -0.1)
 #GFI for spatial (1 weight=NA, which is why warning message pops up after printing)
 
-ggsave("figs/spatial/spatial_GFI.png")
+ggsave(here("figs","spatial","spatial_GFI.png"))
 #save figure into folder
 
 gfi_table <- spatial_gfi_data %>%
@@ -426,7 +426,7 @@ gfi_table <- spatial_gfi_data %>%
   group_by(fish_species, sample_site) %>% 
   summarise(mean=mean(calc_gfi), median=median(calc_gfi), sd=sd(calc_gfi))
 
-write_csv(gfi_table, "processed/spatial_gfi_means.csv")
+write_csv(gfi_table, here("processed","spatial_gfi_means.csv"))
 
 gfi_summary <- spatial_gfi_data %>%
   filter(is.na(calc_gfi)==FALSE) %>%
@@ -477,7 +477,7 @@ spat_data_taxa_sum %>%
         axis.text.x = element_text(size=12))
 #boxplot for simple version of niche breadth (just number of taxa in each fish stomach)
 
-ggsave("figs/spatial_niche_breadth.png")
+ggsave(here("figs", "spatial", "spatial_niche_breadth.png"))
 
 summary_spat_data <- spat_biomass_data %>%
   ungroup() %>% 
@@ -576,7 +576,7 @@ spat_nb %>%
 
 #BUT... the less taxa is the code chunk BELOW this one, so reorder/be mindful of it.
 
-ggsave("figs/spatial_NB_calc.png")
+ggsave(here("figs", "spatial", "spatial_NB_calc.png"))
 
 ##### Diet Composition Bar Graphs (unfiltered; broad taxa data) #####
 
@@ -656,7 +656,7 @@ group_bio_mat %>%
        x="Site", y="Relative Biomass")
 #delete useless categories later
 
-ggsave("figs/spatial/taxa_comp_spatial.png")
+ggsave(here("figs","spatial","taxa_comp_spatial.png"))
 
 ##### Frequency of occurrence (unfiltered; full taxa data)  ######
 
@@ -788,9 +788,9 @@ plot(anosim_diet)
 
 ##### Prey Selectivity (filtered; broad taxa data) #####
 
-zoop_data <- read_csv("data/zoop_comp_data_combined.csv")
+zoop_data <- read_csv(here("data","zoop_comp_data_combined.csv"))
 #read in zoop data
-zoop_names <- read_csv("data/zoop_names.csv")
+zoop_names <- read_csv(here("data","zoop_names.csv"))
 #read in zoop name data
 
 #for loop doesn't like data as factors
@@ -821,9 +821,9 @@ zoop_data_available <- zoop_data_merged %>%
 colnames(zoop_data_available)
 
 #load in file with old and new taxa names to be assigned (broader categories)
-prey_spat_names<-read.csv("data/spatial_taxa_category_change.csv") 
+prey_spat_names<-read.csv(here("data","spatial_taxa_category_change.csv"))
 
-prey_spat_data <- read_csv("processed/spatial_pink_chum_diets.csv")
+prey_spat_data <- read_csv(here("processed","spatial_pink_chum_diets.csv"))
 #RELOAD in spatial diet data (to reset original taxa categories)
 
 prey_spat_data$sample_site <- factor(prey_spat_data$sample_site, levels = site_order)
@@ -914,7 +914,7 @@ aveivlev %>%
   coord_flip()+
   theme_bw()
 
-ggsave("figs/DI_spatial_prey_sel.png")
+ggsave("figs","spatial", "DI_spatial_prey_sel.png")
 
 aveivlev %>%
   filter(Available %in% c("J02", "J08", "J06")) %>% 
@@ -928,7 +928,7 @@ aveivlev %>%
   coord_flip()+
   theme_bw()
 
-ggsave("figs/JS_spatial_prey_sel.png")
+ggsave("figs","spatial", "JS_spatial_prey_sel.png")
   
 #reorder sites and taxa (see notebook for details)
 

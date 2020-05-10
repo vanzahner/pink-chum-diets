@@ -481,7 +481,7 @@ temp_data_taxa_sum %>%
                             "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))
 #boxplot for simple version of niche breadth (just number of taxa in each fish stomach)
 
-ggsave("figs/temporal_niche_breadth.png")
+ggsave(here("figs","temporal","temporal_niche_breadth.png"))
 
 summary_temp_data <- temp_biomass_data %>%
   ungroup() %>% 
@@ -582,7 +582,7 @@ temp_nb %>%
   facet_grid(year~site, scales = "free_x")+
   scale_x_discrete(labels=c("DI_Early"="May", "DI_June_Early"="Early June", "DI_June_Mid"="Mid-June",
                             "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))
-ggsave("figs/temoral_NB_calc.png")
+ggsave("figs","temporal","temoral_NB_calc.png")
 #try including empty stomachs, see if that changes it. Try less taxa categories too?
 
 ##### Diet Composition Bar Graphs #####
