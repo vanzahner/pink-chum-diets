@@ -239,6 +239,17 @@ color_temp <- c("#E31A1C", "#FDBF6F",
                  "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
 #red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
 
+#current diet groups:
+temp_levels <- c("Amphipods", "Cyclopoids", "Calanoids", "Decapods", "Euphausiids", "Cladocerans", "Barnacles", "Echinoderms",
+                 "Insects", "Harpacticoids", "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other", "Fish")
+
+color_temp <- c("#E7298A", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
+                "#E6AB02", "#A6761D", "#666666",
+                #clad yell, #barn brown, #echin grey
+                "#B2DF8A", "#33A02C",
+                "#1B9E77", #Eggs teal 
+                "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A", "black")
+
 brewer.pal("Dark2", n=8)
 
 zoop_temp$labID <- factor(zoop_temp$labID, levels = temp_levels)

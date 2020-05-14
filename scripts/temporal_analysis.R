@@ -588,9 +588,9 @@ ggsave("figs","temporal","temoral_NB_calc.png")
 ##### Diet Composition Bar Graphs #####
 
 #load in file with old and new taxa names to be assigned
-temp_names_broad <-read.csv("data/taxa_broad_groups_temporal.csv") 
+temp_names_broad <-read.csv(here("data", "taxa_broad_groups_temporal.csv"))
 
-temp_date_ids <- read_csv("data/temporal_date_id_categories_extensive.csv")
+temp_date_ids <- read_csv(here("data", "temporal_date_id_categories_extensive.csv"))
 #read in data to get relevant date ids for plotting (streamline above code too.)
 
 temp_data_merged <- left_join(temp_data_raw, temp_date_ids)
@@ -608,25 +608,12 @@ temp_names_broad$new_category <- as.character(temp_names_broad$new_category)
 for (n in temp_names_broad$old_category) {
   temp_data_merged$taxa_detail_calc[which(temp_data_merged$taxa_detail_calc %in% n)] <- temp_names_broad$new_category[which(temp_names_broad$old_category == n)]
 }
-#warning: number of items to replace is not a multiple of replacement length (but ok?)
-
-calanoid_fixing <- filter(temp_data_merged, taxa_detail_calc=="Calanoids")
-no_calanoids <- anti_join(temp_data_merged, calanoid_fixing)
-small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
-large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
-small_calanoids$taxa_detail_calc <- "Calanoids_Small"
-large_calanoids$taxa_detail_calc <- "Calanoids_Large"
-temp_data_fixed <- rbind(no_calanoids, small_calanoids, large_calanoids)
-
-#redo this step above in the set up? before renaming the taxa to broad groups (later)
 
 #group_biomass <- temp_data_fixed %>%
 group_biomass <- temp_data_merged %>%
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id, date_id_names) %>%
   summarise(prey_weight_sum=sum(prey_weight))
 #summarize biomass for each fish
-
-#^need to properly average proportions first (*** this is just the quickie version! ***)
 
 group_bio_wide <- group_biomass %>%
   ungroup() %>%
@@ -637,73 +624,75 @@ group_bio_wide <- group_biomass %>%
 
 group_bio_mat <- group_bio_wide %>%
   ungroup() %>% 
-  select(-c(ufn, fish_species, sample_site, date_id_names)) %>%
-  decostand(method="total")
+  select(-c(ufn, fish_species, sample_site, date_id_names, Digested)) %>%
+  decostand(method="total") %>%
+  mutate(site=group_bio_wide$sample_site, fish=group_bio_wide$fish_species,
+         date_id=group_bio_wide$date_id_names) %>%
+  gather(key="taxa", value="rel_bio", Amphipods:Other
+         ) %>% 
+  group_by(site, date_id, fish, taxa) %>%
+  summarise(rel_bio=mean(rel_bio))
 
-group_bio_ids <- group_bio_wide %>%
+group_bio_mat %>%
+  spread(taxa, rel_bio) %>%
   ungroup() %>% 
-  select(c(fish_species, sample_site, date_id_names))
-
-group_bio_combo <- cbind(group_bio_ids, group_bio_mat) %>%
-  gather(key="taxa", value="rel_bio", -fish_species, -sample_site, -date_id_names) %>%
-  group_by(fish_species, sample_site, date_id_names, taxa) %>% 
-  summarise(ave_rel_bio=mean(rel_bio))
-
-group_bio_combo %>%
-  spread(taxa, ave_rel_bio) %>%
-  ungroup() %>% 
-  select(-c(fish_species, sample_site, date_id_names)) %>% 
+  select(-c(fish, site, date_id)) %>% 
   rowSums()
 
-temp_levels <- c("Calanoids", "Decapods", "Cladocerans", "Barnacles", "Echinoderms",
-                 "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other")
+group_bio_mat %>%
+  group_by(site, date_id, fish, taxa) %>%
+  summarise(sum_bio=sum(rel_bio)) %>%
+  View()
 
-color_temp <- c("#E31A1C", "#FDBF6F",
+temp_levels <- c("Amphipods", "Cyclopoids", "Calanoids", "Decapods", "Euphausiids", "Cladocerans", "Barnacles", "Echinoderms",
+                 "Insects", "Harpacticoids", "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other", "Fish")
+
+color_temp <- c("#E7298A", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
                 "#E6AB02", "#A6761D", "#666666",
                 #clad yell, #barn brown, #echin grey
+                "#B2DF8A", "#33A02C",
                 "#1B9E77", #Eggs teal 
-                "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
+                "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A", "black")
 
-group_bio_combo$taxa <- factor(group_bio_combo$taxa, levels = temp_levels)
+group_bio_mat$taxa <- factor(group_bio_mat$taxa, levels = temp_levels)
 
-# NEEDS RECALCULATING AND GET RID OF DIGESTED ***** IT'S STILL QUICK VERS.
-
-group_bio_combo %>%
-  filter(date_id_names %in% c("DI_Early_15", "JS_June_Early_15", "DI_June_Early_15",
+group_bio_mat %>%
+  filter(date_id %in% c("DI_Early_15", "JS_June_Early_15", "DI_June_Early_15",
                               "DI_June_Mid_15", "JS_June_Mid_15", "JS_Late_15")) %>% 
-  ggplot(aes(date_id_names, ave_rel_bio))+
+  ggplot(aes(date_id, rel_bio))+
   geom_bar(aes(fill=taxa), stat="identity", position="fill"
            )+
-  scale_fill_manual(values=color_temp)+
-  facet_grid(fish_species~sample_site, scales = "free")+
+  scale_fill_manual(breaks = c("Amphipods", "Cyclopoids", "Calanoids", "Decapods", "Euphausiids", "Cladocerans", "Barnacles",
+                               "Insects", "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other", "Fish"), values=color_temp)+
+  facet_grid(fish~site, scales = "free")+
   theme_bw()+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
         axis.title = element_text(size=14), axis.text = element_text(size=12),
         legend.text = element_text(size=12), legend.title = element_text(size=14),
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
   labs(title="2015 Temporal Diet Composition", x="Sample Site", y="% Biomass")
-#get rid of/change copepods (combine?), decapods, digested?, echin, euph eggs (combine), fish?
 
 ggsave("figs/temporal_prey_comp_15.png")
 
-group_bio_combo %>%
-  filter(!date_id_names %in% c("DI_Early_15", "JS_June_Early_15", "DI_June_Early_15",
+group_bio_mat %>%
+  filter(!date_id %in% c("DI_Early_15", "JS_June_Early_15", "DI_June_Early_15",
                               "DI_June_Mid_15", "JS_June_Mid_15", "JS_Late_15")) %>%
-  ggplot(aes(date_id_names, ave_rel_bio))+
-  geom_bar(aes(fill=taxa), stat="identity", position="fill")+
-  facet_grid(fish_species~sample_site, scales = "free")+
+  ggplot(aes(date_id, rel_bio))+
+  geom_bar(aes(fill=taxa), stat="identity", position="fill"
+           )+
+  facet_grid(fish~site, scales = "free")+
   theme_bw()+
-  scale_fill_manual(values=color_temp)+
+  scale_fill_manual(breaks=c("Amphipods", "Cyclopoids", "Calanoids", "Decapods", "Euphausiids", "Cladocerans", "Barnacles", "Echinoderms",
+                             "Insects", "Harpacticoids", "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other"), values=color_temp)+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
         axis.title = element_text(size=14), axis.text = element_text(size=12),
         legend.text = element_text(size=12), legend.title = element_text(size=14),
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
   labs(title="2016 Temporal Diet Composition", x="Sample Site", y="% Biomass")
-#get rid of/change other copepods, decapods?, digested?, echin?, euphausiids (combine?), fish
 
 ggsave("figs/temporal_prey_comp_16.png")
 
-#FIGURE OUT WHAT LATE-D07-2016-PINK OTHER GROUP IS MADE OF... LATER.
+#get rid of cyclo, amph, harp and ins. update zoop groups! *****
 
 ##### Frequency of occurrence #####
 
