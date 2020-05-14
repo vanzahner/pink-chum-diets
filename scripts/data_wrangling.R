@@ -229,26 +229,32 @@ for (n in zoop_names$old_category) {
   zoop_temp$labID[which(zoop_temp$labID %in% n)] <- zoop_names$temp_category[which(zoop_names$old_category == n)]
 }
 
-#taxa_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids",# "Insects",
-#                 "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognath", "Other")
+temp_levels <- c("Calanoids", "Decapods", "Cladocerans", "Barnacles", "Echinoderms",
+                 "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other")
 
-#color_levels <- c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",# "#B2DF8A",
-#                  "#33A02C", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
+color_temp <- c("#E31A1C", "#FDBF6F",
+                 "#E6AB02", "#A6761D", "#666666",
+                 #clad yell, #barn brown, #echin grey
+                 "#1B9E77", #Eggs teal 
+                 "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
 #red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
 
-#zoop_data$labID <- factor(zoop_data$labID, levels = taxa_levels)
+brewer.pal("Dark2", n=8)
+
+zoop_temp$labID <- factor(zoop_temp$labID, levels = temp_levels)
 
 zoop_temp %>%
   filter(site %in% c("J07", "D07")) %>%
   ggplot(aes(date_name, abundance))+
   geom_bar(aes(fill=labID), stat="identity", position="fill")+
-#  scale_fill_manual(values=color_levels)+
+  scale_fill_manual(values=color_temp)+
   facet_grid(year~site, scales="free_x")+
   theme_bw()+
   theme(panel.grid=element_blank())+
   labs(title="Zoop Composition (Temporal)")
 
 ggsave(here("figs", "temporal", "zoop_comp_temporal.png"))
-#too much other... need to change groups. Add cladocerans for example?
-#keep colors same as last groupings, but add yellow+brown and rearrange?
+#looks hella ugly though. match up with diet composition groups later!
+
+
 
