@@ -1,106 +1,106 @@
-old_category,new_category,zoop_category*,zoop_category_general,temp_category
-Acartia,Calanoids,Acartia,Calanoids_Small,Calanoids
-Aequorea victoria,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Aetidius divergens,Calanoids,Aetideus_divergens,Calanoids_Small,Calanoids
-Aglantha digitale,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Amphinema platytiedos,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Amphipod,Other,Gammarida,Amphipods,Other
-Annatiara affinis,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Anomuran,Decapods,Anomura_Zoea,Decapods,Decapods
-Barnacle Nauplius,Other,Balanomorpha_Nauplii,Barnacles,Barnacles
-Bivalve veliger,Other,Bivalvia_Veliger,Bivalves,Other
-Bryozoa,Other,Bryozoa,Bryozoa,Other
-Calanoid Copepod,Calanoids,Calanoida,Calanoids_Small,Calanoids
-Calanus copedite,Calanoids,Copepodite,Calanoids_Small,Calanoids
-Calanus marshallae,Calanoids,Calanus_marshallae,Calanoids_Large,Calanoids
-Calanus pacificus,Calanoids,Calanus_pacificus,Calanoids_Large,Calanoids
-Caligus,Other,Parasite,Parasite,Other
-Callianassidae zoea,Decapods,Callianassidae_Zoea,Decapods,Decapods
-Cancridae,Decapods,Cancridae_Megalopa,Decapods,Decapods
-Cancridae megalopa,Decapods,Cancridae_Megalopa,Decapods,Decapods
-Cancridae zoea,Decapods,Cancridae_Zoea,Decapods,Decapods
-Centropages abdominalis,Calanoids,Centropages_abdominalis,Calanoids_Small,Calanoids
-Chaetognath,Chaetognath,Chaetognatha,Chaetognath,Chaetognaths
-Clytia,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Copepod nauplius,Calanoids,Calanoida_Nauplii,Calanoids_Small,Calanoids
-Copepodite,Calanoids,Copepodite,Calanoids_Small,Calanoids
-Corycaeus,Cyclopoids,Ditrichocorycaeus,Cyclopoids,Other
-Crangonidae,Decapods,Caridea_Larvae,Decapods,Decapods
-Ctenophore,Gelatinous,Ctenophora,Gelatinous,Gelatinous
-Cyclopoid Copepod,Cyclopoids,Cyclopoida,Cyclopoids,Other
-Cydippid Ctenophore,Gelatinous,Ctenophora,Gelatinous,Gelatinous
-Cyphonautes Larva,Other,Bryozoa,Bryozoa,Other
-Cyprid,Other,Balanomorpha_Cyprid,Barnacles,Barnacles
-Cyprid Larva,Other,Balanomorpha_Cyprid,Barnacles,Barnacles
-Decapoda,Decapods,Decapoda_Larvae,Decapods,Decapods
-Diptera,Insects,Insects,Insects,Other
-Echinodermata,Other,Echinodermata,Echinoderms,Echinoderms
-Egg,Other,Eggs,Eggs,Eggs
-Egg (fish),Other,Fish_Egg,Eggs,Eggs
-Egg (oily),Other,Eggs,Eggs,Eggs
-Epilabidocera longipedata,Calanoids,Epilabidocera_amphrites,Calanoids_Large,Calanoids
-Eucalanus,Calanoids,Eucalanus,Calanoids_Large,Calanoids
-Euphausiid calytopsis,Euphausiids,Euphausiidae_Calyptopis,Euphausiids,Other
-Euphausiid egg,Euphausiids,Euphausiidae_Eggs,Eggs,Eggs
-Euphausiid furcilia larvae,Euphausiids,Euphausiidae_Furcilia,Euphausiids,Other
-Euphausiid nauplius,Euphausiids,Euphausiidae_Nauplii,Euphausiids,Other
-Euphysa,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Evadne,Other,Evadne,Cladocerans,Cladocerans
-Evadne sp.,Other,Evadne,Cladocerans,Cladocerans
-Fabia subquadrata zoea,Decapods,Fabia_subquadrata_Zoea,Decapods,Decapods
-Fish egg,Other,Fish_Egg,Eggs,Eggs
-Flatworm,Other,Parasite,Parasite,Other
-Gammarid,Other,Gammarida,Amphipods,Other
-Gastropod,Other,Gastropoda,Gastropods,Other
-Gastropod egg,Other,Gastropoda,Eggs,Eggs
-Gastropod veliger,Other,Gastropoda,Gastropods,Other
-Grapsidae,Decapods,Grapsidae_Larvae,Decapods,Decapods
-Halimedusa typus,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Halitholus,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Harpacticoid,Harpacticoids,Harpacticoida,Harpacticoids,Other
-Harpacticoid spp,Harpacticoids,Harpacticoida,Harpacticoids,Other
-Hippolytidae zoea,Decapods,Thoridae_Zoea,Decapods,Decapods
-Hydromedusae,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Hydrozoan,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Hyperiid (themisto),Other,Themisto_pacifica,Amphipods,Other
-Hyperiid amphipod,Other,Hyperiidae,Amphipods,Other
-Leptomedusae,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Leuckartiara,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Leuckartiara spp,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Majidae,Decapods,Oregoniidae_Larvae,Decapods,Decapods
-Metridia,Calanoids,Metridia,Calanoids_Large,Calanoids
-Microsetella,Harpacticoids,Harpacticoida,Harpacticoids,Other
-Nauplius Larva,Other,Balanomorpha_Nauplii,Barnacles,Barnacles
-Oikopleura,Larvaceans,Oikopleura,Larvaceans,Larvaceans
-Oikopleura sp.,Larvaceans,Oikopleura,Larvaceans,Larvaceans
-Oithona,Cyclopoids,Oithona,Cyclopoids,Other
-Oncaea,Cyclopoids,Oncaeidae,Cyclopoids,Other
-Pandalidae,Decapods,Pandalidae_Larvae,Decapods,Decapods
-Pandeidae,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Paracalanus,Calanoids,Paracalanus,Calanoids_Small,Calanoids
-Paracalanus parvus,Calanoids,Paracalanus,Calanoids_Small,Calanoids
-Pinnotheridae,Decapods,Pinnotheridae_Larvae,Decapods,Decapods
-Pleurobrachiidae,Gelatinous,Ctenophora,Gelatinous,Gelatinous
-Pleuronectidae (fish),Other,Actinopterygii_Larvae,Fish,Other
-Pleuronectidae (Hippoglossus stenolepis?),Other,Actinopterygii,Fish,Other
-Pluteus Larva,Other,Echinodermata,Echinoderms,Echinoderms
-Podon,Other,Podon,Cladocerans,Cladocerans
-Polychaete (spionid nectochaete),Other,Polychaeta,Polychaetes,Other
-Polychaete trocophore,Other,Polychaeta,Polychaetes,Other
-Polyp,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Porcellanidae,Decapods,Porcellanidae_Larvae,Decapods,Decapods
-Pseudocalanus,Calanoids,Pseudocalanus,Calanoids_Small,Calanoids
-Sarsia,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Siphonophore,Gelatinous,Siphonophore,Gelatinous,Gelatinous
-Siphonophore pneumatophore,Gelatinous,Siphonophore,Gelatinous,Gelatinous
-Spionidae,Other,Polychaeta,Polychaetes,Other
-Syllidae,Other,Polychaeta,Polychaetes,Other
-Tortanus,Calanoids,Tortanus,Calanoids_Small,Calanoids
-Tortanus copedite,Calanoids,Tortanus,Calanoids_Small,Calanoids
-Trochophore Larva,Other,Polychaeta,Polychaetes,Other
-Trocophore,Other,Polychaeta,Polychaetes,Other
-Veliger Larva,Other,Gastropoda,Gastropods,Other
-Amphinema platyhedos,Gelatinous,Cnidaria,Gelatinous,Gelatinous
-Barnacle nauplius,Other,Balanomorpha_Nauplii,Barnacles,Barnacles
-chaetognath,Chaetognath,Chaetognatha,Chaetognath,Chaetognaths
-Eplabidocera longipedata,Calanoids,Epilabidocera_amphrites,Calanoids_Large,Calanoids
+old_category,new_category,zoop_category*,zoop_category_general,temp_category,temp_temp_category
+Acartia,Calanoids,Acartia,Calanoids_Small,Calanoids,Calanoids
+Aequorea victoria,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Aetidius divergens,Calanoids,Aetideus_divergens,Calanoids_Small,Calanoids,Calanoids
+Aglantha digitale,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Amphinema platytiedos,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Amphipod,Other,Gammarida,Amphipods,Other,Amphipods
+Annatiara affinis,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Anomuran,Decapods,Anomura_Zoea,Decapods,Decapods,Decapods
+Barnacle Nauplius,Other,Balanomorpha_Nauplii,Barnacles,Barnacles,Barnacles
+Bivalve veliger,Other,Bivalvia_Veliger,Bivalves,Other,Other
+Bryozoa,Other,Bryozoa,Bryozoa,Other,Other
+Calanoid Copepod,Calanoids,Calanoida,Calanoids_Small,Calanoids,Calanoids
+Calanus copedite,Calanoids,Copepodite,Calanoids_Small,Calanoids,Calanoids
+Calanus marshallae,Calanoids,Calanus_marshallae,Calanoids_Large,Calanoids,Calanoids
+Calanus pacificus,Calanoids,Calanus_pacificus,Calanoids_Large,Calanoids,Calanoids
+Caligus,Other,Parasite,Parasite,Other,Other
+Callianassidae zoea,Decapods,Callianassidae_Zoea,Decapods,Decapods,Decapods
+Cancridae,Decapods,Cancridae_Megalopa,Decapods,Decapods,Decapods
+Cancridae megalopa,Decapods,Cancridae_Megalopa,Decapods,Decapods,Decapods
+Cancridae zoea,Decapods,Cancridae_Zoea,Decapods,Decapods,Decapods
+Centropages abdominalis,Calanoids,Centropages_abdominalis,Calanoids_Small,Calanoids,Calanoids
+Chaetognath,Chaetognath,Chaetognatha,Chaetognath,Chaetognaths,Chaetognaths
+Clytia,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Copepod nauplius,Calanoids,Calanoida_Nauplii,Calanoids_Small,Calanoids,Calanoids
+Copepodite,Calanoids,Copepodite,Calanoids_Small,Calanoids,Calanoids
+Corycaeus,Cyclopoids,Ditrichocorycaeus,Cyclopoids,Other,Cyclopoids
+Crangonidae,Decapods,Caridea_Larvae,Decapods,Decapods,Decapods
+Ctenophore,Gelatinous,Ctenophora,Gelatinous,Gelatinous,Gelatinous
+Cyclopoid Copepod,Cyclopoids,Cyclopoida,Cyclopoids,Other,Cyclopoids
+Cydippid Ctenophore,Gelatinous,Ctenophora,Gelatinous,Gelatinous,Gelatinous
+Cyphonautes Larva,Other,Bryozoa,Bryozoa,Other,Other
+Cyprid,Other,Balanomorpha_Cyprid,Barnacles,Barnacles,Barnacles
+Cyprid Larva,Other,Balanomorpha_Cyprid,Barnacles,Barnacles,Barnacles
+Decapoda,Decapods,Decapoda_Larvae,Decapods,Decapods,Decapods
+Diptera,Insects,Insects,Insects,Other,Insects
+Echinodermata,Other,Echinodermata,Echinoderms,Echinoderms,Echinoderms
+Egg,Other,Eggs,Eggs,Eggs,Eggs
+Egg (fish),Other,Fish_Egg,Eggs,Eggs,Eggs
+Egg (oily),Other,Eggs,Eggs,Eggs,Eggs
+Epilabidocera longipedata,Calanoids,Epilabidocera_amphrites,Calanoids_Large,Calanoids,Calanoids
+Eucalanus,Calanoids,Eucalanus,Calanoids_Large,Calanoids,Calanoids
+Euphausiid calytopsis,Euphausiids,Euphausiidae_Calyptopis,Euphausiids,Other,Euphausiids
+Euphausiid egg,Euphausiids,Euphausiidae_Eggs,Eggs,Eggs,Eggs
+Euphausiid furcilia larvae,Euphausiids,Euphausiidae_Furcilia,Euphausiids,Other,Euphausiids
+Euphausiid nauplius,Euphausiids,Euphausiidae_Nauplii,Euphausiids,Other,Euphausiids
+Euphysa,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Evadne,Other,Evadne,Cladocerans,Cladocerans,Cladocerans
+Evadne sp.,Other,Evadne,Cladocerans,Cladocerans,Cladocerans
+Fabia subquadrata zoea,Decapods,Fabia_subquadrata_Zoea,Decapods,Decapods,Decapods
+Fish egg,Other,Fish_Egg,Eggs,Eggs,Eggs
+Flatworm,Other,Parasite,Parasite,Other,Other
+Gammarid,Other,Gammarida,Amphipods,Other,Amphipods
+Gastropod,Other,Gastropoda,Gastropods,Other,Other
+Gastropod egg,Other,Gastropoda,Eggs,Eggs,Eggs
+Gastropod veliger,Other,Gastropoda,Gastropods,Other,Other
+Grapsidae,Decapods,Grapsidae_Larvae,Decapods,Decapods,Decapods
+Halimedusa typus,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Halitholus,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Harpacticoid,Harpacticoids,Harpacticoida,Harpacticoids,Other,Other
+Harpacticoid spp,Harpacticoids,Harpacticoida,Harpacticoids,Other,Other
+Hippolytidae zoea,Decapods,Thoridae_Zoea,Decapods,Decapods,Decapods
+Hydromedusae,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Hydrozoan,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Hyperiid (themisto),Other,Themisto_pacifica,Amphipods,Other,Other
+Hyperiid amphipod,Other,Hyperiidae,Amphipods,Other,Other
+Leptomedusae,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Leuckartiara,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Leuckartiara spp,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Majidae,Decapods,Oregoniidae_Larvae,Decapods,Decapods,Decapods
+Metridia,Calanoids,Metridia,Calanoids_Large,Calanoids,Calanoids
+Microsetella,Harpacticoids,Harpacticoida,Harpacticoids,Other,Other
+Nauplius Larva,Other,Balanomorpha_Nauplii,Barnacles,Barnacles,Barnacles
+Oikopleura,Larvaceans,Oikopleura,Larvaceans,Larvaceans,Larvaceans
+Oikopleura sp.,Larvaceans,Oikopleura,Larvaceans,Larvaceans,Larvaceans
+Oithona,Cyclopoids,Oithona,Cyclopoids,Other,Other
+Oncaea,Cyclopoids,Oncaeidae,Cyclopoids,Other,Other
+Pandalidae,Decapods,Pandalidae_Larvae,Decapods,Decapods,Decapods
+Pandeidae,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Paracalanus,Calanoids,Paracalanus,Calanoids_Small,Calanoids,Calanoids
+Paracalanus parvus,Calanoids,Paracalanus,Calanoids_Small,Calanoids,Calanoids
+Pinnotheridae,Decapods,Pinnotheridae_Larvae,Decapods,Decapods,Decapods
+Pleurobrachiidae,Gelatinous,Ctenophora,Gelatinous,Gelatinous,Gelatinous
+Pleuronectidae (fish),Other,Actinopterygii_Larvae,Fish,Other,Other
+Pleuronectidae (Hippoglossus stenolepis?),Other,Actinopterygii,Fish,Other,Other
+Pluteus Larva,Other,Echinodermata,Echinoderms,Echinoderms,Echinoderms
+Podon,Other,Podon,Cladocerans,Cladocerans,Cladocerans
+Polychaete (spionid nectochaete),Other,Polychaeta,Polychaetes,Other,Other
+Polychaete trocophore,Other,Polychaeta,Polychaetes,Other,Other
+Polyp,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Porcellanidae,Decapods,Porcellanidae_Larvae,Decapods,Decapods,Decapods
+Pseudocalanus,Calanoids,Pseudocalanus,Calanoids_Small,Calanoids,Calanoids
+Sarsia,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Siphonophore,Gelatinous,Siphonophore,Gelatinous,Gelatinous,Gelatinous
+Siphonophore pneumatophore,Gelatinous,Siphonophore,Gelatinous,Gelatinous,Gelatinous
+Spionidae,Other,Polychaeta,Polychaetes,Other,Other
+Syllidae,Other,Polychaeta,Polychaetes,Other,Other
+Tortanus,Calanoids,Tortanus,Calanoids_Small,Calanoids,Calanoids
+Tortanus copedite,Calanoids,Tortanus,Calanoids_Small,Calanoids,Calanoids
+Trochophore Larva,Other,Polychaeta,Polychaetes,Other,Other
+Trocophore,Other,Polychaeta,Polychaetes,Other,Other
+Veliger Larva,Other,Gastropoda,Gastropods,Other,Other
+Amphinema platyhedos,Gelatinous,Cnidaria,Gelatinous,Gelatinous,Gelatinous
+Barnacle nauplius,Other,Balanomorpha_Nauplii,Barnacles,Barnacles,Barnacles
+chaetognath,Chaetognath,Chaetognatha,Chaetognath,Chaetognaths,Chaetognaths
+Eplabidocera longipedata,Calanoids,Epilabidocera_amphrites,Calanoids_Large,Calanoids,Calanoids
