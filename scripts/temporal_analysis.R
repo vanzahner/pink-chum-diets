@@ -203,13 +203,11 @@ diets_w_labels <- cbind(ufn_names, simple_semsp_names, site_names, species_names
 #REDO WITH RAW BIOMASS DATA (DELETE ONE OF THESE OPTIONS LATAER)
 
 diets_filtered <- diets_w_labels %>%
-  filter(Total!=0 & !ufn_names %in% c("U2627", "U5143", #barnacles.
-                                      #"U5435", #mix up with acartia and jellies, fixed now!
-                                      "U5346", #nothing unusual, WHY IS IT LISTED HERE?
-                                      "U5319", #gammarid
-                                      "U5400", #empty, it's already filtered out
-                                      "U5404" #three lil'calanoids <0.1mg total
-    #"U2978", "U3501", "U5168", "U5282", "U5283", "U5285"
+  filter(Total!=0 & !ufn_names %in% c(#"U2627", "U5143", #barnacles.
+                                      #"U5346", #nothing unusual, WHY IS IT LISTED HERE?
+                                      #"U5319", #gammarid
+                                      #"U5404" #three lil'calanoids <0.1mg total
+    #"U2978", "U3501", "U5168", "U5282", "U5283", "U5285" #?????
     ))
 #*double check these later
 #filter those out with that have 0 biomass (see columns for future labels)
@@ -300,17 +298,17 @@ brewer.pal(n=11, "RdBu")
 #darker red and darker blue "#B2182B" "#2166AC"
 
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
-  geom_point(stat = "identity", aes(shape=species_names_filtered, fill=date_sites_filtered), size=3)+#, color = "black")+
+  geom_point(stat = "identity", aes(shape=species_names_filtered, fill=site_sp_names_filtered), size=3)+#, color = "black")+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 22), name="Species")+
-  scale_fill_manual(values=c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", "#FFFF99", "#B15928", "#CAB2D6", "#6A3D9A",
-                             "#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "grey50"),
-                    name="Date", guide="legend") + #for site and date groupings
-  #scale_fill_manual(values=c("#FB9A99", "#E31A1C", "#A6CEE3", "#1F78B4"),
-  #                    name="Site and Sp.", guide="legend") + #for site and sp groups
+  #scale_fill_manual(values=c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00", "#FFFF99", "#B15928", "#CAB2D6", "#6A3D9A",
+  #                           "#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "grey50"),
+  #                  name="Date", guide="legend") + #for site and date groupings
+  scale_fill_manual(values=c("#E31A1C","#FB9A99", "#1F78B4", "#A6CEE3"),
+                      name="Site and Sp.", guide="legend") + #for site and sp groups
   guides(fill= guide_legend(override.aes = list(shape=21)))+
   scale_colour_manual(values=c("#B2182B", "#053061"),
-                      name="Site and Sp.", guide="legend") + #for site and sp groups
+                      name="Site", guide="legend") + #for site and sp groups
   #scale_y_continuous(limits=c(-1,1),breaks=seq(-1,1,by=.5),name = "NMDS2, Proportion-based dissimilarity")+
   #scale_x_continuous(limits=c(-0.85,0.65),breaks=seq(-0.85,0.65,by=.5),name = "NMDS1, Proportion-based dissimilarity")+
   theme_bw()+
@@ -321,7 +319,7 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
         panel.grid.minor=element_blank(),panel.grid.major=element_blank()#,
         #legend.position = "none"
   ) + coord_fixed() +
-  annotate("text",x=-2.5,y=1.5,label="(stress = 0.15)",size=4, hjust = -0.1)
+  annotate("text",x=1,y=1.5,label="(stress = 0.15)",size=4, hjust = -0.1)
 #NMDS graph for the different sites!
 
 a
@@ -681,7 +679,7 @@ group_bio_mat %>%
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
   labs(title="2015 Temporal Diet Composition", x="Sample Site", y="% Biomass")
 
-ggsave("figs/temporal_prey_comp_15.png")
+ggsave(here("figs", "temporal", "temporal_prey_comp_15.png"))
 
 group_bio_mat %>%
   filter(!date_id %in% c("DI_Early_15", "JS_June_Early_15", "DI_June_Early_15",
@@ -699,7 +697,7 @@ group_bio_mat %>%
         title = element_text(size=16), plot.title = element_text(hjust=0.5))+
   labs(title="2016 Temporal Diet Composition", x=NULL, y="% Biomass")
 
-ggsave("figs/temporal_prey_comp_16.png")
+ggsave(here("figs", "temporal", "temporal_prey_comp_16.png"))
 
 ##### Frequency of occurrence #####
 

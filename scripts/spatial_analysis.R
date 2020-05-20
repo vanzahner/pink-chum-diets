@@ -36,11 +36,11 @@ spat_data_raw <- read_csv(here("processed", "spatial_pink_chum_diets.csv"))
 spat_diet_data <- spat_data_raw # no dig. calanoid size differentiation *
 
 site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
-spat_diet_data$sample_site <- factor(spat_diet_data$sample_site, levels = site_order)
+#spat_diet_data$sample_site <- factor(spat_diet_data$sample_site, levels = site_order)
 #reorder sites from the default of alphabetical to west to east, like on the map
 
 species_order <- c("Pink", "Chum")
-spat_diet_data$fish_species <- factor(spat_diet_data$fish_species, levels = species_order)
+#spat_diet_data$fish_species <- factor(spat_diet_data$fish_species, levels = species_order)
 #reorder species from the default of alphabetical to pink then chum, for graph reasons
 
 spat_data_mod <- spat_diet_data
