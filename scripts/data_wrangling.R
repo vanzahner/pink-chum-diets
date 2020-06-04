@@ -1,271 +1,150 @@
-# Data wrangling code for MSc thesis on juvenile pink and chum salmon diets #
+#updated data wrangling code:
 
-##### Diet data set up #####
+#last modified june 4, 2020
 
-library(readr)
-#read in files
+#purpose is: transform raw data into spatial and temporal data for analysis
+
+#load libraries:
 library(tidyverse)
-#data wrangling
+#multiple libraries (reading, manipulating and displaying data)
 library(here)
 #project workflow
+library(httr)
+#read in Hakai data urls
 
-here()
-#check working directory "msc_project"
+##### SALMON DATA #####
 
-raw_data <- read_csv(here("data","pink_chum_diets_raw_data.csv"))
-#read in raw data file
+# Read in salmon data files: 
 
-metadata <- read_csv(here("data","pink_chum_fish_info_filtered_data.csv"))
-#new version - edited hakai_id to be ufn (NEED DATA DICTIONARY AND CHANGELOG!*)
+diet_data <- read.csv(here("data","pink_chum_diets_raw_data.csv"), stringsAsFactors = FALSE)
+#read in juvenile pink and chum salmon diets raw data file
 
-seinedata <- read_csv(here("data","pink_chum_seine_raw_data.csv"))
-#seine data for lat long info (column names fixed, lat and long were mixed up!)
+fish_lab_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/fish_lab_data.csv"), stringsAsFactors = FALSE)  
 
-fishdata <- left_join(raw_data, metadata, by=c("ufn", "semsp_id"))
-#join tables to merge the meta data with the diet data!
+fish_field_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/fish_field_data.csv"), stringsAsFactors = FALSE) %>%
+  select(-species) #drop fish species column (it's redundant)
 
-fish <- left_join(fishdata, seinedata) %>%
-  filter(taxa_detail_calc!="Goop")
-#transformed dataset with all 312 fish (spatial + temporal)
+fish_meta_data <- left_join(fish_lab_data, fish_field_data, by="ufn")
+#combine fish meta data files (weights, lengths, etc.)
 
-temp_fish <- filter(fish, analysis!="Spatial")
-#make datafile for only temporal analysis fish
+seine_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/seine_data.csv"), stringsAsFactors = FALSE)
+#seine data for lat long info and seine ID to connect with zoops ?
 
-spat_fish <- filter(fish, analysis!="Temporal")
+# Join together salmon data files:
+
+intermediate_fish_data <- left_join(diet_data, fish_meta_data,
+                                    by=c("ufn", "semsp_id"))
+#join tables to merge the meta data with the diet data
+
+all_salmon_data <- left_join(intermediate_fish_data, seine_data, by="seine_id") %>%
+  filter(taxa_detail_calc!="Goop") #delete stomach goop, is not a food item
+#transformed (merged) dataset with all 312 fish (spatial + temporal)
+
+# Reorder salmon species as factors for creating graphs:
+
+species_order <- c("Pink", "Chum")
+all_salmon_data$fish_species <- factor(all_salmon_data$fish_species, levels = species_order)
+#reorder species from alphabetical to pink salmon first before chum salmon
+
+# Create individual dataframes for spatial and temporal chapters/analysis:
+
+spatial_info <- data.frame(site_id=c("D07", "D09", "D11", "J06", "J08", "J02"),
+                           survey_date=as.character(c("2016-06-16", "2016-06-14", "2016-06-08",
+                                                      "2016-06-11", "2016-06-10", "2016-06-09")), stringsAsFactors = FALSE)
+
+temporal_info <- data.frame(site_id=c("D07", "J07", "D07", "D07", "D07", "J07", "J07", "D07", "D07", "J07", "D07", "J07", "J07"),
+                            survey_date=c("2015-05-21", "2015-06-02", "2015-06-05", "2015-06-07", "2015-06-13", "2015-06-14", "2015-06-29",
+                                          "2016-05-19", "2016-06-03", "2016-06-03", "2016-06-16", "2016-06-20", "2016-07-05"), stringsAsFactors = FALSE)
+#create dataframes for filtering out spatial sites/dates and temporal too
+
+spat_fish_data <- semi_join(all_salmon_data, spatial_info, by=c("site_id", "survey_date"))
 #make datafile for only spatial analysis fish
 
-write_csv(spat_fish, here("processed", "spatial_pink_chum_diets.csv"))
-write_csv(temp_fish, here("processed", "temporal_pink_chum_diets.csv"))
+temp_fish_data <- semi_join(all_salmon_data, temporal_info, by=c("site_id", "survey_date"))
+#make datafile for only temporal analysis fish
+
+spat_site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
+temp_site_order <- c("D07", "J07")
+
+spat_fish_data$site_id <- factor(spat_fish_data$site_id, levels = spat_site_order)
+temp_fish_data$site_id <- factor(temp_fish_data$site_id, levels = temp_site_order)
+#reorder sites for spatial to be same as on the map; temporal = D07, J07
+
+# Save spatial and temporal salmon diet datasets for further analysis:
+
+write_csv(spat_fish_data, here("processed", "spatial_data", "spatial_pink_chum_diets.csv"))
+write_csv(temp_fish_data, here("processed", "temporal_data", "temporal_pink_chum_diets.csv"))
 #write csv files for initial transformation and saving of diet data
 
-#fish %>%
-#  filter(subsample=="N") %>% 
-#  group_by(ufn) %>%
-#  summarise(most=sum(prey_abund)) %>%
-#  View()
+##### ENVIRONMENTAL DATA #####
 
-##### Environmental data #####
+# Read in environmental data:
 
-ysi_data <- read_csv(here("data","ysi.csv"))
+ysi_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/ysi.csv"), stringsAsFactors = FALSE)
+#read in data file for temperature and salinity, paired with salmon surveys
 
-ysi_filtered <- ysi_data %>%
-  filter(site_id %in% c("D07", "J07", "D09", "D11", 
-                        "J02", "J06", "J08") & 
-           survey_date>"2015-05-20"&
-           survey_date<"2016-07-06")
-#need to filter out to only what's relevant to samples (then secchi next)
+survey_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/survey_data.csv"), stringsAsFactors = FALSE)
+#read in salmon survey data file for secchi measurements and other data
 
-survey_data <- read_csv(here("data","survey_data.csv"))
-#for secchi!
+# Combine datasets:
 
-fish_rename <- rename(fish, survey_id=jsp_survey_id)
+survey_ysi <- left_join(survey_data, ysi_data, by=c("survey_date", "site_id"))
+#combine survey data and ysi data
 
-survey_fish <- left_join(fish_rename, survey_data, by="survey_id")
+# Create individual dataframes for spatial and temporal chapters/analysis:
 
-survey_rename <- rename(survey_fish, site_id=sample_site)
+spat_envr_data <- semi_join(survey_ysi, spatial_info, by=c("site_id", "survey_date"))
+#make datafile for only spatial analysis ocean conditions
 
-survey_ysi <- left_join(survey_rename, ysi_filtered, by=c("survey_date", "site_id"))
+temp_envr_data <- semi_join(survey_ysi, temporal_info, by=c("site_id", "survey_date"))
+#make datafile for only temporal analysis ocean conditions
 
-survey_filtered <- survey_ysi %>%
-  select(site_id, sample_date, year, analysis, seine_id, date, work_area, site_id.x, survey_id,
-         sampling_week, gather_long.x, gather_lat.x, set_time, survey_date, site_id.y, precip, cloud_cover,
-         sea_state, wind_speed, wind_direction, secchi, gather_lat.y, gather_long.y, line_out_depth, collected,
-         temperature, salinity) %>%
-  unique()
+spat_envr_data$site_id <- factor(spat_envr_data$site_id, levels = spat_site_order)
+temp_envr_data$site_id <- factor(temp_envr_data$site_id, levels = temp_site_order)
+#reorder sites for spatial to be same as on the map; temporal = D07, J07
 
-survey_filtered$line_out_depth <- as.character(survey_filtered$line_out_depth)
+# Save spatial and temporal envr. datasets for further analysis:
 
-site_order <- c("J02", "J08", "J06", "D11", "D09", "D07", "J07")
-survey_filtered$site_id <- factor(survey_filtered$site_id, levels = site_order)
-#reorder sites from the default of alphabetical to west to east, like on the map
+write_csv(spat_envr_data, here("processed", "spatial_data", "spatial_survey_ysi.csv"))
+write_csv(temp_envr_data, here("processed", "temporal_data", "temporal_survey_ysi.csv"))
+#write csv files for initial transformation and saving of envr data
 
-survey_filtered %>%
-  filter(analysis!="Temporal") %>% 
-  ggplot(aes(site_id, secchi))+
-  geom_line(aes(group=line_out_depth))+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Secchi Depth (Spatial)")
-#line out depth exact same for 0 and 1 m.
+##### ZOOP DATA #####
 
-survey_filtered %>%
-  filter(line_out_depth==0) %>% 
-  filter(analysis!="Temporal") %>% 
-  ggplot(aes(site_id, temperature))+
-  geom_line(aes(group=NA))+
-  theme_bw(base_size = 12)+
-  geom_line(aes(y=salinity/2, x=site_id, group=NA), color="red")+
-  scale_y_continuous(sec.axis = sec_axis(~.*2, name= "Salinity (‰)"))+
-  theme(axis.title.y.right = element_text(color = "red"),
-        panel.grid=element_blank(),
-        axis.text.y.right = element_text(color="red"),
-        axis.text.y.left = element_text(color="black"),
-        axis.text.x = element_text(color="black"),
-        #axis.ticks.length = unit(-0.05, "in"),
-        #axis.text.y = element_text(margin=unit(c(0.3,0.3,0.3,0.3), "cm")), 
-        axis.ticks.x = element_blank())+
-  labs(y="Temperature (°C)", x="Site" #title="Temperature (Spatial)"
-       )
+# Read in zooplankton data:
 
-survey_filtered[18, 27] <- NA
-#delete erronous salinity value for D11 depth 1m (way fresher than the surface...)
+zoop_data <- read_csv(here("data", "zoop_data_combo.csv"))
+#read in data file that has both taxonomic and wet weight zoop data
 
-survey_filtered %>%
-  filter(line_out_depth==0) %>% 
-  filter(analysis!="Temporal") %>% 
-  ggplot(aes(site_id, salinity))+
-  geom_line(aes(group=line_out_depth#, color=line_out_depth
-                ))+
-  scale_y_continuous(limits = c(24.5, 32.5))+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Salinity (Spatial)")
+zoop_tax <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/zoop_tax.csv"), stringsAsFactors = FALSE)
+#read in zoop tax data to get tow ID
 
-##### Zoop data #####
+zoop_tow <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/zoop_tows.csv"), stringsAsFactors = FALSE)
+#read in zoop tow meta data to put it all together
 
-zoop_data_raw <- read_csv(here("data","zoop_comp_data_combined.csv"))
-#need to resolve issues about missing data (JSPK 1154, which is for July 5, 2016 J07)
+# Combine zoop data sets:
 
-zoop_data_ww <- read_csv(here("data","zoop_data_ww.csv"))
-#J02 (JSPK1118) has taxa data but no wet weight. ignore all ww since J02 most important
+tow_tax <- left_join(zoop_tax, zoop_tow, by="tow_id")
+#join Hakai github datasets together
 
-zoop_data_ww$site <- factor(zoop_data_ww$site, levels = site_order)
+all_zoop_data <- left_join(zoop_data, tow_tax, by="sample_id")
+#join together Hakai and processed data (filtering out whats needed)
 
-zoop_data_ww$sieve <- as.character(zoop_data_ww$sieve)
+# Create individual dataframes for spatial and temporal chapters/analysis:
 
-sieve_order <- c("250", "1000", "2000")
-zoop_data_ww$sieve <- factor(zoop_data_ww$sieve, levels = sieve_order)
+spat_zoop_data <- semi_join(all_zoop_data, spatial_info, by=c("site_id", "survey_date"))
+#make datafile for only spatial analysis zooplankton
 
-zoop_data_ww %>%
-  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751"
-                         #, "QPK747" #biomass super high from diatom bloom - erronous
-                         )) %>%
-  ggplot(aes(site, biomass))+
-  geom_boxplot(aes(color=sieve))+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Zoop Biomass (Spatial)")
+temp_zoop_data <- semi_join(all_zoop_data, temporal_info, by=c("site_id", "survey_date"))
+#make datafile for only temporal analysis zooplankton
 
-ggsave(here("figs", "spatial", "zoop_biomass_spatial.png"))
+spat_zoop_data$site_id <- factor(spat_zoop_data$site_id, levels = spat_site_order)
+temp_zoop_data$site_id <- factor(temp_zoop_data$site_id, levels = temp_site_order)
+#reorder sites for spatial to be same as on the map; temporal = D07, J07
 
-zoop_names <- read_csv(here("data","zoop_names.csv"))
+# Save spatial and temporal zoop datasets for further analysis:
 
-zoop_data_raw$site <- factor(zoop_data_raw$site, levels = site_order)
-
-zoop_data <- zoop_data_raw
-#make a copy before transforming further
-
-#for loop doesn't like data as factors
-zoop_data$labID <- as.character(zoop_data$labID) 
-zoop_names$old_category <- as.character(zoop_names$old_category)
-zoop_names$new_category <- as.character(zoop_names$new_category)
-#for loop that will go through all the organism names in the data spreadsheet 
-#and for each one it will go to the names spreadsheet and reassign the name accordingly
-for (n in zoop_names$old_category) {
-  zoop_data$labID[which(zoop_data$labID %in% n)] <- zoop_names$new_category[which(zoop_names$old_category == n)]
-}
-
-taxa_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids",# "Insects",
-                 "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognath", "Other")
-
-color_levels <- c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",# "#B2DF8A",
-                  "#33A02C", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
-#red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
-
-zoop_data$labID <- factor(zoop_data$labID, levels = taxa_levels)
-
-zoop_data %>%
-  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118",
-                         "QPK747")) %>%
-  ggplot(aes(site, abundance))+
-  geom_bar(aes(fill=labID), stat="identity", position="fill")+
-  scale_fill_manual(values=color_levels)+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Zoop Composition (Spatial)")
-
-ggsave(here("figs", "spatial", "zoop_comp_spatial.png"))
-
-zoop_data %>%
-  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118",
-                         "QPK747")) %>%
-  ggplot(aes(site, abundance))+
-  geom_bar(aes(fill=labID), stat="identity", position="fill")+
-  scale_fill_manual(values=color_levels)+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Zoop Composition (Spatial)")+
-  facet_wrap(~sieve)
-
-ggsave(here("figs", "spatial", "zoop_comp_size_spatial.png"))
-
-#Temporal zoops:
-
-zoop_data_ww %>%
-  filter(site %in% c("J07", "D07")) %>%
-  ggplot(aes(date_name, biomass))+
-  geom_boxplot(aes(color=sieve))+
-  facet_grid(year~site, scales="free_x")+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Zoop Biomass (Temporal)")
-#note: June_Early 2015 D07 has two samples (June 5 and 7 2015)
-# June 5th (the Chum date) has high gel. June 5th (pink date) has low gel.
-#neither has non-gelatinous 2000 um. unlike June_Mid 2016 J07, has gel+non.
-
-ggsave(here("figs", "temporal", "zoop_biomass_temporal.png"))
-
-zoop_temp <- zoop_data_raw
-#make another copy of data
-
-#temporal zoop category change:
-#for loop doesn't like data as factors
-zoop_temp$labID <- as.character(zoop_temp$labID) 
-zoop_names$old_category <- as.character(zoop_names$old_category)
-zoop_names$temp_category <- as.character(zoop_names$temp_category)
-#for loop that will go through all the organism names in the data spreadsheet 
-#and for each one it will go to the names spreadsheet and reassign the name accordingly
-for (n in zoop_names$old_category) {
-  zoop_temp$labID[which(zoop_temp$labID %in% n)] <- zoop_names$temp_category[which(zoop_names$old_category == n)]
-}
-
-temp_levels <- c("Calanoids", "Decapods", "Cladocerans", "Barnacles", "Echinoderms",
-                 "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other")
-
-color_temp <- c("#E31A1C", "#FDBF6F",
-                 "#E6AB02", "#A6761D", "#666666",
-                 #clad yell, #barn brown, #echin grey
-                 "#1B9E77", #Eggs teal 
-                 "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
-#red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
-
-#current diet groups:
-temp_levels <- c("Amphipods", "Cyclopoids", "Calanoids", "Decapods", "Euphausiids", "Cladocerans", "Barnacles", "Echinoderms",
-                 "Insects", "Harpacticoids", "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other", "Fish")
-
-color_temp <- c("#E7298A", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
-                "#E6AB02", "#A6761D", "#666666",
-                #clad yell, #barn brown, #echin grey
-                "#B2DF8A", "#33A02C",
-                "#1B9E77", #Eggs teal 
-                "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A", "black")
-
-brewer.pal("Dark2", n=8)
-
-zoop_temp$labID <- factor(zoop_temp$labID, levels = temp_levels)
-
-zoop_temp %>%
-  filter(site %in% c("J07", "D07")) %>%
-  ggplot(aes(date_name, abundance))+
-  geom_bar(aes(fill=labID), stat="identity", position="fill")+
-  scale_fill_manual(values=color_temp)+
-  facet_grid(year~site, scales="free_x")+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Zoop Composition (Temporal)")
-
-ggsave(here("figs", "temporal", "zoop_comp_temporal.png"))
-#looks hella ugly though. match up with diet composition groups later!
-
-
+write_csv(spat_zoop_data, here("processed", "spatial_data", "spatial_zoop_data.csv"))
+write_csv(temp_zoop_data, here("processed", "temporal_data", "temporal_zoop_data.csv"))
+#write csv files for initial transformation and saving of zoop data
 

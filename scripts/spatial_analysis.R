@@ -1,5 +1,27 @@
 # Spatial analysis code for MSc thesis on juvenile pink and chum salmon diets #
 
+#note: updated raw data to be survey_date and site_id
+#instead of sample_site and sample_date * NEED TO UPDATE CODE
+
+#update envr+zoop code read in and analysis (then this'll be the graphs)
+survey_filtered %>%
+  filter(analysis!="Temporal") %>% 
+  ggplot(aes(site_id, secchi))+
+  geom_line(aes(group=line_out_depth))+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(title="Secchi Depth (Spatial)")
+#line out depth exact same for 0 and 1 m.
+
+survey_filtered %>%
+  filter(analysis!="Temporal") %>% 
+  ggplot(aes(site_id, secchi))+
+  geom_line(aes(group=line_out_depth))+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(title="Secchi Depth (Spatial)")
+#line out depth exact same for 0 and 1 m.
+
 ##### Set up (data; libraries) #####
 
 library(tidyverse)
@@ -435,6 +457,47 @@ gfi_summary <- spatial_gfi_data %>%
   group_by(fish_species, work_area
            ) %>%
   summarise(mean=mean(calc_gfi), median=median(calc_gfi), sd=sd(calc_gfi))
+
+zoop_data_ww %>%
+  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751"
+                         #, "QPK747" #biomass super high from diatom bloom - erronous
+  )) %>%
+  ggplot(aes(site, biomass))+
+  geom_boxplot(aes(color=sieve))+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(title="Zoop Biomass (Spatial)")
+
+zoop_names <- read_csv(here("data","zoop_names.csv"))
+
+#for loop doesn't like data as factors
+zoop_data$labID <- as.character(zoop_data$labID) 
+zoop_names$old_category <- as.character(zoop_names$old_category)
+zoop_names$new_category <- as.character(zoop_names$new_category)
+#for loop that will go through all the organism names in the data spreadsheet 
+#and for each one it will go to the names spreadsheet and reassign the name accordingly
+for (n in zoop_names$old_category) {
+  zoop_data$labID[which(zoop_data$labID %in% n)] <- zoop_names$new_category[which(zoop_names$old_category == n)]
+}
+
+taxa_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids",# "Insects",
+                 "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognath", "Other")
+
+color_levels <- c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",# "#B2DF8A",
+                  "#33A02C", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
+#red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
+
+zoop_data$labID <- factor(zoop_data$labID, levels = taxa_levels)
+
+zoop_data %>%
+  filter(sampleID %in% c("JSPK1122", "JSPK1123", "QPK734", "QPK751", "JSPK1118",
+                         "QPK747")) %>%
+  ggplot(aes(site, abundance))+
+  geom_bar(aes(fill=labID), stat="identity", position="fill")+
+  scale_fill_manual(values=color_levels)+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(title="Zoop Composition (Spatial)")
 
 ##### Niche Breadth? (filtered; full taxa data) #####
 
