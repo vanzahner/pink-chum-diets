@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified june 4, 2020
+#last modified june 5, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -9,72 +9,6 @@ library(tidyverse)
 #multiple libraries (reading, manipulating and displaying data)
 library(here)
 #project workflow
-library(httr)
-#read in Hakai data urls
-
-##### SALMON DATA #####
-
-# Read in salmon data files: 
-
-diet_data <- read.csv(here("data","pink_chum_diets_raw_data.csv"), stringsAsFactors = FALSE)
-#read in juvenile pink and chum salmon diets raw data file
-
-fish_lab_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/fish_lab_data.csv"), stringsAsFactors = FALSE)  
-
-fish_field_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/fish_field_data.csv"), stringsAsFactors = FALSE) %>%
-  select(-species) #drop fish species column (it's redundant)
-
-fish_meta_data <- left_join(fish_lab_data, fish_field_data, by="ufn")
-#combine fish meta data files (weights, lengths, etc.)
-
-seine_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/seine_data.csv"), stringsAsFactors = FALSE)
-#seine data for lat long info and seine ID to connect with zoops ?
-
-# Join together salmon data files:
-
-intermediate_fish_data <- left_join(diet_data, fish_meta_data,
-                                    by=c("ufn", "semsp_id"))
-#join tables to merge the meta data with the diet data
-
-all_salmon_data <- left_join(intermediate_fish_data, seine_data, by="seine_id") %>%
-  filter(taxa_detail_calc!="Goop") #delete stomach goop, is not a food item
-#transformed (merged) dataset with all 312 fish (spatial + temporal)
-
-# Reorder salmon species as factors for creating graphs:
-
-species_order <- c("Pink", "Chum")
-all_salmon_data$fish_species <- factor(all_salmon_data$fish_species, levels = species_order)
-#reorder species from alphabetical to pink salmon first before chum salmon
-
-# Create individual dataframes for spatial and temporal chapters/analysis:
-
-spatial_info <- data.frame(site_id=c("D07", "D09", "D11", "J06", "J08", "J02"),
-                           survey_date=as.character(c("2016-06-16", "2016-06-14", "2016-06-08",
-                                                      "2016-06-11", "2016-06-10", "2016-06-09")), stringsAsFactors = FALSE)
-
-temporal_info <- data.frame(site_id=c("D07", "J07", "D07", "D07", "D07", "J07", "J07", "D07", "D07", "J07", "D07", "J07", "J07"),
-                            survey_date=c("2015-05-21", "2015-06-02", "2015-06-05", "2015-06-07", "2015-06-13", "2015-06-14", "2015-06-29",
-                                          "2016-05-19", "2016-06-03", "2016-06-03", "2016-06-16", "2016-06-20", "2016-07-05"), stringsAsFactors = FALSE)
-#create dataframes for filtering out spatial sites/dates and temporal too
-
-spat_fish_data <- semi_join(all_salmon_data, spatial_info, by=c("site_id", "survey_date"))
-#make datafile for only spatial analysis fish
-
-temp_fish_data <- semi_join(all_salmon_data, temporal_info, by=c("site_id", "survey_date"))
-#make datafile for only temporal analysis fish
-
-spat_site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
-temp_site_order <- c("D07", "J07")
-
-spat_fish_data$site_id <- factor(spat_fish_data$site_id, levels = spat_site_order)
-temp_fish_data$site_id <- factor(temp_fish_data$site_id, levels = temp_site_order)
-#reorder sites for spatial to be same as on the map; temporal = D07, J07
-
-# Save spatial and temporal salmon diet datasets for further analysis:
-
-write_csv(spat_fish_data, here("processed", "spatial_data", "spatial_pink_chum_diets.csv"))
-write_csv(temp_fish_data, here("processed", "temporal_data", "temporal_pink_chum_diets.csv"))
-#write csv files for initial transformation and saving of diet data
 
 ##### ENVIRONMENTAL DATA #####
 
@@ -98,10 +32,6 @@ spat_envr_data <- semi_join(survey_ysi, spatial_info, by=c("site_id", "survey_da
 
 temp_envr_data <- semi_join(survey_ysi, temporal_info, by=c("site_id", "survey_date"))
 #make datafile for only temporal analysis ocean conditions
-
-spat_envr_data$site_id <- factor(spat_envr_data$site_id, levels = spat_site_order)
-temp_envr_data$site_id <- factor(temp_envr_data$site_id, levels = temp_site_order)
-#reorder sites for spatial to be same as on the map; temporal = D07, J07
 
 # Save spatial and temporal envr. datasets for further analysis:
 
@@ -147,4 +77,68 @@ temp_zoop_data$site_id <- factor(temp_zoop_data$site_id, levels = temp_site_orde
 write_csv(spat_zoop_data, here("processed", "spatial_data", "spatial_zoop_data.csv"))
 write_csv(temp_zoop_data, here("processed", "temporal_data", "temporal_zoop_data.csv"))
 #write csv files for initial transformation and saving of zoop data
+
+##### SALMON DATA #####
+
+#data relationships:
+#diet and lab data, connect by ufn (important for metadata, not connecting)
+#diet/lab and field data, connect by ufn, adds seine_id
+#diet/lab/field and seine data, connect by seine_id, adds survey_id
+#diet/lab/field/seine and survey data, connect by survey_id
+#connecting them all together gets site_id and survey_date (all metadata)
+
+# Read in salmon data files: 
+
+diet_data <- read.csv(here("data","pink_chum_diets_raw_data.csv"), stringsAsFactors = FALSE)
+#read in juvenile pink and chum salmon diets raw data file
+
+fish_lab_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/fish_lab_data.csv"), stringsAsFactors = FALSE)  
+
+fish_field_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/fish_field_data.csv"), stringsAsFactors = FALSE) %>%
+  select(-species) #drop fish species column (it's redundant)
+#unless column is renamed "fish_species" in Hakai data,
+#then fish_species can be deleted from raw diet dataset
+#since there's a conflicting species column regarding prey
+
+fish_meta_data <- left_join(fish_lab_data, fish_field_data, by="ufn")
+#combine fish meta data files (weights, lengths, etc.)
+
+seine_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/seine_data.csv"), stringsAsFactors = FALSE)
+#seine data for lat long info and seine ID to connect with zoops ?
+
+# Join together salmon data files:
+
+intermediate_fish_data <- left_join(diet_data, fish_meta_data,
+                                    by=c("ufn"))
+#join tables to merge the meta data with the diet data
+
+filter_salmon_data <- left_join(intermediate_fish_data, seine_data, by="seine_id") %>%
+  filter(taxa_detail_calc!="Goop")
+#transformed dataset - deleted stomach goop since it's not a food item
+
+all_salmon_data <- left_join(filter_salmon_data, survey_data, by=c("survey_id"))
+#dataset with all 312 fish (spatial + temporal)
+
+# Create individual dataframes for spatial and temporal chapters/analysis:
+
+spatial_info <- data.frame(site_id=c("D07", "D09", "D11", "J06", "J08", "J02"),
+                           survey_date=c("2016-06-16", "2016-06-14", "2016-06-08",
+                                         "2016-06-11", "2016-06-10", "2016-06-09"), stringsAsFactors = FALSE)
+
+temporal_info <- data.frame(site_id=c("D07", "J07", "D07", "D07", "D07", "J07", "J07", "D07", "D07", "J07", "D07", "J07", "J07"),
+                            survey_date=c("2015-05-21", "2015-06-02", "2015-06-05", "2015-06-07", "2015-06-13", "2015-06-14", "2015-06-29",
+                                          "2016-05-19", "2016-06-03", "2016-06-03", "2016-06-16", "2016-06-20", "2016-07-05"), stringsAsFactors = FALSE)
+#create dataframes for filtering out spatial sites/dates and temporal too
+
+spat_fish_data <- semi_join(all_salmon_data, spatial_info, by=c("site_id", "survey_date"))
+#make datafile for only spatial analysis fish
+
+temp_fish_data <- semi_join(all_salmon_data, temporal_info, by=c("site_id", "survey_date"))
+#make datafile for only temporal analysis fish
+
+# Save spatial and temporal salmon diet datasets for further analysis:
+
+write_csv(spat_fish_data, here("processed", "spatial_data", "spatial_pink_chum_diets.csv"))
+write_csv(temp_fish_data, here("processed", "temporal_data", "temporal_pink_chum_diets.csv"))
+#write csv files for initial transformation and saving of diet data
 
