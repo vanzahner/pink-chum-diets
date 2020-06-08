@@ -40,6 +40,9 @@ spat_envr_data$site_id <- factor(spat_envr_data$site_id, levels = spat_site_orde
 
 
 
+spat_zoop_data$site_id <- factor(spat_zoop_data$site_id, levels = spat_site_order)
+#reorder sites for spatial to be same as on the map; temporal = D07, J07
+
 ##### SALMON DATA PREP #####
 
 # Read in main data file for spatial diets:

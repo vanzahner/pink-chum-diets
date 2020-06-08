@@ -68,10 +68,6 @@ spat_zoop_data <- semi_join(all_zoop_data, spatial_info, by=c("site_id", "survey
 temp_zoop_data <- semi_join(all_zoop_data, temporal_info, by=c("site_id", "survey_date"))
 #make datafile for only temporal analysis zooplankton
 
-spat_zoop_data$site_id <- factor(spat_zoop_data$site_id, levels = spat_site_order)
-temp_zoop_data$site_id <- factor(temp_zoop_data$site_id, levels = temp_site_order)
-#reorder sites for spatial to be same as on the map; temporal = D07, J07
-
 # Save spatial and temporal zoop datasets for further analysis:
 
 write_csv(spat_zoop_data, here("processed", "spatial_data", "spatial_zoop_data.csv"))
@@ -80,7 +76,7 @@ write_csv(temp_zoop_data, here("processed", "temporal_data", "temporal_zoop_data
 
 ##### SALMON DATA #####
 
-#data relationships:
+# Data relationships:
 #diet and lab data, connect by ufn (important for metadata, not connecting)
 #diet/lab and field data, connect by ufn, adds seine_id
 #diet/lab/field and seine data, connect by seine_id, adds survey_id
@@ -106,14 +102,34 @@ fish_meta_data <- left_join(fish_lab_data, fish_field_data, by="ufn")
 seine_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/seine_data.csv"), stringsAsFactors = FALSE)
 #seine data for lat long info and seine ID to connect with zoops ?
 
+# Modify diet data to include an automatically calculated prey category:
+
+updated_diet_data <- diet_data %>%
+  mutate(taxa_info=(if_else((species==""),
+                    (if_else((genus==""),
+                    (if_else((family==""),
+                    (if_else((infraorder==""),
+                    (if_else((suborder==""),
+                    (if_else((order==""),
+                    (if_else((subclass==""),
+                    (if_else((class==""),
+                    (if_else((subphylum==""),
+                    (if_else((phylum==""),
+                    kingdom, phylum)), subphylum)), class)), subclass)),
+                    order)), suborder)), infraorder)), family)), genus)),
+                    paste(genus, species, sep="_"))),
+         prey_info = (ifelse((life_stage==""), taxa_info,
+                             paste(taxa_info, life_stage, sep="_")))) %>%
+  filter(prey_info!="Goop") #delete stomach goop, it's not a prey item
+#use taxonomic columns to get a final prey column of taxa + life stage
+
 # Join together salmon data files:
 
-intermediate_fish_data <- left_join(diet_data, fish_meta_data,
+intermediate_fish_data <- left_join(updated_diet_data, fish_meta_data,
                                     by=c("ufn"))
 #join tables to merge the meta data with the diet data
 
-filter_salmon_data <- left_join(intermediate_fish_data, seine_data, by="seine_id") %>%
-  filter(taxa_detail_calc!="Goop")
+filter_salmon_data <- left_join(intermediate_fish_data, seine_data, by="seine_id")
 #transformed dataset - deleted stomach goop since it's not a food item
 
 all_salmon_data <- left_join(filter_salmon_data, survey_data, by=c("survey_id"))

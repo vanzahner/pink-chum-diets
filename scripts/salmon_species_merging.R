@@ -1,6 +1,7 @@
 # Merging pink and chum diet dataset with sockeye diet dataset!
 
 library(tidyverse)
+library(here)
 
 sockeye_diets <- read_csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/sample_results/sockeye_diets.csv"))
 #read in sockeye diet data
@@ -17,15 +18,14 @@ sockeye_filtered <- select(sockeye_diets, -c(sample_int, dry_content_w,
                                              length_corr))
 #delete columns that aren't needed for merging
 
-sockeye_rename <- rename(sockeye_filtered, stom_proc_date=sam_proc_date,
-                         food_weight_raw=wet_content_w,
-                         food_weight_corr=corrected_ww,
-                         species=species_1,
-                         digestion_state=DI,
-                         size_class=size,
-                         length_ave=length_avg,
-                         prey_weight_raw=group_weight,
-                         prey_weight_corr=corrected_weight)
+sockeye_rename <- rename(sockeye_filtered, stom_proc_date = sam_proc_date,
+                         food_weight_raw = wet_content_w,
+                         food_weight_corr = corrected_ww,
+                         species = species_1,
+                         digestion_state = DI,
+                         size_class = size,
+                         prey_weight_raw = group_weight,
+                         prey_weight_corr = corrected_weight)
 #rename other columns that need to be merged
 
 sockeye_data <- mutate(sockeye_rename, processor="SJ", fish_species="Sockeye")
@@ -35,8 +35,13 @@ pink_chum_data <- select(pink_chum_diets, -c(microscope_hours,
                                              stom_weight_full,
                                              stom_weight_empty)) %>%
   mutate(processor="VF")
-#delete useless columns that aren't needed, add processor info
+#delete useless columns that aren't needed, add that processor was Vanessa
 
-pink_chum_sockeye_diets <- left_join(pink_chum_data, sockeye_data)
+pink_chum_data$stom_proc_date <- as.character(pink_chum_data$stom_proc_date)
+#convert processing date to character to merge with sockeye data
+
+pink_chum_sockeye_diets <- full_join(pink_chum_data, sockeye_data)
 #final raw diet data with the three species of salmon merged together! :)
 
+write_csv(pink_chum_sockeye_diets, here("processed", "pink_chum_sockeye_diets.csv"))
+#save it as a csv (can save to Hakai Github - or can keep 2 diff. datafiles)

@@ -3,6 +3,18 @@
 #note: updated raw data to be survey_date and site_id
 #instead of sample_site and sample_date * NEED TO UPDATE CODE
 
+# THIS IS HOW TO UPDATE TO PREY GROUPS WITHOUT NEEDING A CSV FILE :)
+simpler_data <- updated_diet_data %>%
+  mutate(prey_group=if_else(order=="Cyclopoida", "Cyclopoids",
+                            if_else(order=="Calanoida", "Calanoids",
+                                    if_else(order=="Decapoda", "Decapods",
+                                            if_else(family=="Euphausiidae", "Euphausiids",
+                                                    if_else(class=="Insecta" | class=="Arachnida", "Insects",
+                                                            if_else(order=="Harpacticoida", "Harpacticoids",
+                                                                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Gelatinous",
+                                                                            if_else(genus=="Oikopleura", "Larvaceans",
+                                                                                    if_else(class=="Sagittoidea", "Chaetognaths", "Other"))))))))))
+
 #update envr+zoop code read in and analysis (then this'll be the graphs)
 survey_filtered %>%
   filter(analysis!="Temporal") %>% 
