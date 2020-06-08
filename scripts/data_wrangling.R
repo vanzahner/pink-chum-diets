@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified june 5, 2020
+#last modified june 8, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -27,6 +27,15 @@ survey_ysi <- left_join(survey_data, ysi_data, by=c("survey_date", "site_id"))
 
 # Create individual dataframes for spatial and temporal chapters/analysis:
 
+spatial_info <- data.frame(site_id=c("D07", "D09", "D11", "J06", "J08", "J02"),
+                           survey_date=c("2016-06-16", "2016-06-14", "2016-06-08",
+                                         "2016-06-11", "2016-06-10", "2016-06-09"), stringsAsFactors = FALSE)
+
+temporal_info <- data.frame(site_id=c("D07", "J07", "D07", "D07", "D07", "J07", "J07", "D07", "D07", "J07", "D07", "J07", "J07"),
+                            survey_date=c("2015-05-21", "2015-06-02", "2015-06-05", "2015-06-07", "2015-06-13", "2015-06-14", "2015-06-29",
+                                          "2016-05-19", "2016-06-03", "2016-06-03", "2016-06-16", "2016-06-20", "2016-07-05"), stringsAsFactors = FALSE)
+#create dataframes for filtering out spatial sites/dates and temporal too
+
 spat_envr_data <- semi_join(survey_ysi, spatial_info, by=c("site_id", "survey_date"))
 #make datafile for only spatial analysis ocean conditions
 
@@ -43,7 +52,7 @@ write_csv(temp_envr_data, here("processed", "temporal_data", "temporal_survey_ys
 
 # Read in zooplankton data:
 
-zoop_data <- read_csv(here("data", "zoop_data_combo.csv"))
+zoop_data <- read_csv(here("data", "zoop_raw_data_ww_taxa.csv"))
 #read in data file that has both taxonomic and wet weight zoop data
 
 zoop_tax <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/zoop_tax.csv"), stringsAsFactors = FALSE)
@@ -51,6 +60,10 @@ zoop_tax <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-d
 
 zoop_tow <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/zoop_tows.csv"), stringsAsFactors = FALSE)
 #read in zoop tow meta data to put it all together
+
+# Update taxa information using taxonomic columns:
+
+# RESUME HERE AFTER MEETINGS! COPY AND PASTE IF ELSE FUNCTION :)
 
 # Combine zoop data sets:
 
@@ -136,15 +149,6 @@ all_salmon_data <- left_join(filter_salmon_data, survey_data, by=c("survey_id"))
 #dataset with all 312 fish (spatial + temporal)
 
 # Create individual dataframes for spatial and temporal chapters/analysis:
-
-spatial_info <- data.frame(site_id=c("D07", "D09", "D11", "J06", "J08", "J02"),
-                           survey_date=c("2016-06-16", "2016-06-14", "2016-06-08",
-                                         "2016-06-11", "2016-06-10", "2016-06-09"), stringsAsFactors = FALSE)
-
-temporal_info <- data.frame(site_id=c("D07", "J07", "D07", "D07", "D07", "J07", "J07", "D07", "D07", "J07", "D07", "J07", "J07"),
-                            survey_date=c("2015-05-21", "2015-06-02", "2015-06-05", "2015-06-07", "2015-06-13", "2015-06-14", "2015-06-29",
-                                          "2016-05-19", "2016-06-03", "2016-06-03", "2016-06-16", "2016-06-20", "2016-07-05"), stringsAsFactors = FALSE)
-#create dataframes for filtering out spatial sites/dates and temporal too
 
 spat_fish_data <- semi_join(all_salmon_data, spatial_info, by=c("site_id", "survey_date"))
 #make datafile for only spatial analysis fish

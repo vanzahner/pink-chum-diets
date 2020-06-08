@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified june 5, 2020
+#last modified june 8, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -25,7 +25,7 @@ library(here)
 
 # Read in data file:
 
-spat_data_raw <- read_csv(here("processed", "spatial_data", "spatial_survey_ysi.csv"))
+spat_envr_data <- read_csv(here("processed", "spatial_data", "spatial_survey_ysi.csv"))
 #read in spatial environmental data
 
 # Reorder spatial sites from alphabetical to migration route order:
@@ -34,14 +34,44 @@ spat_site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
 
 spat_envr_data$site_id <- factor(spat_envr_data$site_id, levels = spat_site_order)
 
+# Graph for environmental data:
 
+spat_envr_data %>%
+  filter(line_out_depth==0) %>% 
+  ggplot(aes(site_id, temperature))+
+  geom_line(aes(group=NA))+
+  theme_bw(base_size = 12)+
+  geom_line(aes(y=salinity/2, x=site_id, group=NA), color="red")+
+  scale_y_continuous(sec.axis = sec_axis(~.*2, name= "Salinity (‰)"))+
+  theme(axis.title.y.right = element_text(color = "red"),
+        panel.grid=element_blank(),
+        axis.text.y.right = element_text(color="red"),
+        axis.text.y.left = element_text(color="black"),
+        axis.text.x = element_text(color="black"),
+        axis.ticks.x = element_blank())+
+  labs(y="Temperature (°C)", x="Site")
+#temperature and salinity graph combo
+
+ggsave(here("figs", "spatial_figs", "temp_salinity_spatial.png"))
 
 ##### ZOOP DATA #####
 
-
+spat_zoop_data <- read_csv(here("processed", "spatial_data", "spatial_zoop_data.csv"))
 
 spat_zoop_data$site_id <- factor(spat_zoop_data$site_id, levels = spat_site_order)
 #reorder sites for spatial to be same as on the map; temporal = D07, J07
+
+zoop_group_data <- spat_zoop_data %>%
+  mutate(prey_group=if_else(order=="Cyclopoida", "Cyclopoids",
+                    if_else(order=="Calanoida", "Calanoids",
+                    if_else(order=="Decapoda", "Decapods",
+                    if_else(family=="Euphausiidae", "Euphausiids",
+                    if_else(class=="Insecta" | class=="Arachnida", "Insects",
+                    if_else(order=="Harpacticoida", "Harpacticoids",
+                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Gelatinous",
+                    if_else(genus=="Oikopleura", "Larvaceans",
+                    if_else(class=="Sagittoidea", "Chaetognaths",
+                    "Other"))))))))))
 
 ##### SALMON DATA PREP #####
 

@@ -4,9 +4,9 @@
 
 # e.g. phylum, class, order, family, genus, species, life stage as columns
 
-# this code combines genus and species if given and life stage if given
+# this code combines genus and species if given, and life stage if given
 
-# if there's adult life stages, you can leave it blank
+# if there's adult life stages, you can leave it blank as a default
 
 # if you have "digested food" or objects or etc, don't put in species column
 
@@ -44,5 +44,6 @@ simpler_data <- updated_diet_data %>%
                     if_else(order=="Harpacticoida", "Harpacticoids",
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Gelatinous",
                     if_else(genus=="Oikopleura", "Larvaceans",
-                    if_else(class=="Sagittoidea", "Chaetognaths", "Other"))))))))))
+                    if_else(class=="Sagittoidea", "Chaetognaths",
+                            "Other"))))))))))
 
