@@ -50,27 +50,50 @@ write_csv(temp_envr_data, here("processed", "temporal_data", "temporal_survey_ys
 
 ##### ZOOP DATA #####
 
+# Data relationships for zooplankton:
+#weight and comp data, connect by sample_id and sieve (merges 2 datasets)
+#weight/comp  and tax data, connect by sample_id, adds tow_id
+#weight/comp/tax and tow data, connect by tow_id
+#connecting them all together gets site_id and survey_date (all metadata)
+
 # Read in zooplankton data:
 
-zoop_data <- read_csv(here("data", "zoop_raw_data_ww_taxa.csv"))
-#read in data file that has both taxonomic and wet weight zoop data
+zoop_ww_data <- read.csv(here("data", "zoop_wet_weight_raw_data.csv"), stringsAsFactors = FALSE)
+#read in data file that has size fractionated wet weight zoop data
 
-zoop_tax <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/zoop_tax.csv"), stringsAsFactors = FALSE)
-#read in zoop tax data to get tow ID
+zoop_comp_data <- read.csv(here("data", "zoop_taxonomic_raw_data.csv"), stringsAsFactors = FALSE)
+#read in data file that has zooplankton taxonomic composition data
+
+zoop_tax_metadata <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/zoop_tax.csv"), stringsAsFactors = FALSE)
+#read in zoop tax meta data to get tow ID
 
 zoop_tow <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/zoop_tows.csv"), stringsAsFactors = FALSE)
 #read in zoop tow meta data to put it all together
 
-# Update taxa information using taxonomic columns:
+# Update zoop taxa information using taxonomic columns:
 
-# RESUME HERE AFTER MEETINGS! COPY AND PASTE IF ELSE FUNCTION :)
+zoop_taxa_data <- zoop_comp_data %>%
+  mutate(taxa_info=(if_else(species=="",
+                   if_else(genus=="",
+                   if_else(family=="",
+                   if_else(order=="",
+                   if_else(class=="",
+                           phylum, class),
+                    order), family), genus),
+                    paste(genus, species, sep="_"))),
+         prey_info = (ifelse((life_stage==""), taxa_info,
+                             paste(taxa_info, life_stage, sep="_"))))
+#use taxonomic columns to get a final zoop column of taxa + life stage
 
 # Combine zoop data sets:
 
-tow_tax <- left_join(zoop_tax, zoop_tow, by="tow_id")
-#join Hakai github datasets together
+intermediate_zoop_data <- left_join(zoop_taxa_data, zoop_ww_data, by=c("sample_id", "sieve"))
+#join two zooplankton data sets together
 
-all_zoop_data <- left_join(zoop_data, tow_tax, by="sample_id")
+tow_tax <- left_join(zoop_tax, zoop_tow, by="tow_id")
+#join two Hakai github meta data sets together
+
+all_zoop_data <- left_join(intermediate_zoop_data, tow_tax, by="sample_id")
 #join together Hakai and processed data (filtering out whats needed)
 
 # Create individual dataframes for spatial and temporal chapters/analysis:
@@ -89,7 +112,7 @@ write_csv(temp_zoop_data, here("processed", "temporal_data", "temporal_zoop_data
 
 ##### SALMON DATA #####
 
-# Data relationships:
+# Data relationships for salmon:
 #diet and lab data, connect by ufn (important for metadata, not connecting)
 #diet/lab and field data, connect by ufn, adds seine_id
 #diet/lab/field and seine data, connect by seine_id, adds survey_id

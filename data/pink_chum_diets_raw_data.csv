@@ -59,7 +59,7 @@ U3327,Chum,2018-07-26,4,189.3,141.8,31.4,48.356,25-50%,37.5,Animalia,Arthropoda,
 U3327,Chum,2018-07-26,4,189.3,141.8,31.4,48.356,25-50%,37.5,Animalia,Arthropoda,Crustacea,Malacostraca,Eumalacostraca,Euphausiacea,,,Euphausiidae,,,,,2,4.3,1.5,2.9,3,1.9,2.926,2 to 5,N,
 U3327,Chum,2018-07-26,4,189.3,141.8,31.4,48.356,25-50%,37.5,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,196,3.3,2,2.65,2,22.9,35.266,2 to 5,N,
 U3327,Chum,2018-07-26,4,189.3,141.8,31.4,48.356,25-50%,37.5,,,,,,,,,,Digested_food,,,,1,2.7,1.7,2.2,4,1.3,2.002,2 to 5,N,
-U3326,Chum,2018-07-26,1,295.4,295.4,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
+U3326,Chum,2018-07-26,1,295.4,295.4,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U3325,Chum,2018-07-27,4,324,236.7,30.1,46.354,25-50%,37.5,Animalia,Arthropoda,Crustacea,Branchiopoda,Diplostraca,Onychopoda,,,Podonidae,Pleopis,polyphemoides,,,1,0.4,0.4,0.4,1,0.1,0.154,<1,N,
 U3325,Chum,2018-07-27,4,324,236.7,30.1,46.354,25-50%,37.5,Chromista,Ochrophyta,Khakista,Bacillariophyceae,Coscinodiscophycidae,,,,,,,,,3,0.3,0.2,0.25,1,0.1,0.154,<1,N,
 U3325,Chum,2018-07-27,4,324,236.7,30.1,46.354,25-50%,37.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,marshallae,,,2,4.1,3.5,3.8,1,2.8,4.312,2 to 5,N,
@@ -84,7 +84,7 @@ U3502,Chum,2018-07-27,2,336.2,245.7,30.2,46.508,0-25%,12.5,Animalia,Cnidaria,,Hy
 U3502,Chum,2018-07-27,2,336.2,245.7,30.2,46.508,0-25%,12.5,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,206,3.3,2.4,2.85,2,25.5,39.27,2 to 5,N,
 U3502,Chum,2018-07-27,2,336.2,245.7,30.2,46.508,0-25%,12.5,Animalia,Mollusca,,Gastropoda,Heterobranchia,Pteropoda,,,,,,Veliger,,2,0.6,0.6,0.6,2,0.1,0.154,<1,N,
 U3502,Chum,2018-07-27,2,336.2,245.7,30.2,46.508,0-25%,12.5,Chromista,Ochrophyta,Khakista,Bacillariophyceae,Coscinodiscophycidae,,,,,,,,,1,0.2,0.2,0.2,1,0.1,0.154,<1,N,
-U2978,Chum,2018-07-27,3,205.7,175,0.4,0.616,0%,0,,,,,,,,,,Digested_food,,,,1,2.2,0.6,1.4,4,0.4,0.616,2 to 5,N,kinda empty stomach
+U2978,Chum,2018-07-27,3,205.7,175,0.4,0.616,0%,0,,,,,,,,,,Digested_food,,,,1,2.2,0.6,1.4,4,0.4,0.616,2 to 5,N,
 U3765,Pink,2018-07-30,4,194.9,160.1,13.9,21.406,0-25%,12.5,Chromista,Ochrophyta,Khakista,Bacillariophyceae,Coscinodiscophycidae,,,,,,,,,3,0.4,0.3,0.35,1,0.1,0.154,<1,N,
 U3765,Pink,2018-07-30,4,194.9,160.1,13.9,21.406,0-25%,12.5,Animalia,Mollusca,,Gastropoda,Heterobranchia,Pteropoda,,,,,,Veliger,,3,0.8,0.6,0.7,2,0.1,0.154,<1,N,
 U3765,Pink,2018-07-30,4,194.9,160.1,13.9,21.406,0-25%,12.5,Animalia,Annelida,,Polychaeta,Sedentaria,Spionida,Spioniformia,,Spionidae,,,Nectochaete,,1,1.5,1.5,1.5,1,0.1,0.154,1 to 2,N,
@@ -936,7 +936,7 @@ U4980,Chum,2019-01-01,2.5,294.1,157.5,91.2,140.448,50-75%,62.5,Animalia,Chordata
 U4980,Chum,2019-01-01,2.5,294.1,157.5,91.2,140.448,50-75%,62.5,,,,,,,,,,Goop,,,,1,1,0.5,0.75,4,7.7,11.858,<1,N,
 U4980,Chum,2019-01-01,2.5,294.1,157.5,91.2,140.448,50-75%,62.5,Animalia,Annelida,,Polychaeta,Sedentaria,Spionida,Spioniformia,,Spionidae,,,Nectochaete,,2,0.9,0.9,0.9,2,0.1,0.154,<1,N,
 U4980,Chum,2019-01-01,2.5,294.1,157.5,91.2,140.448,50-75%,62.5,Animalia,Arthropoda,Crustacea,Branchiopoda,Diplostraca,Onychopoda,,,Podonidae,Pleopis,polyphemoides,,,1,0.8,0.8,0.8,1,0.1,0.154,<1,N,
-U4979,Chum,2019-01-02,0.5,334.5,334.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,kinda empty stomach
+U4979,Chum,2019-01-02,0.5,334.5,334.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U1392,Pink,2019-01-02,7.5,161.9,69.9,40.8,62.832,25-50%,37.5,Chromista,Ochrophyta,Khakista,Bacillariophyceae,Coscinodiscophycidae,,,,,,,,,1,0.3,0.3,0.3,1,0.1,0.154,<1,N,
 U1392,Pink,2019-01-02,7.5,161.9,69.9,40.8,62.832,25-50%,37.5,Animalia,Mollusca,,Gastropoda,Heterobranchia,Pteropoda,,,,,,Egg,,8,0.7,0.4,0.55,1,0.1,0.154,<1,N,
 U1392,Pink,2019-01-02,7.5,161.9,69.9,40.8,62.832,25-50%,37.5,Animalia,Bryozoa,,,,,,,,,,Larvae,,5,0.7,0.5,0.6,1,0.1,0.154,<1,N,
@@ -1781,17 +1781,17 @@ U5277,Pink,2019-03-07,0.5,183.1,147.5,3.7,5.698,0-25%,12.5,Animalia,Arthropoda,C
 U5277,Pink,2019-03-07,0.5,183.1,147.5,3.7,5.698,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Cyclopoida,Ergasilida,,Oncaeidae,Triconia,conifera,,F,1,1.4,1.4,1.4,1,0.1,0.154,1 to 2,N,
 U5277,Pink,2019-03-07,0.5,183.1,147.5,3.7,5.698,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,,,,,,1,0.8,0.8,0.8,3,0.3,0.462,<1,N,
 U5277,Pink,2019-03-07,0.5,183.1,147.5,3.7,5.698,0-25%,12.5,,,,,,,,,,Digested_food,,,,1,1,0.8,0.9,4,0.1,0.154,<1,N,
-U5278,Pink,2019-03-08,0.5,393,393,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
+U5278,Pink,2019-03-08,0.5,393,393,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U5279,Pink,2019-03-08,0.5,276.1,264.8,1.8,2.772,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Harpacticoida,,,Harpacticidae,Harpacticus,,,,2,1.5,1.5,1.5,1,0.2,0.308,1 to 2,N,
 U5279,Pink,2019-03-08,0.5,276.1,264.8,1.8,2.772,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Pontellidae,Epilabidocera,longipedata,,,1,3.3,3.3,3.3,1,0.8,1.232,2 to 5,N,
 U5279,Pink,2019-03-08,0.5,276.1,264.8,1.8,2.772,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Centropagidae,Centropages,abdominalis,,F,1,2,2,2,1,0.1,0.154,1 to 2,N,
 U5279,Pink,2019-03-08,0.5,276.1,264.8,1.8,2.772,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,,,,,,1,0.8,0.8,0.8,2,0.1,0.154,<1,N,
 U5279,Pink,2019-03-08,0.5,276.1,264.8,1.8,2.772,0-25%,12.5,Animalia,Arthropoda,Crustacea,Ostracoda,,,,,,,,,,1,1.6,1.6,1.6,2,0.3,0.462,1 to 2,N,
 U5279,Pink,2019-03-08,0.5,276.1,264.8,1.8,2.772,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Aetideidae,Aetideus,divergens,,,1,1.9,1.9,1.9,1,0.3,0.462,1 to 2,N,
-U5280,Pink,2019-03-08,0.5,281.5,281.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
-U5281,Pink,2019-03-08,0.5,334.7,334.7,0,0,0%,0,Animalia,Arthropoda,Hexapoda,Insecta,,,,,,,,,,1,0.3,0.3,0.3,4,0,0,<1,N,kinda empty stomach
-U5282,Pink,2019-03-08,0.5,377.6,344.5,0.1,0.154,0%,0,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Harpacticoida,,,Harpacticidae,Harpacticus,,,,3,1.7,1.4,1.55,1,0.1,0.154,1 to 2,N,kinda empty stomach
-U5283,Pink,2019-03-08,0.5,344.3,344.3,0.1,0.154,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,kinda empty stomach
+U5280,Pink,2019-03-08,0.5,281.5,281.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
+U5281,Pink,2019-03-08,0.5,334.7,334.7,0,0,0%,0,Animalia,Arthropoda,Hexapoda,Insecta,,,,,,,,,,1,0.3,0.3,0.3,4,0,0,<1,N,
+U5282,Pink,2019-03-08,0.5,377.6,344.5,0.1,0.154,0%,0,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Harpacticoida,,,Harpacticidae,Harpacticus,,,,3,1.7,1.4,1.55,1,0.1,0.154,1 to 2,N,
+U5283,Pink,2019-03-08,0.5,344.3,344.3,0.1,0.154,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U5284,Pink,2019-03-08,0.5,228,199,1.8,2.772,0-25%,12.5,Animalia,Arthropoda,Crustacea,Malacostraca,Eumalacostraca,Amphipoda,Amphilochidea,Lysianassida,Cyphocarididae,Cyphocaris,challengeri,,,1,3.1,3.1,3.1,1,0.5,0.77,2 to 5,N,
 U5284,Pink,2019-03-08,0.5,228,199,1.8,2.772,0-25%,12.5,Animalia,Arthropoda,Crustacea,Malacostraca,Eumalacostraca,Euphausiacea,,,Euphausiidae,,,Furcilia,,1,1.6,1.6,1.6,2,0.1,0.154,1 to 2,N,
 U5284,Pink,2019-03-08,0.5,228,199,1.8,2.772,0-25%,12.5,Animalia,Arthropoda,Crustacea,Malacostraca,Eumalacostraca,Isopoda,,,,,,Juvenile,,1,1.2,1.2,1.2,1,0.1,0.154,1 to 2,N,
@@ -2315,17 +2315,17 @@ U5384,Pink,2019-04-17,11,377.9,200.6,134.6,207.284,50-75%,62.5,Animalia,Arthropo
 U5384,Pink,2019-04-17,11,377.9,200.6,134.6,207.284,50-75%,62.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Harpacticoida,,,Tisbidae,Tisbe,,,,2,1.1,0.9,1,1,0.1,0.154,<1,N,
 U5167,Chum,2019-04-19,0.5,146.9,125,1,1.54,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Thecostraca,Sessilia,Balanomorpha,,,,,Nauplii,,1,0.7,0.7,0.7,1,0.1,0.154,<1,N,
 U5167,Chum,2019-04-19,0.5,146.9,125,1,1.54,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,pacificus,,,2,2.6,2.6,2.6,1,0.7,1.078,2 to 5,N,
-U5168,Chum,2019-04-19,0.5,177.7,162.8,0.1,0.154,0%,0,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,2,2.8,2.8,2.8,2,0.1,0.154,2 to 5,N,kinda empty stomach
-U5169,Chum,2019-04-19,0.5,209.9,209.9,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
-U5170,Chum,2019-04-19,0.5,195.5,195.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
-U5162,Chum,2019-04-19,0.5,170.9,152,0.4,0.616,0-25%,12.5,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,1,2.8,2.8,2.8,2,0.1,0.154,2 to 5,N,kinda empty stomach
-U5162,Chum,2019-04-19,0.5,170.9,152,0.4,0.616,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Thecostraca,Sessilia,Balanomorpha,,Balanidae,Balanus,glandula,Cyprid,,1,0.8,0.8,0.8,1,0.1,0.154,<1,N,kinda empty stomach
-U5162,Chum,2019-04-19,0.5,170.9,152,0.4,0.616,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,pacificus,,,1,2.6,2.6,2.6,1,0.4,0.616,2 to 5,N,kinda empty stomach
-U5162,Chum,2019-04-19,0.5,170.9,152,0.4,0.616,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,,,,,,1,1.4,1.4,1.4,2,0.1,0.154,1 to 2,N,kinda empty stomach
+U5168,Chum,2019-04-19,0.5,177.7,162.8,0.1,0.154,0%,0,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,2,2.8,2.8,2.8,2,0.1,0.154,2 to 5,N,
+U5169,Chum,2019-04-19,0.5,209.9,209.9,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
+U5170,Chum,2019-04-19,0.5,195.5,195.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
+U5162,Chum,2019-04-19,0.5,170.9,152,0.4,0.616,0-25%,12.5,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,1,2.8,2.8,2.8,2,0.1,0.154,2 to 5,N,
+U5162,Chum,2019-04-19,0.5,170.9,152,0.4,0.616,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Thecostraca,Sessilia,Balanomorpha,,Balanidae,Balanus,glandula,Cyprid,,1,0.8,0.8,0.8,1,0.1,0.154,<1,N,
+U5162,Chum,2019-04-19,0.5,170.9,152,0.4,0.616,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,pacificus,,,1,2.6,2.6,2.6,1,0.4,0.616,2 to 5,N,
+U5162,Chum,2019-04-19,0.5,170.9,152,0.4,0.616,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,,,,,,1,1.4,1.4,1.4,2,0.1,0.154,1 to 2,N,
 U5163,Chum,2019-04-19,0.5,213.2,188.3,0.7,1.078,0-25%,12.5,Animalia,Arthropoda,Crustacea,Malacostraca,Eumalacostraca,Amphipoda,Senticaudata,Corophiida,Caprellidae,Caprella,laeviuscula,,,1,3.2,3.2,3.2,1,0.1,0.154,2 to 5,N,9 mm nematode outside stomach
 U5163,Chum,2019-04-19,0.5,213.2,188.3,0.7,1.078,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Aetideidae,Aetideus,divergens,,,2,1.8,1.5,1.65,1,0.6,0.924,1 to 2,N,
 U5163,Chum,2019-04-19,0.5,213.2,188.3,0.7,1.078,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Centropagidae,Centropages,abdominalis,,F,1,1.9,1.9,1.9,1,0.1,0.154,1 to 2,N,
-U5164,Chum,2019-04-22,0.5,324.4,324.4,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
+U5164,Chum,2019-04-22,0.5,324.4,324.4,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U5165,Chum,2019-04-22,0.5,194.5,170.6,0.9,1.386,0-25%,12.5,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,9,3.3,2.4,2.85,2,0.8,1.232,2 to 5,N,
 U5166,Chum,2019-04-22,0.5,284.6,240.7,0.5,0.77,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Paracalanidae,Paracalanus,parvus,,F,1,1,1,1,1,0.1,0.154,<1,N,
 U5166,Chum,2019-04-22,0.5,284.6,240.7,0.5,0.77,0-25%,12.5,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,7,6.7,3.3,5,2,1.9,2.926,2 to 5,N,
@@ -2573,8 +2573,8 @@ U5314,Pink,2019-05-14,3,265.2,241,3.1,4.774,0-25%,12.5,Animalia,Chordata,Tunicat
 U5314,Pink,2019-05-14,3,265.2,241,3.1,4.774,0-25%,12.5,Animalia,Mollusca,,Gastropoda,Heterobranchia,Pteropoda,,,,,,Veliger,,6,0.7,0.6,0.65,1,0.1,0.154,<1,N,
 U5314,Pink,2019-05-14,3,265.2,241,3.1,4.774,0-25%,12.5,Animalia,Mollusca,,Gastropoda,Heterobranchia,Pteropoda,,,,,,Veliger,,21,0.9,0.4,0.65,2,0.5,0.77,<1,N,
 U5314,Pink,2019-05-14,3,265.2,241,3.1,4.774,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,,,,,,1,0.6,0.6,0.6,2,0.1,0.154,<1,N,
-U5313,Pink,2019-05-16,1.5,275.5,275.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
-U5312,Pink,2019-05-16,1.5,243.1,243.1,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
+U5313,Pink,2019-05-16,1.5,275.5,275.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
+U5312,Pink,2019-05-16,1.5,243.1,243.1,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U5132,Chum,2019-05-16,1.5,369.8,295.8,16.4,25.256,0-25%,12.5,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,219,2.5,2,2.25,1,26.6,40.964,2 to 5,N,
 U5132,Chum,2019-05-16,1.5,369.8,295.8,16.4,25.256,0-25%,12.5,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,62,3.3,1.4,2.35,2,6.3,9.702,2 to 5,N,
 U5132,Chum,2019-05-16,1.5,369.8,295.8,16.4,25.256,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Thecostraca,Sessilia,Balanomorpha,,,,,Nauplii,,1,0.7,0.7,0.7,1,0.1,0.154,<1,N,
@@ -2970,7 +2970,7 @@ U5145,Chum,2019-06-10,1,203,138.3,32.7,50.358,0-25%,12.5,Animalia,Arthropoda,Cru
 U5145,Chum,2019-06-10,1,203,138.3,32.7,50.358,0-25%,12.5,Animalia,Chordata,Tunicata,Appendicularia,,Copelata,,,Oikopleuridae,Oikopleura,,,,351,4.3,1.9,3.1,2,68.6,105.644,2 to 5,N,
 U5145,Chum,2019-06-10,1,203,138.3,32.7,50.358,0-25%,12.5,,,,,,,,,,Goop,,,,1,1,0.5,0.75,4,4,6.16,<1,N,
 U5145,Chum,2019-06-10,1,203,138.3,32.7,50.358,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Pseudocalananidae,Microcalanus,pygmaeus_pusillus,,,1,0.9,0.9,0.9,1,0.1,0.154,<1,N,
-U5146,Chum,2019-06-11,0.5,355.3,355.3,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,kinda empty stomach
+U5146,Chum,2019-06-11,0.5,355.3,355.3,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U5141,Chum,2019-06-11,1,284,259.7,0.7,1.078,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Thecostraca,Sessilia,Balanomorpha,,Balanidae,Balanus,glandula,Cyprid,,2,0.8,0.7,0.75,1,0.1,0.154,<1,N,
 U5141,Chum,2019-06-11,1,284,259.7,0.7,1.078,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Thecostraca,Sessilia,Balanomorpha,,,,,Nauplii,,1,0.7,0.7,0.7,1,0.1,0.154,<1,N,
 U5141,Chum,2019-06-11,1,284,259.7,0.7,1.078,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Cyclopoida,Ergasilida,,Corycaeidae,Ditrichocorycaeus,anglicus,,,2,1.1,1.1,1.1,1,0.1,0.154,1 to 2,N,
@@ -4068,7 +4068,7 @@ U5341,Pink,2019-10-10,5,336,191,117.4,180.796,0-25%,12.5,Animalia,Arthropoda,Cru
 U5341,Pink,2019-10-10,5,336,191,117.4,180.796,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Pseudocalananidae,Pseudocalanus,,,,110,1.9,1.2,1.55,1,14.8,22.792,1 to 2,N,
 U5341,Pink,2019-10-10,5,336,191,117.4,180.796,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Pseudocalananidae,Pseudocalanus,,,,118,1.8,1,1.4,2,13.2,20.328,1 to 2,N,
 U5341,Pink,2019-10-10,5,336,191,117.4,180.796,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,,,,,,123,1,0.5,0.75,3,32.9,50.666,<1,N,
-U5340,Pink,2019-10-11,0.5,227.5,227.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,kinda empty stomach
+U5340,Pink,2019-10-11,0.5,227.5,227.5,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U5339,Pink,2019-10-11,4,354.4,216.9,100.5,154.77,0-25%,12.5,Animalia,Chordata,Verbrata,Actinopterygii,,Pleuronectiformes,,,Pleuronectidae,Pleuronichthys,coenosus,Egg,,1,1.7,1.7,1.7,1,0.5,0.77,1 to 2,N,
 U5339,Pink,2019-10-11,4,354.4,216.9,100.5,154.77,0-25%,12.5,Chromista,Ochrophyta,Phaeista,Phaeophyceae,,,,,,,,,,1,1.4,1.4,1.4,2,0.1,0.154,1 to 2,N,
 U5339,Pink,2019-10-11,4,354.4,216.9,100.5,154.77,0-25%,12.5,Animalia,Mollusca,,Gastropoda,Heterobranchia,Pteropoda,,,,,,Egg,,1,0.6,0.6,0.6,1,0.1,0.154,<1,N,
@@ -4226,7 +4226,7 @@ U5395,Pink,2019-10-18,0.5,324.5,287.3,13.4,20.636,0-25%,12.5,Animalia,Arthropoda
 U5396,Pink,2019-10-18,0.5,296.1,270.5,6.4,9.856,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,marshallae,,,2,4.2,3.8,4,1,4,6.16,2 to 5,N,
 U5396,Pink,2019-10-18,0.5,296.1,270.5,6.4,9.856,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,marshallae,,,2,3.8,3.2,3.5,2,2.1,3.234,2 to 5,N,
 U5396,Pink,2019-10-18,0.5,296.1,270.5,6.4,9.856,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,pacificus,,,2,3,2.5,2.75,1,1.6,2.464,2 to 5,N,
-U5397,Pink,2019-10-18,0.5,230.3,230.3,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
+U5397,Pink,2019-10-18,0.5,230.3,230.3,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U5398,Pink,2019-10-18,0.5,280.3,244.8,11.7,18.018,0-25%,12.5,Animalia,Arthropoda,Crustacea,Malacostraca,Eumalacostraca,Amphipoda,Hyperiidea,Physocephalata,Hyperiidae,,,Juvenile,,1,0.6,0.6,0.6,3,0.1,0.154,<1,N,
 U5398,Pink,2019-10-18,0.5,280.3,244.8,11.7,18.018,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,marshallae,,,4,4,3.2,3.6,1,5.2,8.008,2 to 5,N,
 U5398,Pink,2019-10-18,0.5,280.3,244.8,11.7,18.018,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,marshallae,,,5,4,3.2,3.6,2,4.6,7.084,2 to 5,N,
@@ -4239,12 +4239,12 @@ U5399,Pink,2019-10-18,0.5,231.6,194.6,15.6,24.024,0-25%,12.5,Animalia,Arthropoda
 U5399,Pink,2019-10-18,0.5,231.6,194.6,15.6,24.024,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,pacificus,,,4,2.6,2.3,2.45,2,2,3.08,2 to 5,N,
 U5399,Pink,2019-10-18,0.5,231.6,194.6,15.6,24.024,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Metridinidae,Metridia,,,,2,2.8,2.4,2.6,1,0.6,0.924,2 to 5,N,
 U5399,Pink,2019-10-18,0.5,231.6,194.6,15.6,24.024,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,,,,,,2,2,1.3,1.65,2,0.3,0.462,2 to 5,N,
-U5400,Pink,2019-10-18,0.5,265.9,239.2,0.1,0.154,0%,0,Animalia,Arthropoda,Hexapoda,Insecta,,,,,,,,,,1,0.5,0.5,0.5,4,0,0,<1,N,kinda empty stomach
+U5400,Pink,2019-10-18,0.5,265.9,239.2,0.1,0.154,0%,0,Animalia,Arthropoda,Hexapoda,Insecta,,,,,,,,,,1,0.5,0.5,0.5,4,0,0,<1,N,
 U5401,Pink,2019-10-21,0.5,256.9,223.4,5.8,8.932,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Harpacticoida,,,Harpacticidae,Harpacticus,,,,1,1.5,1.5,1.5,1,0.1,0.154,1 to 2,N,
 U5401,Pink,2019-10-21,0.5,256.9,223.4,5.8,8.932,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,marshallae,,,2,3.2,3.2,3.2,2,1.2,1.848,2 to 5,N,
 U5401,Pink,2019-10-21,0.5,256.9,223.4,5.8,8.932,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,pacificus,,,1,2.5,2.5,2.5,2,0.6,0.924,2 to 5,N,
 U5401,Pink,2019-10-21,0.5,256.9,223.4,5.8,8.932,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,,,,7,2.5,2,2.25,3,4.6,7.084,2 to 5,N,
-U5402,Pink,2019-10-21,0.5,249.9,249.9,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,empty stomach
+U5402,Pink,2019-10-21,0.5,249.9,249.9,0,0,0%,0,,,,,,,,,,Empty,,,,0,0,0,0,0,0,0,<1,N,
 U5403,Pink,2019-10-21,0.5,272.2,201.8,42.1,64.834,0-25%,12.5,Animalia,Annelida,,Polychaeta,,,,,,,,Nectochaete,,1,1.2,1.2,1.2,2,0.1,0.154,1 to 2,N,
 U5403,Pink,2019-10-21,0.5,272.2,201.8,42.1,64.834,0-25%,12.5,Animalia,Arthropoda,Hexapoda,Insecta,,Diptera,,,,,,,,1,2.5,2.5,2.5,2,0.6,0.924,2 to 5,N,
 U5403,Pink,2019-10-21,0.5,272.2,201.8,42.1,64.834,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Pontellidae,Epilabidocera,longipedata,,M,2,3.5,3.1,3.3,1,1.8,2.772,2 to 5,N,
@@ -4254,7 +4254,7 @@ U5403,Pink,2019-10-21,0.5,272.2,201.8,42.1,64.834,0-25%,12.5,Animalia,Arthropoda
 U5403,Pink,2019-10-21,0.5,272.2,201.8,42.1,64.834,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,pacificus,,,3,3,2.5,2.75,1,2.4,3.696,2 to 5,N,
 U5403,Pink,2019-10-21,0.5,272.2,201.8,42.1,64.834,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Calanidae,Calanus,pacificus,,,5,3,2.5,2.75,2,2.6,4.004,2 to 5,N,
 U5403,Pink,2019-10-21,0.5,272.2,201.8,42.1,64.834,0-25%,12.5,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,,,,,,12,2.7,2,2.35,3,11.9,18.326,2 to 5,N,
-U5404,Pink,2019-10-21,0.5,291.9,276.7,0.1,0.154,0%,0,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Aetideidae,Aetideus,divergens,,,1,2,2,2,1,0.1,0.154,1 to 2,N,kinda empty stomach
+U5404,Pink,2019-10-21,0.5,291.9,276.7,0.1,0.154,0%,0,Animalia,Arthropoda,Crustacea,Hexanauplia,Copepoda,Calanoida,,,Aetideidae,Aetideus,divergens,,,1,2,2,2,1,0.1,0.154,1 to 2,N,
 U5171,Chum,2019-10-21,3,570.6,313.3,147.5,227.15,50-75%,62.5,,,,,,,,,,Microplastic_fiber,,Object,,1,4,4,4,0,0.1,0.154,2 to 5,N,transparent fiber (no organic matter on this one but it was inside of food)
 U5171,Chum,2019-10-21,3,570.6,313.3,147.5,227.15,50-75%,62.5,Animalia,Platyhelminthes,Rhabditophora,Trematoda,,,,,,,,Parasite,,1,0.9,0.9,0.9,0,0.1,0.154,<1,N,
 U5171,Chum,2019-10-21,3,570.6,313.3,147.5,227.15,50-75%,62.5,Animalia,Arthropoda,Crustacea,Malacostraca,Eumalacostraca,Euphausiacea,,,Euphausiidae,,,Furcilia,,1,0.3,0.3,0.3,3,0.1,0.154,<1,N,

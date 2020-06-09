@@ -5,7 +5,10 @@
 \margl1440\margr1440\vieww10800\viewh8400\viewkind0
 \pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
 
-\f0\fs24 \cf0 DATA DICTIONARY\
+\f0\fs24 \cf0 \
+DATA DICTIONARY\
+\
+#####\
 \
 pink_chum_diets_raw_data.csv\
 \
@@ -19,10 +22,9 @@ microscope_hours = how long each stomach took to process (delete later)\
 \
 stom_weight_full = wet weight of stomach before dissecting\
 \
-\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
-\cf0 stom_weight_empty = wet weight of stomach lining after removing food\
+stom_weight_empty = wet weight of stomach lining after removing food\
 \
-food_weight_raw = wet weight of the food items\
+food_weight_raw = wet weight of the food items/bolus\
 \
 food_weight_corr = raw bolus wet weight * 1.54 for ethanol correction/dessication  (delete/calc in R?)\
 \
@@ -30,7 +32,16 @@ fullness_cat = a visual estimate of fullness based on incremental categories of 
 \
 fullness_mean = the mean value of the range given by fullness_cat. e.g. 0-25% = 12.5% mean.\
 \
-phylum, subphylum, class, subclass, order, infraorder, family, genus, species = taxonomic info of prey.\
+kingdom\
+phylum\
+subphylum\
+class\
+subclass\
+order\
+infraorder\
+family\
+genus\
+species = all these columns designate the taxonomic information of prey species and/or groups\
 \
 life_stage = stage of prey: eggs, juveniles or stages of larvae. Adult not included, since it\'92s the default\
 \
@@ -42,8 +53,69 @@ length_max = maximum recorded length of prey organism present\
 \
 length_min = minimum recorded length of prey organism present\
 \
-length_ave = average between minimum and maximum values (delete and calculate this in R?)\
+length_avg= average between minimum and maximum values (delete and calculate this in R?)\
 \
 digestion_state = level of prey digestion 1=fresh, 2=semi-fresh, 3=semi-digested, 4=fully digested\
 \
-}
+prey_weight_raw = wet weight of each given prey group\
+\
+prey_weight_corr = wet weight of prey group * 1.54 to correct for ethanol desiccation (to get fresh ww)\
+\
+size_class = <1, 1-2, 2-5, 5-10 or >10 mm size classifications of prey\
+\
+subsample = \'93N\'94 (No) means entire sample was processed with no subsampling. \'93Rare\'94 means items were processed before sample split and 25% processed \'93subsample_25\'94 (counts and weights * 4)\
+\
+comment = any processing comments. E.g. plastic descriptions or noted external stomach parasites.\
+\
+#####\
+\
+zoop_wet_weight_raw_data.csv\
+\
+sample_id = unique sample ID for zooplankton sample\
+\
+mesh = 250 micron mesh zooplankton net was used for sampling\
+\
+vol_corr = volume filtered, calculated from zooplankton net flowmeter (corrected for any errors)\
+\
+sieve = size fraction of zooplankton to be weighed (250 um, 1000 um or 2000 um)\
+\
+ww = wet weight of size fraction\
+\
+biomass = wet weight of size fraction / meters cubed, according to the volume filtered (ww/vol_corr)\
+\
+processor_notes = any comments. Mainly specifying gelatinous or non-gelatinous wet weights\
+\
+##### \
+\
+zoop_taxonomic_raw_data.csv\
+\
+sample_id = unique sample ID for zooplankton sample\
+\
+sieve = size fraction of zooplankton to be weighed (250 um, 1000 um or 2000 um)\
+\
+fraction_proc = level of subsample taken for processing\
+\
+size_class = <1, 1-2, 2-5, 5-10, >10 mm size categories of zooplankton\
+\
+phylum\
+class\
+order\
+family\
+genus\
+species = taxonomic details for each zooplankton species/group\
+\
+life_stage = larvae, juvenile, cyprid, etc. of prey (adult = default, not recorded)\
+\
+sex = male or female zooplankton, only recorded if very obvious\
+\
+length = length of zooplankton in mm (using ocular micrometer)\
+\
+count = how many zooplankton were counted within subsample\
+\
+tot_count = how many zooplankton are in the total sample (calculated from subsample)\
+\
+abundance = how many zooplankton per meter^3 according to volume filtered (tot_count/vol_corr)\
+\
+lab_processor = who processed the zooplankton taxonomic information (full name)\
+\
+#####}

@@ -56,7 +56,7 @@ ggsave(here("figs", "spatial_figs", "temp_salinity_spatial.png"))
 
 ##### ZOOP DATA #####
 
-spat_zoop_data <- read_csv(here("processed", "spatial_data", "spatial_zoop_data.csv"))
+spat_zoop_data <- read.csv(here("processed", "spatial_data", "spatial_zoop_data.csv"), stringsAsFactors = FALSE)
 
 spat_zoop_data$site_id <- factor(spat_zoop_data$site_id, levels = spat_site_order)
 #reorder sites for spatial to be same as on the map; temporal = D07, J07
@@ -68,10 +68,11 @@ zoop_group_data <- spat_zoop_data %>%
                     if_else(family=="Euphausiidae", "Euphausiids",
                     if_else(class=="Insecta" | class=="Arachnida", "Insects",
                     if_else(order=="Harpacticoida", "Harpacticoids",
-                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Gelatinous",
+                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora",  "Gelatinous",
                     if_else(genus=="Oikopleura", "Larvaceans",
                     if_else(class=="Sagittoidea", "Chaetognaths",
                     "Other"))))))))))
+
 
 ##### SALMON DATA PREP #####
 
