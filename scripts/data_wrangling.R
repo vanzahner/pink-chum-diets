@@ -1,29 +1,16 @@
 #updated data wrangling code:
 
-#last modified june 8, 2020
+#last modified june 12, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
+
+##### SET UP ##### 
 
 #load libraries:
 library(tidyverse)
 #multiple libraries (reading, manipulating and displaying data)
 library(here)
 #project workflow
-
-##### ENVIRONMENTAL DATA #####
-
-# Read in environmental data:
-
-ysi_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/ysi.csv"), stringsAsFactors = FALSE)
-#read in data file for temperature and salinity, paired with salmon surveys
-
-survey_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/survey_data.csv"), stringsAsFactors = FALSE)
-#read in salmon survey data file for secchi measurements and other data
-
-# Combine datasets:
-
-survey_ysi <- left_join(survey_data, ysi_data, by=c("survey_date", "site_id"))
-#combine survey data and ysi data
 
 # Create individual dataframes for spatial and temporal chapters/analysis:
 
@@ -34,7 +21,24 @@ spatial_info <- data.frame(site_id=c("D07", "D09", "D11", "J06", "J08", "J02"),
 temporal_info <- data.frame(site_id=c("D07", "J07", "D07", "D07", "D07", "J07", "J07", "D07", "D07", "J07", "D07", "J07", "J07"),
                             survey_date=c("2015-05-21", "2015-06-02", "2015-06-05", "2015-06-07", "2015-06-13", "2015-06-14", "2015-06-29",
                                           "2016-05-19", "2016-06-03", "2016-06-03", "2016-06-16", "2016-06-20", "2016-07-05"), stringsAsFactors = FALSE)
-#create dataframes for filtering out spatial sites/dates and temporal too
+
+
+# Read in data that's needed for more than one code chunk:
+
+survey_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/survey_data.csv"), stringsAsFactors = FALSE)
+#read in salmon survey data file for secchi measurements and other data
+
+##### ENVIRONMENTAL DATA #####
+
+# Read in environmental ysi data:
+
+ysi_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/ysi.csv"), stringsAsFactors = FALSE)
+#read in data file for temperature and salinity, paired with salmon surveys
+
+# Combine datasets:
+
+survey_ysi <- left_join(survey_data, ysi_data, by=c("survey_date", "site_id"))
+#combine survey data and ysi data
 
 spat_envr_data <- semi_join(survey_ysi, spatial_info, by=c("site_id", "survey_date"))
 #make datafile for only spatial analysis ocean conditions
@@ -74,15 +78,17 @@ zoop_tow <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-d
 
 zoop_taxa_data <- zoop_comp_data %>%
   mutate(taxa_info=(if_else(species=="",
-                   if_else(genus=="",
-                   if_else(family=="",
-                   if_else(order=="",
-                   if_else(class=="",
-                           phylum, class),
-                    order), family), genus),
+                    if_else(genus=="",
+                    if_else(family=="",
+                    if_else(infraorder=="",
+                    if_else(order=="",
+                    if_else(subclass=="",
+                    if_else(class=="",
+                    phylum, class), subclass),
+                    order), infraorder), family), genus),
                     paste(genus, species, sep="_"))),
          prey_info = (ifelse((life_stage==""), taxa_info,
-                             paste(taxa_info, life_stage, sep="_"))))
+                      paste(taxa_info, life_stage, sep="_"))))
 #use taxonomic columns to get a final zoop column of taxa + life stage
 
 # Combine zoop data sets:
@@ -141,21 +147,21 @@ seine_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp
 # Modify diet data to include an automatically calculated prey category:
 
 updated_diet_data <- diet_data %>%
-  mutate(taxa_info=(if_else((species==""),
-                    (if_else((genus==""),
-                    (if_else((family==""),
-                    (if_else((infraorder==""),
-                    (if_else((suborder==""),
-                    (if_else((order==""),
-                    (if_else((subclass==""),
-                    (if_else((class==""),
-                    (if_else((subphylum==""),
-                    (if_else((phylum==""),
-                    kingdom, phylum)), subphylum)), class)), subclass)),
-                    order)), suborder)), infraorder)), family)), genus)),
-                    paste(genus, species, sep="_"))),
-         prey_info = (ifelse((life_stage==""), taxa_info,
-                             paste(taxa_info, life_stage, sep="_")))) %>%
+  mutate(taxa_info=if_else(species=="",
+                   if_else(genus=="",
+                   if_else(family=="",
+                   if_else(infraorder=="",
+                   if_else(suborder=="",
+                   if_else(order=="",
+                   if_else(subclass=="",
+                   if_else(class=="",
+                   if_else(subphylum=="",
+                   if_else(phylum=="",
+                    kingdom, phylum), subphylum), class), subclass),
+                    order), suborder), infraorder), family), genus),
+                    paste(genus, species, sep="_")),
+         prey_info = ifelse(life_stage=="", taxa_info,
+                             paste(taxa_info, life_stage, sep="_"))) %>%
   filter(prey_info!="Goop") #delete stomach goop, it's not a prey item
 #use taxonomic columns to get a final prey column of taxa + life stage
 
