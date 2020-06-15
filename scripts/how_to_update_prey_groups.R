@@ -26,7 +26,7 @@ diet_data <- read.csv(here("data", "diet_data_example.csv"), stringsAsFactors = 
 # code chunk that checks each column backwards until it finds a non-blank:
 
 updated_diet_data <- diet_data %>%
-  mutate(taxa_info=(if_else(species=="",
+  mutate(taxa_info=if_else(species=="",
                    if_else(genus=="",
                    if_else(family=="",
                    if_else(infraorder=="",
@@ -38,9 +38,9 @@ updated_diet_data <- diet_data %>%
                    if_else(phylum=="",
                    kingdom, phylum), subphylum), class), subclass),
                    order), suborder), infraorder), family), genus),
-                   paste(genus, species, sep="_"))),
-         prey_info = (ifelse(life_stage=="", taxa_info,
-                             paste(taxa_info, life_stage, sep="_"))))
+                   paste(genus, species, sep="_")),
+         prey_info = ifelse(life_stage=="", taxa_info,
+                             paste(taxa_info, life_stage, sep="_")))
 
 # save your data with new columns into a new dataframe and off you go!
 
@@ -69,6 +69,24 @@ simpler_data <- updated_diet_data %>%
                     if_else(genus=="Oikopleura", "Larvaceans",
                     if_else(class=="Sagittoidea", "Chaetognaths",
                             "Other")))))))))))))#)
+
+simpler_data <- updated_diet_data %>%
+  mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Mollusca" | phylum=="Echinodermata" | phylum=="Ochrophyta", phylum,
+                    if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta", class,
+                    if_else(order=="Calanoida" | order=="Decapoda"  |
+                            order=="Amphipoda" | order=="Cumacea" | order=="Isopoda" |
+                            order=="Harpacticoida" | order=="Cyclopoida", order,
+                    if_else(suborder=="Balanomorpha", suborder,
+                    if_else(family=="Euphausiidae" | family=="Podonidae", family,
+                    if_else(class=="Insecta" | class=="Arachnida", "Insecta_Arachnida",
+                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Cnidaria_Ctenophora",
+                    if_else(prey_info=="Copepoda", "Crustacea",
+                            prey_info)))))))))
+
+other_data <- simpler_data %>%
+  mutate(prey_group_simple=if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Euphausiidae" & prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
+                                     prey_group!="Insecta_Arachnida" & prey_group!="Cnidaria_Ctenophora" & prey_group!="Appendicularia" & prey_group!="Chaetognatha", "Other", prey_group))
+# keep prey groups that are substantial, rest = "Other" prey category
 
 # order does not matter here and is a separate process from previous code
 

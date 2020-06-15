@@ -1,10 +1,10 @@
 #updated spatial analysis code:
 
-#last modified june 14, 2020
+#last modified june 15, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
-##### SET UP #####
+##### LIBRARIES #####
 
 library(tidyverse)
 #data wrangling/graphs/read in data
@@ -21,25 +21,86 @@ library(dietr)
 library(here)
 #project oriented workflow
 
-# Vector to reorder alphabetical spatial sites  to migration route order:
+##### ENVR + ZOOP DATA #####
 
-spat_site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
-
-##### ENVIRONMENTAL GRAPHS #####
-
-# Read in data file:
+# Read in environmental data file:
 
 spat_envr_data_raw <- read.csv(here("processed", "spatial_data", "spatial_survey_ysi.csv"), stringsAsFactors = FALSE)
 #read in spatial environmental data
 
 # Reorder spatial sites from alphabetical to migration route order:
 
+spat_site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
+# Vector to reorder alphabetical spatial sites  to migration route order:
+
 spat_envr_data_raw$site_id <- factor(spat_envr_data_raw$site_id, levels = spat_site_order)
+#reorder levels in zoop dataframe for plotting
 
 spat_envr_data <- spat_envr_data_raw %>%
   filter(line_out_depth==0 & survey_id!="DE317") %>%
   select(survey_id, site_id, temperature, salinity, collected)
 #filter to surface data - error in 1 m depth D11 salinity and duplicate D09
+
+# Read in zooplankton data:
+
+spat_zoop_data <- read.csv(here("processed", "spatial_data", "spatial_zoop_data.csv"), stringsAsFactors = FALSE)
+#read in data file for zooplankton spatial data
+
+spat_zoop_data$site_id <- factor(spat_zoop_data$site_id, levels = spat_site_order)
+#reorder sites for spatial to be same as on the map; temporal = D07, J07
+
+# Zooplankton biomass data set up:
+
+spat_zoop_ww <- spat_zoop_data %>%
+  select(site_id, sieve, biomass, processor_notes) %>%
+  unique() %>%
+  mutate(size_frac=if_else(processor_notes=="gelatinous",
+                           "2000 (Gelatinous)", as.character(sieve)))
+#create dataframe for graphing biomass of zooplankton
+
+spat_zoop_ww$size_frac <- factor(spat_zoop_ww$size_frac, levels = c("250", "1000", "2000", "2000 (Gelatinous)"))
+#reorder size fractions to be in numerical order for graphing
+
+spat_zoop_ww_total <- spat_zoop_ww %>%
+  group_by(site_id) %>%
+  summarise(zoop_ww=sum(biomass))
+#create dataframe to append together to salmon stomach + envr data sets
+
+spat_zoop_envr <- left_join(spat_envr_data, spat_zoop_ww_total, by="site_id")
+#join zoop and envr data together (so it can be joined to salmon data)
+
+# Update zoop groups for relative abundance / taxa composition graph:
+
+zoop_group_data <- spat_zoop_data %>%
+  mutate(prey_group=if_else(order=="Cyclopoida", "Cyclopoids",
+                    if_else(order=="Calanoida", "Calanoids",
+                    if_else(order=="Decapoda", "Decapods",
+                    if_else(family=="Euphausiidae", "Euphausiids",
+                    if_else(class=="Insecta" | class=="Arachnida", "Insects",
+                    if_else(order=="Harpacticoida", "Harpacticoids",
+                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora",  "Gelatinous",
+                    if_else(genus=="Oikopleura", "Larvaceans",
+                    if_else(class=="Sagittoidea", "Chaetognaths",
+                            "Other"))))))))))
+#update zooplankton groups for summary and graphs
+
+zoop_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids",
+                 "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognaths", "Other")
+#put the taxa groups in an order that matches the diet comp later on
+
+zoop_colors <- c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
+                 "#33A02C", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
+#red, pink, orange, Lorange, green, blue, Lblue, purple, Lpurple
+
+zoop_group_data$prey_group <- factor(zoop_group_data$prey_group, levels = zoop_levels)
+#reorder levels to what is a nice visualization and will match the colors
+
+zoop_group_sum <- zoop_group_data %>%
+  group_by(site_id, prey_group) %>%
+  summarise(total_abd=sum(tot_count))
+#summarise total abundance for each sample to plot relative abd of zoops
+
+##### ENVR + ZOOP GRAPHS #####
 
 # Graph for environmental data:
 
@@ -63,32 +124,7 @@ spat_envr_data %>%
 
 ggsave(here("figs", "spatial_figs", "temp_salinity_spatial.png"))
 
-##### ZOOPLANKTON GRAPHS #####
-
-spat_zoop_data <- read.csv(here("processed", "spatial_data", "spatial_zoop_data.csv"), stringsAsFactors = FALSE)
-#read in data file for zooplankton spatial data
-
-spat_zoop_data$site_id <- factor(spat_zoop_data$site_id, levels = spat_site_order)
-#reorder sites for spatial to be same as on the map; temporal = D07, J07
-
 # Biomass Graph:
-
-spat_zoop_ww <- spat_zoop_data %>%
-  select(site_id, sieve, biomass, processor_notes) %>%
-  unique() %>%
-  mutate(size_frac=if_else(processor_notes=="gelatinous",
-    "2000 (Gelatinous)", as.character(sieve)))
-#create dataframe for graphing biomass of zooplankton
-
-spat_zoop_ww$size_frac <- factor(spat_zoop_ww$size_frac, levels = c("250", "1000", "2000", "2000 (Gelatinous)"))
-#reorder size fractions to be in numerical order for graphing
-
-spat_zoop_ww_total <- spat_zoop_ww %>%
-  group_by(site_id) %>%
-  summarise(zoop_ww=sum(biomass))
-#create dataframe to append together to salmon stomach + envr data sets
-
-spat_zoop_envr <- left_join(spat_envr_data, spat_zoop_ww_total, by="site_id")
 
 spat_zoop_ww %>% 
   ggplot(aes(site_id, biomass))+
@@ -107,34 +143,6 @@ ggsave(here("figs", "spatial_figs", "zoop_biomass_spatial.png"))
 #save zoop biomass graph to folder
 
 # Zoop taxa composition graph:
-
-zoop_group_data <- spat_zoop_data %>%
-  mutate(prey_group=if_else(order=="Cyclopoida", "Cyclopoids",
-                    if_else(order=="Calanoida", "Calanoids",
-                    if_else(order=="Decapoda", "Decapods",
-                    if_else(family=="Euphausiidae", "Euphausiids",
-                    if_else(class=="Insecta" | class=="Arachnida", "Insects",
-                    if_else(order=="Harpacticoida", "Harpacticoids",
-                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora",  "Gelatinous",
-                    if_else(genus=="Oikopleura", "Larvaceans",
-                    if_else(class=="Sagittoidea", "Chaetognaths",
-                    "Other"))))))))))
-#update zooplankton groups for summary and graphs
-
-zoop_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids",
-                 "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognaths", "Other")
-#put the taxa groups in an order that matches the diet comp later on
-
-zoop_colors <- c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
-                  "#33A02C", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
-#red, pink, orange, Lorange, green, blue, Lblue, purple, Lpurple
-
-zoop_group_data$prey_group <- factor(zoop_group_data$prey_group, levels = zoop_levels)
-#reorder levels
-
-zoop_group_sum <- zoop_group_data %>%
-  group_by(site_id, prey_group) %>%
-  summarise(total_abd=sum(tot_count))
 
 zoop_group_sum %>%
   ggplot(aes(site_id, total_abd))+
