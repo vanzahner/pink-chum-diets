@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified june 12, 2020
+#last modified june 14, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -37,7 +37,8 @@ ysi_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-d
 
 # Combine datasets:
 
-survey_ysi <- left_join(survey_data, ysi_data, by=c("survey_date", "site_id"))
+survey_ysi <- left_join(survey_data, ysi_data, by=c("survey_date", "site_id")) %>%
+  select(-X) #delete erronous comment column (full of blanks/NAs)
 #combine survey data and ysi data
 
 spat_envr_data <- semi_join(survey_ysi, spatial_info, by=c("site_id", "survey_date"))
@@ -174,8 +175,9 @@ intermediate_fish_data <- left_join(updated_diet_data, fish_meta_data,
 filter_salmon_data <- left_join(intermediate_fish_data, seine_data, by="seine_id")
 #transformed dataset - deleted stomach goop since it's not a food item
 
-all_salmon_data <- left_join(filter_salmon_data, survey_data, by=c("survey_id"))
-#dataset with all 312 fish (spatial + temporal)
+all_salmon_data <- left_join(filter_salmon_data, survey_data, by=c("survey_id")) %>%
+  select(ufn, fish_species, site_id, everything())
+#dataset with all 312 fish (spatial + temporal), bring site_id to the front
 
 # Create individual dataframes for spatial and temporal chapters/analysis:
 

@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified june 12, 2020
+#last modified june 14, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -25,21 +25,25 @@ library(here)
 
 spat_site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
 
-##### ENVIRONMENTAL DATA #####
+##### ENVIRONMENTAL GRAPHS #####
 
 # Read in data file:
 
-spat_envr_data <- read_csv(here("processed", "spatial_data", "spatial_survey_ysi.csv"))
+spat_envr_data_raw <- read.csv(here("processed", "spatial_data", "spatial_survey_ysi.csv"), stringsAsFactors = FALSE)
 #read in spatial environmental data
 
 # Reorder spatial sites from alphabetical to migration route order:
 
-spat_envr_data$site_id <- factor(spat_envr_data$site_id, levels = spat_site_order)
+spat_envr_data_raw$site_id <- factor(spat_envr_data_raw$site_id, levels = spat_site_order)
+
+spat_envr_data <- spat_envr_data_raw %>%
+  filter(line_out_depth==0 & survey_id!="DE317") %>%
+  select(survey_id, site_id, temperature, salinity, collected)
+#filter to surface data - error in 1 m depth D11 salinity and duplicate D09
 
 # Graph for environmental data:
 
 spat_envr_data %>%
-  filter(line_out_depth==0) %>% 
   ggplot(aes(site_id, temperature))+
   geom_line(aes(group=NA))+
   theme_bw(base_size = 12)+
@@ -59,7 +63,7 @@ spat_envr_data %>%
 
 ggsave(here("figs", "spatial_figs", "temp_salinity_spatial.png"))
 
-##### ZOOP DATA #####
+##### ZOOPLANKTON GRAPHS #####
 
 spat_zoop_data <- read.csv(here("processed", "spatial_data", "spatial_zoop_data.csv"), stringsAsFactors = FALSE)
 #read in data file for zooplankton spatial data
@@ -78,6 +82,13 @@ spat_zoop_ww <- spat_zoop_data %>%
 
 spat_zoop_ww$size_frac <- factor(spat_zoop_ww$size_frac, levels = c("250", "1000", "2000", "2000 (Gelatinous)"))
 #reorder size fractions to be in numerical order for graphing
+
+spat_zoop_ww_total <- spat_zoop_ww %>%
+  group_by(site_id) %>%
+  summarise(zoop_ww=sum(biomass))
+#create dataframe to append together to salmon stomach + envr data sets
+
+spat_zoop_envr <- left_join(spat_envr_data, spat_zoop_ww_total, by="site_id")
 
 spat_zoop_ww %>% 
   ggplot(aes(site_id, biomass))+
@@ -158,12 +169,15 @@ spat_diet_raw$fish_species <- factor(spat_diet_raw$fish_species, levels = specie
 spat_diet_raw$site_id <- factor(spat_diet_raw$site_id, levels=spat_site_order)
 #reorder sites (West to East) for the diet dataset
 
-spat_diet_copy <- spat_diet_raw
-#make a copy of data before modifying the raw data
+spat_data_combo <- left_join(spat_diet_raw, spat_zoop_envr, by=c("site_id", "survey_id"))
+
+spat_diet_copy <- filter(spat_data_combo, prey_info!="Digested_food")
+#make a copy of data before modifying the raw data (and remove dig. food)
 
 # Merge rare (< 3 stom.) taxonomic groups to higher prey levels:
 
 spat_diet_data <- spat_diet_copy %>%
+  filter(prey_info!="Digested_food") %>% 
   group_by(ufn, fish_species, site_id, taxa_info, prey_info,
            kingdom, phylum, subphylum, class, subclass, order, suborder, infraorder, family, genus, species, life_stage) %>%
   summarise(biomass=sum(prey_weight_corr))
@@ -230,35 +244,84 @@ spat_diet_filtered <- spat_diet_check %>%
 #calculate how many stomachs each prey group appears in (none <3!)
 #reduced number of taxa from 163 to 91, a lot more manageable now!
 
-#next step: add other code for nmds, cluster, diet comp, gfi, overlap, etc
-#before sunday work on the tables!!!!! envr, sample, zoop, comp, gfi, etc.
-
-spat_diet_all <- spat_diet_copy %>%
-  mutate(prey_group=if_else(class=="Sagittoidea", phylum,
-                    if_else(genus=="Oikopleura"# | class=="Actinopterygii"
-                            , class,
-                    if_else(order=="Calanoida" | order=="Decapoda" 
-                    #        | order=="Amphipoda"
-                            | order=="Harpacticoida", order,
-                    #if_else(suborder=="Balanomorpha", suborder,
-                    if_else(family=="Euphausiidae", family,
-                    if_else(class=="Insecta" | class=="Arachnida", "Insecta_Arachnida",
-                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Cnidaria_Ctenophora",
-                    "Other")))))))#)
-
 spat_diet_intermediate <- spat_diet_copy %>%
-  mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Mollusca" | phylum=="Echinodermata", phylum,
+  mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Mollusca" | phylum=="Echinodermata" | phylum=="Ochrophyta", phylum,
                     if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta", class,
                     if_else(order=="Calanoida" | order=="Decapoda" 
                             | order=="Amphipoda" | order=="Cumacea" | order=="Isopoda"
-                            | order=="Harpacticoida", order,
+                            | order=="Harpacticoida" | order=="Cyclopoida", order,
                     if_else(suborder=="Balanomorpha", suborder,
                     if_else(family=="Euphausiidae" | family=="Podonidae", family,
                     if_else(class=="Insecta" | class=="Arachnida", "Insecta_Arachnida",
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Cnidaria_Ctenophora",
-                    if_else(phylum=="", prey_info,
-                    "Other")))))))))
+                    if_else(prey_info=="Copepoda", "Crustacea",
+                    prey_info)))))))))
+#create more general prey groups for any needed tables, graphs, calc, etc.
 
-prey_levels <- c("Cyclopoida", "Calanoida", "Decapoda", "Euphausiidae", "Insecta_Arachnida", 
-                 "Harpacticoida", "Cnidaria_Ctenophora", "Appendicularia", "Chaetognatha", "Other")
+spat_diet_wide <- spat_diet_intermediate %>%
+  group_by(ufn, fish_species, site_id, prey_group) %>%
+  summarise(biomass=sum(prey_weight_corr)) %>%
+  spread(key=prey_group, value = biomass, fill=0) %>%
+  ungroup()
+#calculate wide data set with new prey groups (detailed and general!)
 
+spat_diet_info <- select(spat_diet_wide, ufn, fish_species, site_id)
+#create dataframe with UFNs, site and species for reattaching to matrices
+
+spat_diet_matrix <- spat_diet_wide %>%
+  select(Actinopterygii:Polychaeta) %>% 
+  decostand(method="total")
+#matrix to calculation relative biomass of 25 different prey groups
+
+spat_diet_rel_bio <- cbind(spat_diet_info, spat_diet_matrix)
+#combine ufn/site/species back onto relative biomass of prey groups data
+
+# Calculate average relative biomass of prey for each site and species:
+
+spat_diet_rel_bio %>%
+  gather(key="prey", value="rel_bio", Actinopterygii:Polychaeta) %>% 
+  group_by(fish_species, prey, site_id) %>%
+  summarise(average=mean(rel_bio)*100) %>%
+  summarise(max=max(average)) %>%
+  filter(max>8) %>%
+  arrange(prey)
+#this calculation tells me which prey groups are on average >8% relative ww
+
+spat_diet_all <- spat_diet_intermediate %>%
+  mutate(prey_group_simple=if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Euphausiidae" & prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
+                                     prey_group!="Insecta_Arachnida" & prey_group!="Cnidaria_Ctenophora" & prey_group!="Appendicularia" & prey_group!="Chaetognatha", "Other", prey_group))
+# keep prey groups that are substantial, rest = "Other" prey category
+
+prey_levels <- c("Calanoida", "Decapoda", "Euphausiidae", "Amphipoda", "Harpacticoida",
+                 "Insecta_Arachnida", "Cnidaria_Ctenophora", "Appendicularia", "Chaetognatha", "Other")
+#vector to reorder prey groups into what makes sense for diet comp bargraph
+
+color_levels <- c("#E31A1C", "#FDBF6F", "#FF7F00", "#B2DF8A", "#33A02C", 
+                  "#666666", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
+#red, Lorange, orange, Lgreen, green, grey, Lblue, blue, Lpurple, purple
+
+spat_diet_all$prey_group_simple <- factor(spat_diet_all$prey_group_simple, levels = prey_levels)
+#reorder taxa groups into correct order for printing graphs (and tables)
+
+spatial_diets <- select(spat_diet_all, ufn, fish_species, site_id, survey_date, food_weight_corr, prey_info, prey_group, prey_group_simple,
+                        count, digestion_state, prey_weight_corr, length_avg, size_class, adipose, weight, fork_length, seine_id, survey_id,
+                        temperature, salinity, collected, zoop_ww, set_time, time_searching, so_taken:he_total, precip:wind_direction, secchi)
+#delete useless columns (can further simplify later), this=working dataset
+
+spat_stomachs <- spatial_diets %>%
+  select(ufn, fish_species, site_id, survey_date, food_weight_corr, weight, fork_length, fork_length, adipose, seine_id, survey_id,
+         temperature, salinity, collected, zoop_ww, set_time, time_searching, so_taken:he_total, precip:wind_direction, secchi) %>%
+  unique()
+#metadata of salmon stomachs with no prey info (envr, zoops, fish ww, etc)
+
+# NEXT STEP: wide data ands,,,,
+
+##### SALMON TABLES :) #####
+
+#Sample summary
+
+#Taxa summary
+
+#Indices summary
+
+#What else was there?
