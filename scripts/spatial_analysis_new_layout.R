@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified june 15, 2020
+#last modified june 16, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -20,6 +20,9 @@ library(dietr)
 #selectivity indices
 library(here)
 #project oriented workflow
+library(kableExtra)
+library(knitr)
+#for creating nice tables
 
 ##### ENVR + ZOOP DATA #####
 
@@ -38,7 +41,7 @@ spat_envr_data_raw$site_id <- factor(spat_envr_data_raw$site_id, levels = spat_s
 
 spat_envr_data <- spat_envr_data_raw %>%
   filter(line_out_depth==0 & survey_id!="DE317") %>%
-  select(survey_id, site_id, temperature, salinity, collected)
+  select(survey_id, survey_date, site_id, temperature, salinity, collected)
 #filter to surface data - error in 1 m depth D11 salinity and duplicate D09
 
 # Read in zooplankton data:
@@ -71,33 +74,44 @@ spat_zoop_envr <- left_join(spat_envr_data, spat_zoop_ww_total, by="site_id")
 
 # Update zoop groups for relative abundance / taxa composition graph:
 
-zoop_group_data <- spat_zoop_data %>%
-  mutate(prey_group=if_else(order=="Cyclopoida", "Cyclopoids",
-                    if_else(order=="Calanoida", "Calanoids",
-                    if_else(order=="Decapoda", "Decapods",
-                    if_else(family=="Euphausiidae", "Euphausiids",
-                    if_else(class=="Insecta" | class=="Arachnida", "Insects",
-                    if_else(order=="Harpacticoida", "Harpacticoids",
-                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora",  "Gelatinous",
-                    if_else(genus=="Oikopleura", "Larvaceans",
-                    if_else(class=="Sagittoidea", "Chaetognaths",
-                            "Other"))))))))))
+spat_zoop_intermediate <- spat_zoop_data %>%
+  mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Mollusca" | phylum=="Echinodermata" | phylum=="Ochrophyta" | phylum=="Bryozoa", phylum,
+                    if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" | class=="Insecta", class,
+                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora",  "Cnidaria_Ctenophora",
+                    if_else(family=="Caligidae", "Parasites",
+                    if_else(life_stage=="egg", "Eggs",
+                    if_else(prey_info=="Copepoda_nauplius", "Calanoida",
+                    if_else(order=="Calanoida" | order=="Decapoda" | order=="Amphipoda" |
+                            order=="Harpacticoida" | order=="Cyclopoida", order,
+                    if_else(infraorder=="Balanomorpha", infraorder,
+                    if_else(family=="Euphausiidae", family,
+                    if_else(family=="Podonidae", "Cladocera",
+                            prey_info)))))))))))
 #update zooplankton groups for summary and graphs
 
-zoop_levels <- c("Cyclopoids", "Calanoids", "Decapods", "Euphausiids",
-                 "Harpacticoids", "Gelatinous", "Larvaceans", "Chaetognaths", "Other")
-#put the taxa groups in an order that matches the diet comp later on
+zoop_group_data <- spat_zoop_intermediate %>%
+  mutate(prey_group_simple=if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Euphausiidae" & prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
+                                   prey_group!="Cnidaria_Ctenophora" & prey_group!="Appendicularia" & #prey_group!="Chaetognatha" &
+                                   prey_group!="Balanomorpha" & prey_group!="Cladocera" & prey_group!="Mollusca" & prey_group!="Cyclopoida", 
+                                   "Other", prey_group))
+# keep prey groups that are substantial, rest = "Other" prey category
 
-zoop_colors <- c("#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
-                 "#33A02C", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
-#red, pink, orange, Lorange, green, blue, Lblue, purple, Lpurple
+zoop_levels <- c("Calanoida", "Decapoda", "Euphausiidae", "Amphipoda", "Harpacticoida",
+                 "Cnidaria_Ctenophora", "Appendicularia", #"Chaetognatha",
+                 "Mollusca", "Cyclopoida", "Balanomorpha", "Cladocera", "Other")
+#put the taxa groups in an order that somewhat matches the diet comp later on
 
-zoop_group_data$prey_group <- factor(zoop_group_data$prey_group, levels = zoop_levels)
+zoop_colors <- c("#E31A1C", "#FDBF6F", "#FF7F00", "#B2DF8A", "#33A02C", "#A6CEE3",
+                 "#1F78B4", #"#CAB2D6", 
+                 "#E7298A", "#FB9A99", "#A6761D", "#E6AB02", "#6A3D9A")
+#red, Lorange, orange, green, Lblue, blue, Lpurple, pink, hotpink, Y, Br, purple
+
+zoop_group_data$prey_group_simple <- factor(zoop_group_data$prey_group_simple, levels = zoop_levels)
 #reorder levels to what is a nice visualization and will match the colors
 
 zoop_group_sum <- zoop_group_data %>%
-  group_by(site_id, prey_group) %>%
-  summarise(total_abd=sum(tot_count))
+  group_by(site_id, prey_group_simple) %>%
+  summarise(total_abd=sum(abundance))
 #summarise total abundance for each sample to plot relative abd of zoops
 
 ##### ENVR + ZOOP GRAPHS #####
@@ -146,17 +160,18 @@ ggsave(here("figs", "spatial_figs", "zoop_biomass_spatial.png"))
 
 zoop_group_sum %>%
   ggplot(aes(site_id, total_abd))+
-  geom_bar(aes(fill=prey_group), stat="identity", position="fill")+
+  geom_bar(aes(fill=prey_group_simple), stat="identity"#, position="fill"
+           )+
   scale_fill_manual(values=zoop_colors)+
   theme_bw()+
-  scale_y_continuous(labels= scales::percent)+
+  scale_y_continuous(labels=scales::comma)+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
         axis.ticks.x = element_blank(), axis.text.x = element_text(color="black"),
         axis.text.y=element_text(color="black"),
         axis.title = element_text(size=14), axis.text = element_text(size=12),
         legend.text = element_text(size=12), legend.title = element_text(size=14))+
-  labs(x="Site", y="Relative abundance", fill="Zooplankton Group")
-#zoop comp graph (other=barnacles, bivalves, cladocerans, mostly.)
+  labs(x="Site", y="Abundance (#/m³)", fill="Zooplankton Group")
+#zoop comp graph 
 
 ggsave(here("figs", "spatial_figs", "zoop_comp_spatial.png"))
 #save the zoop taxa comp. graph
@@ -177,7 +192,7 @@ spat_diet_raw$fish_species <- factor(spat_diet_raw$fish_species, levels = specie
 spat_diet_raw$site_id <- factor(spat_diet_raw$site_id, levels=spat_site_order)
 #reorder sites (West to East) for the diet dataset
 
-spat_data_combo <- left_join(spat_diet_raw, spat_zoop_envr, by=c("site_id", "survey_id"))
+spat_data_combo <- left_join(spat_diet_raw, spat_zoop_envr, by=c("site_id", "survey_id", "survey_date"))
 
 spat_diet_copy <- filter(spat_data_combo, prey_info!="Digested_food")
 #make a copy of data before modifying the raw data (and remove dig. food)
@@ -321,15 +336,76 @@ spat_stomachs <- spatial_diets %>%
          temperature, salinity, collected, zoop_ww, set_time, time_searching, so_taken:he_total, precip:wind_direction, secchi) %>%
   unique()
 #metadata of salmon stomachs with no prey info (envr, zoops, fish ww, etc)
+#use this for GFI table and graph
 
-# NEXT STEP: wide data ands,,,,
+#create wide (?) dataframes: 
 
-##### SALMON TABLES :) #####
+#detailed taxa by species/etc:
+#spat_diet_taxa_rel_bio #for multivariate calculations/graphs, similarity
 
-#Sample summary
+#spat_diet_taxa_pa #for Freq Occur (to find most important taxa)
 
-#Taxa summary
+#general taxa groups - all groups, no Other:
+#spat_diet_groups_rel_bio #for prey comp summary table
 
-#Indices summary
+#spat_diet_groups_rel_abd #for prey selectivity AND summary table
 
-#What else was there?
+#spat_diet_groups_pa #for Freq Occur summary table
+
+#general taxa groups - "Other" grouped together:
+#spat_diet_other_rel_bio #for prey comp graph
+
+##### SALMON TABLES #####
+
+# Sampling table:
+
+zoop_table <- spat_zoop_ww %>%
+  filter(site_id!="J02") %>% 
+  select(site_id, sieve, biomass) %>%
+  group_by(site_id, sieve) %>% 
+  summarise(biomass=round(sum(biomass), digits = 2)) %>% 
+  spread(sieve, biomass, fill=0) %>%
+  mutate(Total=sum(`250`, `1000`, `2000`))
+
+reverse_spat_sites <- c("D07", "D09", "D11", "J06", "J08", "J02")
+
+spat_envr_data$site_id <- factor(spat_envr_data$site_id, levels = reverse_spat_sites)
+zoop_table$site_id <- factor(zoop_table$site_id, levels = reverse_spat_sites)
+#reorder levels in zoop dataframe for tables
+
+zoop_envr_table <- left_join(spat_envr_data, zoop_table, by="site_id") %>%
+  mutate(Region=c("DI", "DI", "NSoG", "QCSt", "JS", "JS"), `# Pink`=10, `# Chum`=10) %>% 
+  select(Region, Site=site_id, Date=survey_date, `# Pink`, `# Chum`, `Temperature (°C)`=temperature, `Salinity (‰)`=salinity,
+         `250 $\\mu$m`=`250`, `1000 $\\mu$m`=`1000`, `2000 $\\mu$m`=`2000`, Total) %>%
+  arrange(Site, reverse_spat_sites)
+
+zoop_envr_table$`250 $\\mu$m`[which(is.na(zoop_envr_table$`250 $\\mu$m`))] <- "No Data"
+zoop_envr_table$`1000 $\\mu$m`[which(is.na(zoop_envr_table$`1000 $\\mu$m`))] <- "No Data"
+zoop_envr_table$`2000 $\\mu$m`[which(is.na(zoop_envr_table$`2000 $\\mu$m`))] <- "No Data"
+zoop_envr_table$Total[which(is.na(zoop_envr_table$Total))] <- "No Data"
+
+kable(zoop_envr_table, "latex", booktabs=TRUE,
+      escape = FALSE, align=c("l", "l", "l", "c", "c", "c", "c", "r", "r", "r", "r")) %>%
+  add_header_above(c(" "=7, "Zooplankton Biomass (mg/m³)"=4)) %>% 
+  save_kable(here("tables", "spatial_tables", "sampling_table.pdf"))
+
+# zoop abundance
+
+spat_zoop_intermediate$site_id <- factor(spat_zoop_intermediate$site_id, levels = reverse_spat_sites)
+#reorder levels in zoop dataframe for tables
+
+zoop_comp_table <- spat_zoop_intermediate %>%
+  group_by(site_id, prey_group) %>%
+  summarise(abd_group=sum(abundance)) %>%
+  spread(prey_group, abd_group, fill=0) %>%
+  arrange(site_id, reverse_spat_sites)
+
+#zoop_comp_rel <- zoop_comp_table %>%
+#  ungroup() %>% 
+#  select(-site_id) %>%
+#  decostand("total") %>%
+#  mutate(Site=reverse_spat_sites) %>%
+#  t()
+
+kable(zoop_comp_rel, "latex", booktabs=TRUE, escape = FALSE) %>% 
+  save_kable(here("tables", "spatial_tables", "zoop_relA_table.pdf"))

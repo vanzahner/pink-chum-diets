@@ -41,34 +41,17 @@ updated_diet_data <- diet_data %>%
                    paste(genus, species, sep="_")),
          prey_info = ifelse(life_stage=="", taxa_info,
                              paste(taxa_info, life_stage, sep="_")))
-
 # save your data with new columns into a new dataframe and off you go!
 
 # if you don't have any columns, just carefully delete parts like so:
-# (if_else(suborder==="",
-# suborder)),
+# if_else(suborder==="",
+# suborder),
 # or add accordingly if you add any other levels of taxonomic details
 # the order definitely matters here, the if_else statements are nested
 
 ##### merging prey groups: #####
 
 # How to merge taxa into broader prey/zoop groups very easily as well:
-
-simpler_data <- updated_diet_data %>%
-  mutate(prey_group=if_else(order=="Amphipoda", "Amphipods",
-                    if_else(suborder=="Balanomorpha", "Barnacles",
-                    if_else(order=="Calanoida", "Calanoids",
-                    if_else(family=="Podonidae", "Cladocerans",
-                    if_else(order=="Decapoda", "Decapods",
-                    if_else(class=="Actinopterygii", "Fish",
-                    if_else(family=="Euphausiidae" & life_stage=="Egg", "Euph_eggs",
-                    if_else(family=="Euphausiidae" & life_stage!="Egg", "Euphausiids",
-                    if_else(class=="Insecta" | class=="Arachnida", "Insects",
-                    if_else(order=="Harpacticoida", "Harpacticoids",
-                    #if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Gelatinous",
-                    if_else(genus=="Oikopleura", "Larvaceans",
-                    if_else(class=="Sagittoidea", "Chaetognaths",
-                            "Other")))))))))))))#)
 
 simpler_data <- updated_diet_data %>%
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Mollusca" | phylum=="Echinodermata" | phylum=="Ochrophyta", phylum,
@@ -82,23 +65,19 @@ simpler_data <- updated_diet_data %>%
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Cnidaria_Ctenophora",
                     if_else(prey_info=="Copepoda", "Crustacea",
                             prey_info)))))))))
-
-other_data <- simpler_data %>%
-  mutate(prey_group_simple=if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Euphausiidae" & prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
-                                     prey_group!="Insecta_Arachnida" & prey_group!="Cnidaria_Ctenophora" & prey_group!="Appendicularia" & prey_group!="Chaetognatha", "Other", prey_group))
-# keep prey groups that are substantial, rest = "Other" prey category
-
 # order does not matter here and is a separate process from previous code
-
-# class=="Insecta" | class=="Arachnida", means insects OR arachnids = same
 
 # taxa levels don't matter, this is very flexible code for whatever ya need
 
-# I left a hashed out example, you can easily delete or add lines this way
+# you can also modify and/or group by life_stage with similar code to this
 
-# using `& life_stage=="whatever"` you can separate larvae from adults, etc
+other_data <- simpler_data %>%
+  mutate(prey_group_simple=if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Euphausiidae" & prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
+                                   prey_group!="Insecta_Arachnida" & prey_group!="Cnidaria_Ctenophora" & prey_group!="Appendicularia" & prey_group!="Chaetognatha", "Other", prey_group))
+# keep prey groups that are substantial, rest = "Other" prey/zoop category
 
 # code creates a new column, not overwriting old data, so it keeps both info
 
 # and that way you can see what makes up the "other" category more easily!
 
+# e-mail vfladmark@eoas.ubc.ca if you need any help with how to use this :)

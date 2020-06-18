@@ -97,7 +97,7 @@ zoop_taxa_data <- zoop_comp_data %>%
 intermediate_zoop_data <- left_join(zoop_taxa_data, zoop_ww_data, by=c("sample_id", "sieve"))
 #join two zooplankton data sets together
 
-tow_tax <- left_join(zoop_tax, zoop_tow, by="tow_id")
+tow_tax <- left_join(zoop_tax_metadata, zoop_tow, by="tow_id")
 #join two Hakai github meta data sets together
 
 all_zoop_data <- left_join(intermediate_zoop_data, tow_tax, by="sample_id")
