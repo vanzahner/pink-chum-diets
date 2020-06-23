@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified june 16, 2020
+#last modified june 23, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -22,6 +22,7 @@ library(here)
 #project oriented workflow
 library(kableExtra)
 library(knitr)
+library(formattable)
 #for creating nice tables
 
 ##### ENVR + ZOOP DATA #####
@@ -77,16 +78,16 @@ spat_zoop_envr <- left_join(spat_envr_data, spat_zoop_ww_total, by="site_id")
 spat_zoop_intermediate <- spat_zoop_data %>%
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Mollusca" | phylum=="Echinodermata" | phylum=="Ochrophyta" | phylum=="Bryozoa", phylum,
                     if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" | class=="Insecta", class,
-                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora",  "Cnidaria_Ctenophora",
+                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Cnidaria_Ctenophora",
                     if_else(family=="Caligidae", "Parasites",
-                    if_else(life_stage=="egg", "Eggs",
+                    #if_else(life_stage=="egg", "Eggs",
                     if_else(prey_info=="Copepoda_nauplius", "Calanoida",
                     if_else(order=="Calanoida" | order=="Decapoda" | order=="Amphipoda" |
                             order=="Harpacticoida" | order=="Cyclopoida", order,
                     if_else(infraorder=="Balanomorpha", infraorder,
                     if_else(family=="Euphausiidae", family,
                     if_else(family=="Podonidae", "Cladocera",
-                            prey_info)))))))))))
+                            prey_info))))))))))#)
 #update zooplankton groups for summary and graphs
 
 zoop_group_data <- spat_zoop_intermediate %>%
@@ -176,7 +177,62 @@ zoop_group_sum %>%
 ggsave(here("figs", "spatial_figs", "zoop_comp_spatial.png"))
 #save the zoop taxa comp. graph
 
-##### SALMON DATA PREP #####
+##### ENVR + ZOOP TABLES #####
+
+# Sampling table:
+
+zoop_table <- spat_zoop_ww %>%
+  filter(site_id!="J02") %>% 
+  select(site_id, sieve, biomass) %>%
+  group_by(site_id, sieve) %>% 
+  summarise(biomass=round(sum(biomass), digits = 2)) %>% 
+  spread(sieve, biomass, fill=0) %>%
+  mutate(Total=sum(`250`, `1000`, `2000`))
+
+reverse_spat_sites <- c("D07", "D09", "D11", "J06", "J08", "J02")
+
+spat_envr_data$site_id <- factor(spat_envr_data$site_id, levels = reverse_spat_sites)
+zoop_table$site_id <- factor(zoop_table$site_id, levels = reverse_spat_sites)
+#reorder levels in zoop dataframe for tables
+
+zoop_envr_table <- left_join(spat_envr_data, zoop_table, by="site_id") %>%
+  mutate(Region=c("DI", "DI", "NSoG", "QCSt", "JS", "JS"), `# Pink`=10, `# Chum`=10) %>% 
+  select(Region, Site=site_id, Date=survey_date, `# Pink`, `# Chum`, `Temp. (°C)`=temperature, `Salinity (‰)`=salinity,
+         `250 $\\mu$m`=`250`, `1000 $\\mu$m`=`1000`, `2000 $\\mu$m`=`2000`, Total) %>%
+  arrange(Site, reverse_spat_sites)
+
+zoop_envr_table$`250 $\\mu$m`[which(is.na(zoop_envr_table$`250 $\\mu$m`))] <- "No Data"
+zoop_envr_table$`1000 $\\mu$m`[which(is.na(zoop_envr_table$`1000 $\\mu$m`))] <- "No Data"
+zoop_envr_table$`2000 $\\mu$m`[which(is.na(zoop_envr_table$`2000 $\\mu$m`))] <- "No Data"
+zoop_envr_table$Total[which(is.na(zoop_envr_table$Total))] <- "No Data"
+
+kable(zoop_envr_table, "latex", booktabs=TRUE,
+      escape = FALSE, align=c("l", "l", "l", "c", "c", "c", "c", "r", "r", "r", "r")) %>%
+  add_header_above(c(" "=7, "Zooplankton Biomass (mg/m³)"=4)) %>% 
+  save_kable(here("tables", "spatial_tables", "sampling_table.pdf"))
+
+# Zooplankton abundance:
+
+spat_zoop_intermediate$site_id <- factor(spat_zoop_intermediate$site_id, levels = reverse_spat_sites)
+#reorder levels in zoop dataframe for tables
+
+zoop_comp_table <- spat_zoop_intermediate %>%
+  group_by(site_id, prey_group) %>%
+  summarise(abd_group=round(sum(abundance), digits=2)) %>%
+  spread(prey_group, abd_group, fill=0) %>%
+  arrange(site_id, spat_site_order) %>%
+  ungroup() %>% 
+  rename(`Unknown Eggs`="Unknown_egg") %>% 
+  select(-c("site_id", "Actinopterygii", "Ochrophyta", "Parasites")) %>% 
+  t()
+# if < 1 individual / m3 for each site = group gets filtered out
+
+colnames(zoop_comp_table) <- spat_site_order
+
+kable(zoop_comp_table, "latex", booktabs=TRUE, escape = FALSE) %>% 
+  save_kable(here("tables", "spatial_tables", "zoop_relA_table.pdf"))
+
+##### SALMON DATA - READ IN #####
 
 # Read in main data file for spatial diets:
 
@@ -193,9 +249,12 @@ spat_diet_raw$site_id <- factor(spat_diet_raw$site_id, levels=spat_site_order)
 #reorder sites (West to East) for the diet dataset
 
 spat_data_combo <- left_join(spat_diet_raw, spat_zoop_envr, by=c("site_id", "survey_id", "survey_date"))
+#join together the salmon and zoop/envr data
 
 spat_diet_copy <- filter(spat_data_combo, prey_info!="Digested_food")
 #make a copy of data before modifying the raw data (and remove dig. food)
+
+##### SALMON DATA - TAXA REGROUP #####
 
 # Merge rare (< 3 stom.) taxonomic groups to higher prey levels:
 
@@ -278,8 +337,11 @@ spat_diet_intermediate <- spat_diet_copy %>%
                     if_else(class=="Insecta" | class=="Arachnida", "Insecta_Arachnida",
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", "Cnidaria_Ctenophora",
                     if_else(prey_info=="Copepoda", "Crustacea",
-                    prey_info)))))))))
+                    if_else(life_stage=="Object", life_stage,
+                    prey_info))))))))))
 #create more general prey groups for any needed tables, graphs, calc, etc.
+
+##### SALMON DATA - PREP ##### 
 
 spat_diet_wide <- spat_diet_intermediate %>%
   group_by(ufn, fish_species, site_id, prey_group) %>%
@@ -355,57 +417,147 @@ spat_stomachs <- spatial_diets %>%
 #general taxa groups - "Other" grouped together:
 #spat_diet_other_rel_bio #for prey comp graph
 
-##### SALMON TABLES #####
+##### SALMON TABLES - PREP #####
 
-# Sampling table:
+spat_gfi_table <- spat_stomachs %>%
+  filter(is.na(weight)!=TRUE) %>% 
+  select(fish_species, site_id, weight, food_weight_corr, fork_length) %>%
+  mutate(weight_corr= weight*1000, # grams to milligrams * FIX IN RAW DATA LATER ! *
+           gfi=food_weight_corr/weight_corr*100) %>% 
+  group_by(fish_species, site_id) %>%
+  summarise(mean_ww=round(mean(weight_corr), digits=1), se_ww=round(sd(weight_corr)/10, digits=1),
+            mean_food=round(mean(food_weight_corr), digits=1), se_food=round(sd(food_weight_corr)/10, digits=1),
+            mean_gfi=round(mean(gfi), digits=2), se_gfi=round(sd(gfi)/10, digits=2))
 
-zoop_table <- spat_zoop_ww %>%
-  filter(site_id!="J02") %>% 
-  select(site_id, sieve, biomass) %>%
-  group_by(site_id, sieve) %>% 
-  summarise(biomass=round(sum(biomass), digits = 2)) %>% 
-  spread(sieve, biomass, fill=0) %>%
-  mutate(Total=sum(`250`, `1000`, `2000`))
+spat_length_table <- spat_stomachs %>%
+  filter(is.na(fork_length)!=TRUE) %>%
+  select(fish_species, site_id, fork_length) %>%
+  group_by(fish_species, site_id) %>%
+  summarise(mean_fl=round(mean(fork_length), digits=1), se_fl=round(sd(fork_length)/10, digits=1))
 
-reverse_spat_sites <- c("D07", "D09", "D11", "J06", "J08", "J02")
+spat_empty_table <- spat_stomachs %>%
+  filter(food_weight_corr==0) %>%
+  group_by(fish_species, site_id) %>%
+  count() %>%
+  mutate(per_empty=n*10)
 
-spat_envr_data$site_id <- factor(spat_envr_data$site_id, levels = reverse_spat_sites)
-zoop_table$site_id <- factor(zoop_table$site_id, levels = reverse_spat_sites)
-#reorder levels in zoop dataframe for tables
+##### SALMON TABLES - INDICES ##### 
 
-zoop_envr_table <- left_join(spat_envr_data, zoop_table, by="site_id") %>%
-  mutate(Region=c("DI", "DI", "NSoG", "QCSt", "JS", "JS"), `# Pink`=10, `# Chum`=10) %>% 
-  select(Region, Site=site_id, Date=survey_date, `# Pink`, `# Chum`, `Temperature (°C)`=temperature, `Salinity (‰)`=salinity,
-         `250 $\\mu$m`=`250`, `1000 $\\mu$m`=`1000`, `2000 $\\mu$m`=`2000`, Total) %>%
-  arrange(Site, reverse_spat_sites)
+summed_data <- spatial_diets %>%
+  filter(!prey_info %in% c("Coscinodiscophycidae", "Microplastic_chunk_Object",
+                           "Object", "Parasites", "Detritus")) %>% 
+  select(fish_species, site_id, prey_info, prey_weight_corr) %>%
+  group_by(fish_species, site_id, prey_info) %>%
+  summarise(totalw=sum(prey_weight_corr)) %>%
+  spread(key=prey_info, value=totalw, fill=0) 
 
-zoop_envr_table$`250 $\\mu$m`[which(is.na(zoop_envr_table$`250 $\\mu$m`))] <- "No Data"
-zoop_envr_table$`1000 $\\mu$m`[which(is.na(zoop_envr_table$`1000 $\\mu$m`))] <- "No Data"
-zoop_envr_table$`2000 $\\mu$m`[which(is.na(zoop_envr_table$`2000 $\\mu$m`))] <- "No Data"
-zoop_envr_table$Total[which(is.na(zoop_envr_table$Total))] <- "No Data"
+sites <- summed_data$site_id
+salmon <- summed_data$fish_species
 
-kable(zoop_envr_table, "latex", booktabs=TRUE,
-      escape = FALSE, align=c("l", "l", "l", "c", "c", "c", "c", "r", "r", "r", "r")) %>%
-  add_header_above(c(" "=7, "Zooplankton Biomass (mg/m³)"=4)) %>% 
-  save_kable(here("tables", "spatial_tables", "sampling_table.pdf"))
+summed_matrix <- summed_data %>%
+  ungroup() %>% 
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method="total")
 
-# zoop abundance
+proportional_sums <- cbind(sites, salmon, summed_matrix)
 
-spat_zoop_intermediate$site_id <- factor(spat_zoop_intermediate$site_id, levels = reverse_spat_sites)
-#reorder levels in zoop dataframe for tables
+calculate_overlap <- function(dataset, site) {
+  dataset %>%
+    filter(sites==site) %>%
+    select(-c(sites, salmon)) %>%
+    summarise_all(min) %>%
+    rowSums()
+  }
 
-zoop_comp_table <- spat_zoop_intermediate %>%
-  group_by(site_id, prey_group) %>%
-  summarise(abd_group=sum(abundance)) %>%
-  spread(prey_group, abd_group, fill=0) %>%
-  arrange(site_id, reverse_spat_sites)
+D07sim <- calculate_overlap(proportional_sums, "D07")
+D09sim <- calculate_overlap(proportional_sums, "D09")
+D11sim <- calculate_overlap(proportional_sums, "D11")
+J06sim <- calculate_overlap(proportional_sums, "J06")
+J08sim <- calculate_overlap(proportional_sums, "J08")
+J02sim <- calculate_overlap(proportional_sums, "J02")
 
-#zoop_comp_rel <- zoop_comp_table %>%
+per_overlap <- data.frame(site_id=c("J02", "J08", "J06", "D11", "D09", "D07"),
+                          overlap=c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim))
+
+per_overlap$site_id <- factor(per_overlap$site_id, levels = reverse_spat_sites)
+
+duplicateddata <- data.frame(site_id=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 2),
+                             overlap=c(round(J02sim*100, digits = 1), round(J08sim*100, digits = 1), round(J06sim*100, digits = 1), round(D11sim*100, digits = 1), "33.0", round(D07sim*100, digits = 1), "", "", "", "", "", ""))
+#D09 sim = 33.00698 and rounded = 33.0 but round doesn't include zeros. so code is 33.0
+
+# merge peroverlap, spat_empty_table (replace NAs), spat_length_table, spat_gfi_table:
+
+gfi_fl_table <- left_join(spat_gfi_table, spat_length_table, by=c("fish_species", "site_id"))
+
+gfi_empty_table <- left_join(gfi_fl_table, spat_empty_table, by=c("fish_species", "site_id"))
+
+gfi_overlap_table <- bind_cols(gfi_empty_table, duplicateddata)
+
+gfi_overlap_table$n[which(is.na(gfi_overlap_table$n)==TRUE)] <- 0
+gfi_overlap_table$per_empty[which(is.na(gfi_overlap_table$per_empty)==TRUE)] <- 0
+
+gfi_overlap_table$site_id <- factor(gfi_overlap_table$site_id, levels = reverse_spat_sites)
+
+gfi_all_data_table <- gfi_overlap_table %>%
+  mutate(fl= paste(mean_fl, se_fl, sep=" ± "),
+         fishw= paste(comma(mean_ww, digits=1), se_ww, sep=" ± "),
+         food= paste(mean_food, se_food, sep=" ± "),
+         GFI= paste(mean_gfi, se_gfi, sep=" ± ")) %>%
+  select(Species=fish_species, Site=site_id, `Fish FL (mm)`=fl, `Fish WW (mg)`=fishw,
+         #`Food WW (mg)`=food,
+         GFI=GFI, `# Empty`=n, #`% Empty Stom.`=per_empty,
+         `Overlap`=overlap) %>%
+  unique() %>%
+  arrange(Site, c("D07", "D07", "D09", "D09", "D11", "D11", "J06", "J06", "J08", "J08", "J02", "J02"))
+
+kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 4), rep("c", 3)),
+      linesep= c('', '\\addlinespace')) %>% 
+  save_kable(here("tables", "spatial_tables", "index_table.pdf"))
+
+##### SALMON TABLES - DIET COMP #####
+
+group_biomass <- spatial_diets %>%
+  filter(food_weight_corr!=0) %>% 
+  group_by(ufn, fish_species, site_id, prey_group) %>%
+  summarise(prey_weight_sum=sum(prey_weight_corr))
+#summarize biomass for each fish
+
+group_bio_wide <- group_biomass %>%
+  ungroup() %>%
+  select(ufn, fish_species, site_id, prey_group, prey_weight_sum) %>% 
+  group_by(ufn, fish_species, site_id) %>% 
+  spread(key=prey_group, value = prey_weight_sum, fill=0)
+#wide data set (might not need it, but it's a good double check that n=120!)  
+
+group_bio_mat <- group_bio_wide %>%
+  ungroup() %>% 
+  select(-c(ufn, fish_species, site_id, Detritus, Echinodermata, Ochrophyta, Parasites, Podonidae, Isopoda)) %>%
+  decostand(method="total")
+
+group_bio_per <- group_bio_mat*100
+
+group_bio_data <- group_bio_per %>%
+  mutate(site=group_bio_wide$site_id, fish=group_bio_wide$fish_species) %>%
+  gather(key="taxa", value="rel_bio", Actinopterygii:Polychaeta) %>% 
+  group_by(site, fish, taxa) %>%
+  summarise(rel_bio=round(mean(rel_bio), digits=1)) %>%
 #  ungroup() %>% 
-#  select(-site_id) %>%
-#  decostand("total") %>%
-#  mutate(Site=reverse_spat_sites) %>%
-#  t()
+#  select(-site) %>% 
+  spread(taxa, rel_bio) %>%
+  t()
 
-kable(zoop_comp_rel, "latex", booktabs=TRUE, escape = FALSE) %>% 
-  save_kable(here("tables", "spatial_tables", "zoop_relA_table.pdf"))
+group_bio_dataframe <- data.frame(group_bio_data)
+
+diet_table <- group_bio_dataframe[3:nrow(group_bio_dataframe), ]
+
+#colnames(group_bio_data) <- c("D07", "D07", "D09", "D09", "D11", "D11", "J06", "J06", "J08", "J08", "J02", "J02")
+#colnames(diet_table) <- c("J02", "J02", "J08", "J08", "J06", "J06", "D11", "D11", "D09", "D09", "D07", "D07")
+
+colnames(diet_table) <- rep(c("PI", "CU"), 6)
+
+kable(diet_table, "latex", booktabs=TRUE, linesep="") %>%
+  add_header_above(c(" "=1, "J02"=2, "J08"=2, "J06"=2, "D11"=2, "D09"=2, "D07"=2)) %>%
+  save_kable(here("tables", "spatial_tables", "diet_comp_table.pdf"))
+
+
+##### SALMON GRAPHS - TBA #####
