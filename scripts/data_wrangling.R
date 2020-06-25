@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified june 14, 2020
+#last modified june 24, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -22,11 +22,20 @@ temporal_info <- data.frame(site_id=c("D07", "J07", "D07", "D07", "D07", "J07", 
                             survey_date=c("2015-05-21", "2015-06-02", "2015-06-05", "2015-06-07", "2015-06-13", "2015-06-14", "2015-06-29",
                                           "2016-05-19", "2016-06-03", "2016-06-03", "2016-06-16", "2016-06-20", "2016-07-05"), stringsAsFactors = FALSE)
 
-
 # Read in data that's needed for more than one code chunk:
 
-survey_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/survey_data.csv"), stringsAsFactors = FALSE)
+survey_data_raw <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/survey_data.csv"), stringsAsFactors = FALSE)
 #read in salmon survey data file for secchi measurements and other data
+
+survey_data_raw$survey_date <- as.Date(survey_data_raw$survey_date)
+#change from character to date to calculate yday
+
+survey_data <- mutate(survey_data_raw, year=str_sub(survey_date, end=4),
+                      yday=lubridate::yday(survey_date))
+#create more manageable date categories to work with for the temporal analysis
+
+survey_data$survey_date <- as.character(survey_data$survey_date)
+#change back into character so it can merged with other datasets
 
 ##### ENVIRONMENTAL DATA #####
 
@@ -108,7 +117,12 @@ all_zoop_data <- left_join(intermediate_zoop_data, tow_tax, by="sample_id")
 spat_zoop_data <- semi_join(all_zoop_data, spatial_info, by=c("site_id", "survey_date"))
 #make datafile for only spatial analysis zooplankton
 
-temp_zoop_data <- semi_join(all_zoop_data, temporal_info, by=c("site_id", "survey_date"))
+temp_zoop_prep <- semi_join(all_zoop_data, temporal_info, by=c("site_id", "survey_date"))
+
+temp_zoop_prep$survey_date <- as.Date(temp_zoop_prep$survey_date)
+
+temp_zoop_data <- mutate(temp_zoop_prep, year=str_sub(survey_date, end=4),
+                         yday=lubridate::yday(survey_date))
 #make datafile for only temporal analysis zooplankton
 
 # Save spatial and temporal zoop datasets for further analysis:
@@ -193,3 +207,4 @@ write_csv(spat_fish_data, here("processed", "spatial_data", "spatial_pink_chum_d
 write_csv(temp_fish_data, here("processed", "temporal_data", "temporal_pink_chum_diets.csv"))
 #write csv files for initial transformation and saving of diet data
 
+# note: salmon data is merged with summarized zoop+envr (but kept detailed zoop & env)

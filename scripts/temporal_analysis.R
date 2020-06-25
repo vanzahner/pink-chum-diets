@@ -4,11 +4,6 @@
 #instead of sample_site and sample_date * NEED TO UPDATE CODE
 
 #do have to include this when updating code:
-temp_site_order <- c("D07", "J07")
-
-temp_fish_data$site_id <- factor(temp_fish_data$site_id, levels = temp_site_order)
-#reorder sites for spatial to be same as on the map; temporal = D07, J07
-
 
 #update envr+zoop code read in and analysis (then this'll be the graphs)
 #Temporal zoops:

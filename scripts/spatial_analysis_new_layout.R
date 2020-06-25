@@ -107,6 +107,8 @@ zoop_colors <- c("#E31A1C", "#FDBF6F", "#FF7F00", "#B2DF8A", "#33A02C", "#A6CEE3
                  "#E7298A", "#FB9A99", "#A6761D", "#E6AB02", "#6A3D9A")
 #red, Lorange, orange, green, Lblue, blue, Lpurple, pink, hotpink, Y, Br, purple
 
+#*NEED TO REDO  THIS - is out of whack. moll=hotpink, cycl=pink, clad=yell, barn=brown
+
 zoop_group_data$prey_group_simple <- factor(zoop_group_data$prey_group_simple, levels = zoop_levels)
 #reorder levels to what is a nice visualization and will match the colors
 
