@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified june 24, 2020
+#last modified june 29, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -183,7 +183,7 @@ species_order <- c("Pink", "Chum") #make vector for rearranging species
 temp_diet_raw$fish_species <- factor(temp_diet_raw$fish_species, levels = species_order)
 #reorder species from alphabetical to pink salmon first before chum salmon
 
-temp_data_combo <- left_join(temp_diet_raw, temp_zoop_envr, by=c("site_id", "survey_id", "survey_date"))
+temp_data_combo <- left_join(temp_diet_raw, temp_zoop_envr, by=c("site_id", "survey_id", "survey_date", "yday", "year"))
 #join together the salmon and zoop/envr data
 
 temp_diet_copy <- filter(temp_data_combo, prey_info!="Digested_food")
@@ -208,37 +208,29 @@ temp_diet_sum <- temp_diet_data %>%
   arrange(n)
 #calculate how many stomachs each prey group appears in
 
-# NEED TO CHANGE THIS TO BE RELEVANT TO TEMPORAL FREQUENCY OF PREY *****
-# CAN'T IGNORE, IT'S CAUSING ISSUES IN THE CODE PIPELINE *****
-
 temp_diet_groups <- temp_diet_sum %>%
-  mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea", 
+  mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea" & taxa_info!="Cancer_oregonensis",
                   if_else(life_stage=="Object" | life_stage=="Detritus", "",
-                  if_else(subphylum=="Chelicerata" | subphylum=="Hexapoda" | genus=="Kellia", phylum,
-                  if_else(class=="Ostracoda", subphylum,
-                  if_else(genus=="Candacia" | genus=="Paraeuchaeta" | genus=="Eurytemora" |
-                          order=="Cyclopoida" | genus=="Limacina" | genus=="Epilabidocera" |
-                          order=="Harpacticoida", order,
-                  if_else(genus=="Amphibalanus"  | (suborder=="Senticaudata" & genus!="Caprella"), suborder,
-                  if_else(family=="Paguridae" | genus=="Eualus", infraorder,
-                  if_else(genus=="Hyperia" | family=="Pinnotheridae" | family=="Podonidae" |
-                          genus=="Nematoscelis", family,
-                  if_else(class=="Phaeophyceae", "Detritus",
-                  if_else(phylum=="Nematoda" | family=="Caligidae", "Parasites",
+                  if_else(class=="Arachnida" | class=="Insecta" | class=="Actinopterygii", class,
+                  if_else(genus=="Monstrilla" | order=="Mysida", subclass,
+                  if_else(genus=="Candacia" | genus=="Paraeuchaeta" | genus=="Eurytemora" | genus=="Microcalanus" |
+                          genus=="Epilabidocera" | genus=="Oncaea" | order=="Harpacticoida" | genus=="Primno", order,
+                  if_else(suborder=="Senticaudata" & infraorder!= "Corophiida", suborder,
+                  if_else(family=="Paguridae" | infraorder=="Corophiida", infraorder,
+                  if_else(family=="Pinnotheridae", family,
+                  if_else(phylum=="Nematoda", "Parasite",
                   if_else(species!="", genus,
-                          taxa_info)))))))))),
-                  if_else(order=="Pteropoda" & life_stage=="Veliger", phylum,
-                  if_else(order=="Cumacea", order,
-                  if_else(family=="Pleuronectidae", family,
-                  if_else(genus=="Neocalanus", genus,
-                  if_else(class=="Trematoda", "Parasites",
-                          taxa_info)))))),
-         life_stage_new=if_else(str_detect(life_stage, "Zoea") | 
-                                order=="Decapoda" & life_stage=="Megalopa" | 
-                                order=="Calanoida" & (life_stage=="Nauplii" | life_stage=="Copepodite"), "Larvae",
-                        if_else(family=="Euphausiidae" & life_stage=="Juvenile" |
-                                taxa_new=="Arthropoda" | taxa_new=="Parasites", "",
-                                life_stage)),
+                          taxa_info))))))))),
+                  if_else(phylum=="Echinodermata", phylum,
+                  if_else(class=="Trematoda", "",
+                  if_else(order=="Pteropoda", order, taxa_info)))),
+         life_stage_new=if_else(str_detect(life_stage, "Zoea") | life_stage=="Megalopa" |
+                                order=="Decapoda" & life_stage=="Juvenile", "Larvae", 
+                        if_else(str_detect(life_stage, "Copepodite"), "Copepodite",
+                        if_else(phylum=="Echinodermata", "Larvae",
+                        if_else(prey_info=="Senticaudata_Juvenile" | prey_info=="Calanoida_Egg" |
+                                class=="Actinopterygii" & life_stage!="Egg" | order=="Isopoda" | taxa_info=="Eumalacostraca", "",
+                                life_stage)))),
          prey_new=if_else(life_stage_new=="", taxa_new,
                   if_else(taxa_new=="", life_stage_new, 
                           paste(taxa_new, life_stage_new, sep="_")))) %>%
@@ -262,7 +254,7 @@ temp_diet_filtered <- temp_diet_check %>%
   tally() %>%
   arrange(n)
 #calculate how many stomachs each prey group appears in (none <3!)
-#reduced number of taxa from 163 to 91, a lot more manageable now!
+#reduced number of taxa from 176 to 112, a lot more manageable now!
 
 temp_diet_intermediate <- temp_diet_copy %>%
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Mollusca" | phylum=="Echinodermata" | phylum=="Ochrophyta", phylum,
@@ -283,8 +275,7 @@ temp_diet_intermediate <- temp_diet_copy %>%
 
 # RESUME HERE TO TRY TO CALCULATE SIZE BIN HISTOGRAM ON FRIDAY ! *
 
-#temp_diet_wide <- temp_diet_intermediate %>%
-temp_diet_wide <- temp_diet_copy %>% 
+temp_diet_wide <- temp_diet_intermediate %>%
   group_by(ufn, fish_species, site_id, prey_group) %>%
   summarise(biomass=sum(prey_weight_corr)) %>%
   spread(key=prey_group, value = biomass, fill=0) %>%
@@ -309,36 +300,80 @@ temp_diet_rel_bio %>%
   group_by(fish_species, prey, site_id) %>%
   summarise(average=mean(rel_bio)*100) %>%
   summarise(max=max(average)) %>%
-  filter(max>8) %>%
+  arrange(desc(max)) %>%
+  filter(max>4) %>%
   arrange(prey)
-#this calculation tells me which prey groups are on average >8% relative ww
+#this calculation tells me which prey groups are on average >4% relative ww
 
 temp_diet_all <- temp_diet_intermediate %>%
-  mutate(prey_group_simple=if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Euphausiidae" & prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
-                                     prey_group!="Insecta_Arachnida" & prey_group!="Cnidaria_Ctenophora" & prey_group!="Appendicularia" & prey_group!="Chaetognatha", "Other", prey_group))
+  mutate(prey_group_simple=if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Euphausiidae" & prey_group!="Echinodermata" & prey_group!="Podonidae" & 
+                                     prey_group!="Balanomorpha" & prey_group!="Cnidaria_Ctenophora" & prey_group!="Appendicularia" & prey_group!="Chaetognatha", "Other", prey_group))
 # keep prey groups that are substantial, rest = "Other" prey category
 
-prey_levels <- c("Calanoida", "Decapoda", "Euphausiidae", "Amphipoda", "Harpacticoida",
-                 "Insecta_Arachnida", "Cnidaria_Ctenophora", "Appendicularia", "Chaetognatha", "Other")
+prey_levels <- c("Calanoida", "Decapoda", "Podonidae", "Balanomorpha", "Echinodermata", "Euphausiidae",
+                 "Cnidaria_Ctenophora", "Appendicularia", "Chaetognatha", "Other")
 #vector to reorder prey groups into what makes sense for diet comp bargraph
 
-color_levels <- c("#E31A1C", "#FDBF6F", "#FF7F00", "#B2DF8A", "#33A02C", 
-                  "#666666", "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
-#red, Lorange, orange, Lgreen, green, grey, Lblue, blue, Lpurple, purple
+
+color_temp <- c("#E31A1C", "#FDBF6F",
+                "#E6AB02", "#A6761D", "#666666",
+                #clad yell, #barn brown, #echin grey
+                "#1B9E77", #Eggs teal 
+                "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
 
 temp_diet_all$prey_group_simple <- factor(temp_diet_all$prey_group_simple, levels = prey_levels)
 #reorder taxa groups into correct order for printing graphs (and tables)
 
-temporal_diets <- select(temp_diet_all, ufn, fish_species, site_id, survey_date, food_weight_corr, prey_info, prey_group, prey_group_simple,
+temporal_diets <- select(temp_diet_all, ufn, fish_species, site_id, survey_date, yday, year, food_weight_corr, prey_info, prey_group, prey_group_simple,
                         count, digestion_state, prey_weight_corr, length_avg, size_class, adipose, weight, fork_length, seine_id, survey_id,
                         temperature, salinity, collected, zoop_ww, set_time, time_searching, so_taken:he_total, precip:wind_direction, secchi)
 #delete useless columns (can further simplify later), this=working dataset
 
 temp_stomachs <- temporal_diets %>%
-  select(ufn, fish_species, site_id, survey_date, food_weight_corr, weight, fork_length, fork_length, adipose, seine_id, survey_id,
+  select(ufn, fish_species, site_id, survey_date, yday, year, food_weight_corr, weight, fork_length, fork_length, adipose, seine_id, survey_id,
          temperature, salinity, collected, zoop_ww, set_time, time_searching, so_taken:he_total, precip:wind_direction, secchi) %>%
   unique()
 #metadata of salmon stomachs with no prey info (envr, zoops, fish ww, etc)
 
+# RESUME HERE TO UPDATE PREY COMP GRAPH (NEED TO CALC REL BIOS FIRST! *)
+
+temp_diet_all %>%
+  ggplot(aes(survey_date, prey_weight_corr))+
+  geom_bar(aes(fill=labID), stat="identity", position="fill")+
+  scale_fill_manual(values=color_temp)+
+  #scale_x_continuous( # fix date labels here )+
+  facet_grid(year~site, scales="free_x")+
+  theme_bw()+
+  theme(panel.grid=element_blank())+
+  labs(title="Zoop Composition (Temporal)")
+
 ##### SIZE BINS #####
+
+ggplot(temp_stomachs)+
+  #geom_freqpoly(aes(fork_length), bins=15)
+  geom_histogram(aes(fork_length, fill=fish_species), position="dodge", binwidth = 5)+
+  facet_grid(site_id~year)+
+  geom_vline(aes(xintercept=87.5))+
+  geom_vline(aes(xintercept=117.5))+
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  theme_bw()+
+  theme(axis.title.y.right = element_text(color = "red"),
+        panel.grid=element_blank(),
+        axis.text.y.right = element_text(color="red"),
+        axis.text.y.left = element_text(color="black"),
+        axis.text.x = element_text(color="black"),
+        strip.text = element_text(size=16),
+        axis.ticks.x = element_blank(),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14))+
+  labs(x="Fork Length (mm)", y="Count", fill="Species")
+
+ggsave(here("figs", "temporal_figs", "salmon_size_temporal.png"))
+
+size_summary <- temp_stomachs %>%
+  mutate(fish_size=if_else(fork_length<87, "Small",
+                   if_else(fork_length>117, "Large", "Medium"))) %>%
+  group_by(fish_size) %>% 
+  tally()
+
 
