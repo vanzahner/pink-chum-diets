@@ -561,5 +561,4 @@ kable(diet_table, "latex", booktabs=TRUE, linesep="") %>%
   add_header_above(c(" "=1, "J02"=2, "J08"=2, "J06"=2, "D11"=2, "D09"=2, "D07"=2)) %>%
   save_kable(here("tables", "spatial_tables", "diet_comp_table.pdf"))
 
-
 ##### SALMON GRAPHS - TBA #####

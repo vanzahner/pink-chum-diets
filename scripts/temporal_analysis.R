@@ -3,67 +3,6 @@
 #note: updated raw data to be survey_date and site_id
 #instead of sample_site and sample_date * NEED TO UPDATE CODE
 
-#do have to include this when updating code:
-
-#update envr+zoop code read in and analysis (then this'll be the graphs)
-#Temporal zoops:
-
-zoop_data_ww %>%
-  filter(site %in% c("J07", "D07")) %>%
-  ggplot(aes(date_name, biomass))+
-  geom_boxplot(aes(color=sieve))+
-  facet_grid(year~site, scales="free_x")+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Zoop Biomass (Temporal)")
-#note: June_Early 2015 D07 has two samples (June 5 and 7 2015)
-# June 5th (the Chum date) has high gel. June 5th (pink date) has low gel.
-#neither has non-gelatinous 2000 um. unlike June_Mid 2016 J07, has gel+non.
-
-#temporal zoop category change:
-#for loop doesn't like data as factors
-zoop_temp$labID <- as.character(zoop_temp$labID) 
-zoop_names$old_category <- as.character(zoop_names$old_category)
-zoop_names$temp_category <- as.character(zoop_names$temp_category)
-#for loop that will go through all the organism names in the data spreadsheet 
-#and for each one it will go to the names spreadsheet and reassign the name accordingly
-for (n in zoop_names$old_category) {
-  zoop_temp$labID[which(zoop_temp$labID %in% n)] <- zoop_names$temp_category[which(zoop_names$old_category == n)]
-}
-
-temp_levels <- c("Calanoids", "Decapods", "Cladocerans", "Barnacles", "Echinoderms",
-                 "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other")
-
-color_temp <- c("#E31A1C", "#FDBF6F",
-                "#E6AB02", "#A6761D", "#666666",
-                #clad yell, #barn brown, #echin grey
-                "#1B9E77", #Eggs teal 
-                "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A")
-#red, pink, orange, Lorange, green, Lgreen, blue, Lblue, purple, Lpurple
-
-#current diet groups:
-temp_levels <- c("Amphipods", "Cyclopoids", "Calanoids", "Decapods", "Euphausiids", "Cladocerans", "Barnacles", "Echinoderms",
-                 "Insects", "Harpacticoids", "Eggs", "Gelatinous", "Larvaceans", "Chaetognaths", "Other", "Fish")
-
-color_temp <- c("#E7298A", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
-                "#E6AB02", "#A6761D", "#666666",
-                #clad yell, #barn brown, #echin grey
-                "#B2DF8A", "#33A02C",
-                "#1B9E77", #Eggs teal 
-                "#A6CEE3", "#1F78B4", "#CAB2D6", "#6A3D9A", "black")
-
-zoop_temp$labID <- factor(zoop_temp$labID, levels = temp_levels)
-
-zoop_temp %>%
-  filter(site %in% c("J07", "D07")) %>%
-  ggplot(aes(date_name, abundance))+
-  geom_bar(aes(fill=labID), stat="identity", position="fill")+
-  scale_fill_manual(values=color_temp)+
-  facet_grid(year~site, scales="free_x")+
-  theme_bw()+
-  theme(panel.grid=element_blank())+
-  labs(title="Zoop Composition (Temporal)")
-
 ##### SET UP #####
 
 library(tidyverse)
