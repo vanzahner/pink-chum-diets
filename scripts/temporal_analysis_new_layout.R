@@ -279,11 +279,12 @@ temp_diet_filtered <- temp_diet_check %>%
 #reduced number of taxa from 176 to 112, a lot more manageable now!
 
 temp_diet_intermediate <- temp_diet_copy %>%
+  filter(order!="Cumacea" & class!="Ostracoda") %>% #filter out <0.1% rel. biomass prey groups
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Echinodermata" | #phylum=="Mollusca" |
                             phylum=="Bryozoa" | phylum=="Ochrophyta", phylum,
                     if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" | class=="Bivalvia", class,
                     if_else(order=="Calanoida" | order=="Decapoda" | order=="Mysida"
-                            | order=="Amphipoda" | order=="Cumacea" | order=="Isopoda"
+                            | order=="Amphipoda" | order=="Isopoda"# | order=="Cumacea"
                             | order=="Harpacticoida" | order=="Cyclopoida" | order=="Pteropoda", order,
                     if_else(suborder=="Balanomorpha", suborder,
                     if_else(family=="Euphausiidae" & life_stage=="", family,
@@ -300,17 +301,19 @@ temp_diet_intermediate <- temp_diet_copy %>%
 ##### SALMON DATA - FIG/TABLE PREP ##### 
 
 temp_diet_wide <- temp_diet_intermediate %>%
+  filter(food_weight_corr!=0) %>% 
   group_by(ufn, survey_date, year, fish_species, site_id, prey_group) %>%
   summarise(biomass=sum(prey_weight_corr)) %>%
   spread(key=prey_group, value = biomass, fill=0) %>%
   ungroup()
 #calculate wide data set with new prey groups (detailed and general!)
 
-temp_diet_info <- select(temp_diet_wide, ufn, fish_species, site_id, year, survey_date)
+temp_diet_info <-temp_diet_wide %>%
+  select(ufn, fish_species, site_id, year, survey_date)
 #create dataframe with UFNs, site and species for reattaching to matrices
 
 temp_diet_matrix <- temp_diet_wide %>%
-  select(Actinopterygii:Pteropoda, -c(Empty, Detritus, Digested_food_worms, Crustacea, Eumalacostraca, Parasite, Ochrophyta)) %>% 
+  select(Actinopterygii:Pteropoda, -c(Detritus, Digested_food_worms, Crustacea, Eumalacostraca, Parasite, Ochrophyta)) %>% 
   decostand(method="total")
 #matrix to calculation relative biomass of 25 different prey groups
 
@@ -502,17 +505,26 @@ kable(zoop_comp_table, "latex", booktabs=TRUE, escape = FALSE, align = c("r"), l
 
 ##### SALMON TABLE - PREY COMP  #####
 
+# summary table (ave % ww by year/site/sp) for main chapter:
+
 rel_bio_sum <- temp_diet_rel_bio %>%
-  gather(key="taxa", value="rel_bio", Actinopterygii:Pteropoda, -Cumacea, -Ostracoda) %>% 
+  filter() %>% 
+  gather(key="taxa", value="rel_bio", Actinopterygii:Pteropoda) %>% 
   group_by(site_id, year, fish_species, taxa) %>%
-  summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) %>%
-  group_by(taxa) %>% 
-  summarise(max(ave_rel_bio)) %>% 
-    View()
+  summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) 
 
 rel_bio_sum$ave_rel_bio[which(rel_bio_sum$ave_rel_bio==0)] <- "-"
 
+prey_level_details <- c("Calanoida", "Cyclopoida", "Harpacticoida", "Decapoda", "Cladocera",
+                        "Balanomorpha", "Echinodermata", "Euphausiidae Eggs", "Euphausiidae_Larvae",
+                        "Euphausiidae","Cnidaria", "Ctenophora", "Appendicularia", "Chaetognatha", 
+                        "Actinopterygii", "Amphipoda", "Mysida", "Isopoda", "Insecta", "Arachnida",
+                        "Pteropoda", "Bivalvia", "Polychaeta", "Bryozoa", "Object")
+
+rel_bio_sum$taxa <- factor(rel_bio_sum$taxa, levels=prey_level_details)
+
 rel_bio_chr <- rel_bio_sum %>%
+  arrange(taxa) %>% 
   spread(taxa, ave_rel_bio) %>%
   rename(` `=fish_species, Larvae=Euphausiidae_Larvae, Eggs=`Euphausiidae Eggs`, Adults=Euphausiidae)
 
@@ -524,32 +536,151 @@ diet_table <- group_bio_dataframe[4:nrow(group_bio_dataframe), ]
 
 colnames(diet_table) <- rep(c("Pink", "Chum"), 4)
 
-kable(diet_table, "latex", booktabs=TRUE, linesep=c(rep("", 12), "\\addlinespace", rep("", 6), "\\addlinespace", rep("", 6))) %>%
+kable(diet_table, "latex", booktabs=TRUE) %>%
   add_header_above(c(" "=1, "2015"=2, "2016"=2, "2015"=2, "2016"=2)) %>% 
   add_header_above(c(" "=1, "D07"=4, "J07"=4)) %>%
   pack_rows("Gelatinous", 11, 12) %>% 
-  pack_rows("Euphausiidae", 16, 18) %>% 
+  pack_rows("Copepoda", 1, 3) %>% 
+  pack_rows("Euphausiidae", 8, 10) %>% 
+  pack_rows("Other", 15, nrow(diet_table)) %>% 
+  add_indent(c(1:3, 8:12, 15:nrow(diet_table))) %>% 
   save_kable(here("tables", "temporal_tables", "diet_comp_table.pdf"))
+
+# more detailed table (ave % ww by date) for appendix:
 
 rel_bio_sum_detail <- temp_diet_rel_bio %>%
   gather(key="taxa", value="rel_bio", Actinopterygii:Polychaeta) %>% 
-  group_by(site_id, survey_date, fish_species, taxa) %>% 
-  summarise(rel_bio=round(mean(rel_bio), digits=2)) %>%
-  spread(taxa, rel_bio) %>%
+  group_by(site_id, survey_date, year, fish_species, taxa) %>% 
+  summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) 
+
+rel_bio_sum_detail$ave_rel_bio[which(rel_bio_sum_detail$ave_rel_bio==0)] <- "-"
+
+rel_bio_sum_detail$taxa <- factor(rel_bio_sum_detail$taxa, levels=prey_level_details)
+
+rel_bio_chr_detail <- rel_bio_sum_detail %>%
+  arrange(taxa) %>% 
+  spread(taxa, ave_rel_bio) %>%
+  arrange(year) %>% 
   rename(` `=fish_species, Larvae=Euphausiidae_Larvae, Eggs=`Euphausiidae Eggs`, Adults=Euphausiidae)
 
-group_bio_data_detail <- t(rel_bio_sum_detail)
+group_bio_data_detail <- t(rel_bio_chr_detail)
 
 group_bio_detail_df <- data.frame(group_bio_data_detail)
 
-diet_table_detail <- group_bio_detail_df[3:nrow(group_bio_detail_df), ]
+diet_table_detail <- group_bio_detail_df[5:nrow(group_bio_detail_df), ]
 
-colnames(diet_table_detail) <- rel_bio_sum_detail$survey_date
+colnames(diet_table_detail) <- rep(c("Pink", "Chum"), 12)
 
 kable(diet_table_detail, "latex", booktabs=TRUE, linesep="") %>%
-  add_header_above(c(" "=1, "2015"=12, "2016"=12)) %>% 
-  add_header_above(c(" "=1, "D07"=4, "J07"=4)) %>%
+  add_header_above(c(" "=1, "May 21"=2, "June 05"=1, "June 07"=1, "June 13"=2, "June 02"=2, "June 14"=2, "June 29"=2, 
+                     "May 19"=2, "June 03"=2, "June 16"=2, "June 03"=2, "June 20"=2, "July 05"=2)) %>% 
+  add_header_above(c(" "=1, "D07"=6, "J07"=6, "D07"=6, "J07"=6), bold=T) %>%
+  add_header_above(c(" "=1, "2015"=12, "2016"=12), bold=T) %>% 
+  pack_rows("Gelatinous", 11, 12, latex_gap_space = "0em") %>% 
+  pack_rows("Copepoda", 1, 3) %>% 
+  pack_rows("Euphausiidae", 8, 10, latex_gap_space = "0em") %>% 
+  pack_rows("Other", 15, nrow(diet_table_detail), latex_gap_space = "0em") %>% 
+  add_indent(c(1:3, 8:12, 15:nrow(diet_table_detail))) %>% 
   save_kable(here("tables", "temporal_tables", "diet_comp_table_detailed.pdf"))
+
+##### SALMON TABLE - INDICES #####
+
+temp_gfi_table <- temp_stomachs %>%
+  filter(is.na(weight)!=TRUE) %>% 
+  select(fish_species, site_id, year, weight, food_weight_corr, fork_length) %>%
+  mutate(weight_corr= weight*1000, # grams to milligrams? * FIX IN RAW DATA LATER ! *
+         gfi=food_weight_corr/weight_corr*100) %>% 
+  group_by(fish_species, year, site_id) %>%
+  summarise(mean_ww=round(mean(weight_corr), digits=1), se_ww=round(sd(weight_corr)/10, digits=1),
+            mean_food=round(mean(food_weight_corr), digits=1), se_food=round(sd(food_weight_corr)/10, digits=1),
+            mean_gfi=round(mean(gfi), digits=2), se_gfi=round(sd(gfi)/10, digits=2))
+
+temp_length_table <- temp_stomachs %>%
+  filter(is.na(fork_length)!=TRUE) %>%
+  select(fish_species, site_id, year, fork_length) %>%
+  group_by(fish_species, year, site_id) %>%
+  summarise(mean_fl=round(mean(fork_length), digits=1), se_fl=round(sd(fork_length)/10, digits=1))
+
+temp_empty_table <- temp_stomachs %>%
+  filter(food_weight_corr==0) %>%
+  group_by(fish_species, site_id, year) %>%
+  count() %>%
+  mutate(per_empty=n*10)
+
+summed_data <- temporal_diets %>%
+  filter(!prey_info %in% c("Coscinodiscophycidae", "Microplastic_chunk_Object",
+                           "Object", "Parasites", "Detritus")) %>% 
+  select(fish_species, site_id, year, prey_info, prey_weight_corr) %>%
+  group_by(fish_species, site_id, year, prey_info) %>%
+  summarise(totalw=sum(prey_weight_corr)) %>%
+  spread(key=prey_info, value=totalw, fill=0) 
+
+sites <- summed_data$site_id
+salmon <- summed_data$fish_species
+
+summed_matrix <- summed_data %>%
+  ungroup() %>% 
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method="total")
+
+proportional_sums <- cbind(sites, salmon, summed_matrix)
+
+# fix this overlap part later: issue of unequal sample size. ignore calculation?
+
+#calculate_overlap <- function(dataset, site) {
+#  dataset %>%
+#    filter(sites==site) %>%
+#    select(-c(sites, salmon)) %>%
+#    summarise_all(min) %>%
+#    rowSums()
+#}
+
+#D07sim <- calculate_overlap(proportional_sums, "D07")
+#D09sim <- calculate_overlap(proportional_sums, "D09")
+#D11sim <- calculate_overlap(proportional_sums, "D11")
+#J06sim <- calculate_overlap(proportional_sums, "J06")
+#J08sim <- calculate_overlap(proportional_sums, "J08")
+#J02sim <- calculate_overlap(proportional_sums, "J02")
+
+#per_overlap <- data.frame(site_id=c("J02", "J08", "J06", "D11", "D09", "D07"),
+#                          overlap=c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim))
+
+#per_overlap$site_id <- factor(per_overlap$site_id, levels = reverse_spat_sites)
+
+#duplicateddata <- data.frame(site_id=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 2),
+#                             overlap=c(round(J02sim*100, digits = 1), round(J08sim*100, digits = 1), round(J06sim*100, digits = 1), round(D11sim*100, digits = 1), "33.0", round(D07sim*100, digits = 1), "", "", "", "", "", ""))
+#D09 sim = 33.00698 and rounded = 33.0 but round doesn't include zeros. so code is 33.0
+
+# merge peroverlap, spat_empty_table (replace NAs), spat_length_table, spat_gfi_table:
+
+gfi_fl_table <- left_join(temp_gfi_table, temp_length_table, by=c("fish_species", "site_id", "year"))
+
+gfi_empty_table <- left_join(gfi_fl_table, temp_empty_table, by=c("fish_species", "site_id", "year"))
+
+#gfi_overlap_table <- bind_cols(gfi_empty_table, duplicateddata)
+
+gfi_empty_table$n[which(is.na(gfi_empty_table$n)==TRUE)] <- 0
+gfi_empty_table$per_empty[which(is.na(gfi_empty_table$per_empty)==TRUE)] <- 0
+
+#gfi_overlap_table$site_id <- factor(gfi_overlap_table$site_id, levels = reverse_spat_sites)
+
+gfi_all_data_table <- gfi_empty_table %>%
+  mutate(fl= paste(mean_fl, se_fl, sep=" ± "),
+         fishw= paste(comma(mean_ww, digits=1), se_ww, sep=" ± "),
+         food= paste(mean_food, se_food, sep=" ± "),
+         GFI= paste(mean_gfi, se_gfi, sep=" ± ")) %>%
+  select(Species=fish_species, Site=site_id, `Fish FL (mm)`=fl, `Fish WW (mg)`=fishw,
+         #`Food WW (mg)`=food,
+         GFI=GFI, `# Empty`=n#, #`% Empty Stom.`=per_empty,
+         #`Overlap`=overlap
+         ) %>%
+  unique() #%>%
+  #arrange(Site, c("D07", "D07", "D09", "D09", "D11", "D11", "J06", "J06", "J08", "J08", "J02", "J02"))
+
+kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 4), rep("c", 3)),
+      linesep= c('', '\\addlinespace')) %>% 
+  save_kable(here("tables", "temporal_tables", "index_table.pdf"))
+
 
 ##### SALMON GRAPH - SIZE BINS #####
 
