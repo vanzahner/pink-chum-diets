@@ -1,7 +1,7 @@
 # Temporal analysis code for MSc thesis on juvenile pink and chum salmon diets #
 
 #note: updated raw data to be survey_date and site_id
-#instead of sample_site and sample_date * NEED TO UPDATE CODE
+#instead of site_id and survey_date * NEED TO UPDATE CODE
 
 ##### SET UP #####
 
@@ -25,18 +25,18 @@ library(here)
 here()
 #check working directory (should be msc_project)
 
-temp_data_raw <- read_csv(here("processed", "temporal_pink_chum_diets.csv"))
+temp_data_raw <- read_csv(here("processed", "temporal_data", "temporal_pink_chum_diets.csv"))
 #read in temporal diet data
 
 site_order <- c("D07", "J07")
-temp_data_raw$sample_site <- factor(temp_data_raw$sample_site, levels = site_order)
+temp_data_raw$site_id <- factor(temp_data_raw$site_id, levels = site_order)
 #reorder sites from the default of alphabetical to west to east, like on the map
 
 species_order <- c("Pink", "Chum")
 temp_data_raw$fish_species <- factor(temp_data_raw$fish_species, levels = species_order)
 #reorder species from the default of alphabetical to pink then chum, for graph reasons
 
-date_categories <- data.frame(date=c(unique(temp_data_raw$sample_date)),
+date_categories <- data.frame(date=c(unique(temp_data_raw$survey_date)),
                               timing=c("Late May", "Early June", "Early June", "Early June",
                                        "Mid-June", "Mid-June", "Late June",
                                        "Late May", "Early June",
@@ -67,7 +67,7 @@ temp_biomass_data <- temp_data %>%
   #                   "U5404" #single prey type <0.1 mg
   #                   )) %>% 
 #getting rid of outliers for nmds... change later.
-  group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id, sampling_week,
+  group_by(ufn, fish_species, survey_date, site_id, taxa_detail_calc, semsp_id, sampling_week,
            year, sampling_week, bolus_weight, weight, fork_length, microscope_hours) %>%
   summarise(Biomass=sum(prey_weight))
 #simplify dataset and combine any redundancies
@@ -91,9 +91,9 @@ temp_numbers_taxa <- temp_biomass_data %>%
 
 temp_data_wide <- temp_biomass_data %>%
   ungroup() %>% 
-  select(ufn, fish_species, sample_site, bolus_weight, weight, fork_length, taxa_detail_calc, Biomass,
-         microscope_hours, sample_date, year, sampling_week, semsp_id) %>% 
-  group_by(ufn, fish_species, sample_site, sample_date) %>% 
+  select(ufn, fish_species, site_id, bolus_weight, weight, fork_length, taxa_detail_calc, Biomass,
+         microscope_hours, survey_date, year, sampling_week, semsp_id) %>% 
+  group_by(ufn, fish_species, site_id, survey_date) %>% 
   spread(key=taxa_detail_calc, value=Biomass, fill = 0)
 #wide data (obviously)
 
@@ -102,7 +102,7 @@ sum(temp_data_wide$microscope_hours)
 
 simple_temp_data <- temp_data_wide %>%
   ungroup() %>% 
-  select(ufn, fish_species, sample_site, Acartia:Tortanus_discaudatus#, -Empty
+  select(ufn, fish_species, site_id, Acartia:Tortanus_discaudatus#, -Empty
   )
 
 write_csv(simple_temp_data, here("NMDS_EXAMPLE", "temporal_diet_data_wide.csv"))
@@ -122,7 +122,7 @@ temp_data_wide$ufn <- as.factor(temp_data_wide$ufn)
 ufn_names <- temp_data_wide$ufn
 #create a vector for ufn info to be reattached after calc
 
-site_names <- temp_data_wide$sample_site
+site_names <- temp_data_wide$site_id
 #make vector for sites, same as before for ufns
 site_names <- as.factor(site_names)
 #make factor to avoid any possible errors
@@ -131,7 +131,7 @@ species_names <- temp_data_wide$fish_species
 species_names <- as.factor(species_names)
 #make vector with fish species labels (as factors) too
 
-date_names <- temp_data_wide$sample_date
+date_names <- temp_data_wide$survey_date
 date_names <- as.factor(date_names)
 #make vector with date labels (as factors) too
 
@@ -413,7 +413,7 @@ temporal_gfi_dates <- cbind(temporal_gfi_data, simple_date_site_names)
 
 dat_text <- data.frame(
   label = c("Empty n = 1", "Empty n = 3", "Empty n = 0", "Empty n = 5"),
-  sample_site=c("D07", "D07", "J07", "J07"),
+  site_id=c("D07", "D07", "J07", "J07"),
   year=c("2015", "2016", "2015", "2016"),
   x=c(2.5, 2.5, 2.5, 2.5),
   y=c(3.75, 3.75, 3.75, 3.75)
@@ -431,7 +431,7 @@ temporal_gfi_dates %>%
         legend.text = element_text(size=12), legend.title = element_text(size=14),
         title = element_text(size=16), plot.title = element_text(hjust=0.5),
         axis.text.x = element_text(size=12))+
-  facet_grid(year~sample_site, scales = "free_x")+
+  facet_grid(year~site_id, scales = "free_x")+
   scale_x_discrete(labels=c("DI_Early"="May", "DI_June_Early"="Early June", "DI_June_Mid"="Mid-June",
                             "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))+
   #can change these labels later to be more exact and relevant.
@@ -449,7 +449,7 @@ ggsave(here("figs", "temporal", "temporal_GFI.png"))
 
 temp_data_wide_info <- temporal_gfi_dates %>%
   ungroup() %>% 
-  select(semsp_id, ufn, sample_site, fish_species, sample_date, year, simple_date_site_names)
+  select(semsp_id, ufn, site_id, fish_species, survey_date, year, simple_date_site_names)
 
 temp_data_pa <- temporal_gfi_dates %>%
   ungroup() %>% 
@@ -468,7 +468,7 @@ temp_data_taxa_sum <- cbind(temp_data_wide_info, totals)
 count(temp_data_taxa_sum)
 
 temp_data_taxa_sum %>%
-  group_by(sample_site, fish_species, sample_date, year, simple_date_site_names) %>%
+  group_by(site_id, fish_species, survey_date, year, simple_date_site_names) %>%
   summarise(mean(totals))
 
 temp_data_taxa_sum %>% 
@@ -482,7 +482,7 @@ temp_data_taxa_sum %>%
         legend.text = element_text(size=12), legend.title = element_text(size=14),
         title = element_text(size=16), plot.title = element_text(hjust=0.5),
         axis.text.x = element_text(size=12))+
-  facet_grid(year~sample_site, scales = "free_x")+
+  facet_grid(year~site_id, scales = "free_x")+
   scale_x_discrete(labels=c("DI_Early"="May", "DI_June_Early"="Early June", "DI_June_Mid"="Mid-June",
                             "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))
 #boxplot for simple version of niche breadth (just number of taxa in each fish stomach)
@@ -491,13 +491,13 @@ ggsave(here("figs","temporal","temporal_niche_breadth.png"))
 
 summary_temp_data <- temp_biomass_data %>%
   ungroup() %>% 
-  group_by(sample_site, sample_date, fish_species, taxa_detail_calc) %>% 
+  group_by(site_id, survey_date, fish_species, taxa_detail_calc) %>% 
   summarise(summary_biomass=sum(Biomass)) %>%
   ungroup() %>% 
   spread(key = taxa_detail_calc, value = summary_biomass, fill = 0)
 
 summary_temp_data_wide_info <- summary_temp_data %>%
-  select(sample_site, sample_date, fish_species)
+  select(site_id, survey_date, fish_species)
 
 summary_temp_data_pa <- summary_temp_data %>%
   ungroup() %>% 
@@ -516,7 +516,7 @@ temp_data_taxa_summary <- cbind(summary_temp_data_wide_info, sum_totals)
 count(temp_data_taxa_summary)
 
 temp_data_taxa_summary %>%
-  group_by(sample_site, sample_date, fish_species) %>%
+  group_by(site_id, survey_date, fish_species) %>%
   summarise(mean(sum_totals))
 #same calculations as the one above but totals taxa for each species-site-date combo
 
@@ -601,7 +601,7 @@ temp_date_ids <- read_csv(here("data", "temporal_date_id_categories_extensive.cs
 
 temp_data_merged <- left_join(temp_data_raw, temp_date_ids)
 
-temp_data_merged$sample_site <- factor(temp_data_merged$sample_site, levels = site_order)
+temp_data_merged$site_id <- factor(temp_data_merged$site_id, levels = site_order)
 
 #for loop doesn't like data as factors
 temp_data_merged$taxa_detail_calc <- as.character(temp_data_merged$taxa_detail_calc) 
@@ -617,22 +617,22 @@ for (n in temp_names_broad$old_category) {
 
 #group_biomass <- temp_data_fixed %>%
 group_biomass <- temp_data_merged %>%
-  group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id, date_id_names) %>%
+  group_by(ufn, fish_species, survey_date, site_id, taxa_detail_calc, semsp_id, date_id_names) %>%
   summarise(prey_weight_sum=sum(prey_weight))
 #summarize biomass for each fish
 
 group_bio_wide <- group_biomass %>%
   ungroup() %>%
-  select(ufn, fish_species, sample_site, taxa_detail_calc, prey_weight_sum, date_id_names) %>% 
-  group_by(ufn, fish_species, sample_site, date_id_names) %>% 
+  select(ufn, fish_species, site_id, taxa_detail_calc, prey_weight_sum, date_id_names) %>% 
+  group_by(ufn, fish_species, site_id, date_id_names) %>% 
   spread(key=taxa_detail_calc, value = prey_weight_sum, fill=0)
 #wide data set (summarized prey group data)
 
 group_bio_mat <- group_bio_wide %>%
   ungroup() %>% 
-  select(-c(ufn, fish_species, sample_site, date_id_names, Digested)) %>%
+  select(-c(ufn, fish_species, site_id, date_id_names, Digested)) %>%
   decostand(method="total") %>%
-  mutate(site=group_bio_wide$sample_site, fish=group_bio_wide$fish_species,
+  mutate(site=group_bio_wide$site_id, fish=group_bio_wide$fish_species,
          date_id=group_bio_wide$date_id_names) %>%
   gather(key="taxa", value="rel_bio", Barnacles:Other
          ) %>% 

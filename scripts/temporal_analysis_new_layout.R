@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified july 6, 2020
+#last modified july 13, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -25,7 +25,7 @@ library(knitr)
 library(formattable)
 #for creating nice tables
 
-##### ENVR + ZOOP DATA #####
+##### ENVR + ZOOP + SALMON DATA - READ IN #####
 
 # Read in environmental data file:
 
@@ -70,46 +70,64 @@ temp_zoop_ww_total <- temp_zoop_ww %>%
 temp_zoop_envr <- left_join(temp_envr_surface, temp_zoop_ww_total, by=c("site_id", "survey_date"))
 #join zoop and envr data together (so it can be joined to salmon data)
 
+# Read in main data file for salmon temporal diets:
+
+temp_diet_raw <- read.csv(here("processed", "temporal_data", "temporal_pink_chum_diets.csv"), stringsAsFactors = FALSE)
+#read in temporal diet data
+
+temp_diet_raw$survey_date <- as.Date(temp_diet_raw$survey_date)
+#make sure dates are treated like dates
+
+# Reorder salmon species + date as factors for creating better graphs:
+
+species_order <- c("Pink", "Chum") #make vector for rearranging species
+temp_diet_raw$fish_species <- factor(temp_diet_raw$fish_species, levels = species_order)
+#reorder species from alphabetical to pink salmon first before chum salmon
+
+temp_data_combo <- left_join(temp_diet_raw, temp_zoop_envr, by=c("site_id", "survey_id", "survey_date", "yday", "year"))
+#join together the salmon and zoop/envr data
+
+temp_diet_copy <- filter(temp_data_combo, prey_info!="Digested_food")
+#make a copy of data before modifying the raw data (and remove dig. food)
+
+##### ENVR + ZOOP DATA - TAXA REGROUP #####
+
 # Update zoop groups for relative abundance / taxa composition graph:
 
 temp_zoop_intermediate <- temp_zoop_data %>%
-  mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Mollusca" | phylum=="Echinodermata" | phylum=="Ochrophyta" | phylum=="Bryozoa", phylum,
-                    if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" | class=="Insecta", class,
+  mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Echinodermata" | phylum=="Ochrophyta" | phylum=="Bryozoa", phylum,
+                    if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" |
+                            class=="Insecta"| class=="Bivalvia", class,
                     if_else(life_stage=="trochophore", "Polychaeta",
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Cnidaria_Ctenophora",
                     if_else(family=="Caligidae", "Parasites",
+                    if_else(class=="Gastropoda", "Pteropoda",
                     if_else(prey_info=="Copepoda_nauplius", "Calanoida",
                     if_else(order=="Calanoida" | order=="Decapoda" | order=="Amphipoda" |
                             order=="Harpacticoida" | order=="Cyclopoida", order,
                     if_else(infraorder=="Balanomorpha", infraorder,
-                    if_else(family=="Euphausiidae" & life_stage!="egg", family,
+                    if_else(family=="Euphausiidae" & life_stage!="egg", "Euphausiidae Larvae",
                     if_else((family=="Euphausiidae" | genus=="Unknown") & life_stage=="egg", "Euphausiidae Eggs",
                     if_else(family=="Podonidae", "Cladocera",
-                            prey_info))))))))))))
+                            prey_info)))))))))))))
 #update zooplankton groups for summary and graphs
 
 zoop_group_data <- temp_zoop_intermediate %>%
   mutate(prey_group_simple=if_else(prey_group=="Cnidaria" | prey_group=="Ctenophora", "Gelatinous",
-                           if_else(prey_group!="Calanoida" & #prey_group!="Decapoda" & 
-                                   prey_group!="Euphausiidae" &# prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
-                                   prey_group!="Appendicularia" & prey_group!="Euphausiidae Eggs" & #prey_group!="Chaetognatha" &
-                                   prey_group!="Balanomorpha" & prey_group!="Cladocera", # & prey_group!="Mollusca" & prey_group!="Cyclopoida", 
-                                   "Other",
-                                   prey_group)))
+                                   if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Echinodermata" &
+                                           prey_group!="Euphausiidae" & # prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
+                                           prey_group!="Appendicularia" & prey_group!="Euphausiidae Eggs" & #prey_group!="Chaetognatha" &
+                                           prey_group!="Balanomorpha" & prey_group!="Cladocera", # & prey_group!="Mollusca" & prey_group!="Cyclopoida", 
+                                           "Other",
+                                           prey_group)))
 # keep prey groups that are substantial, rest = "Other" prey category
 
-zoop_levels <- c("Calanoida", #"Decapoda", 
-                 "Euphausiidae", "Euphausiidae Eggs", #"Amphipoda", "Harpacticoida",
-                 "Gelatinous", "Appendicularia", #"Chaetognatha",
-                 #"Mollusca", "Cyclopoida",
-                 "Balanomorpha", "Cladocera", "Other")
+zoop_levels <- c("Calanoida", "Decapoda", "Cladocera", "Balanomorpha", "Echinodermata", 
+                 "Euphausiidae Eggs", "Gelatinous", "Appendicularia", "Other")
 #put the taxa groups in an order that somewhat matches the diet comp later on
 
-zoop_colors <- c("#E31A1C", "#FDBF6F", "#FF7F00", "#1B9E77",
-                 #"#B2DF8A", "#33A02C", #green
-                 "#A6CEE3", "#1F78B4", #"#CAB2D6", 
-                 #"#E7298A", "#FB9A99", #pink
-                 "#A6761D", "#E6AB02", "#6A3D9A")
+zoop_colors <- c("#E41A1C", "#FF7F00", "goldenrod1", "#A65628", "#999999",
+                 "#1B9E77", "#80B1D3", "#1F78B4", "#6A3D9A")
 #red, Lorange, orange, green, Lblue, blue, Lpurple, pink, hotpink, Y, Br, purple
 
 zoop_group_data$prey_group_simple <- factor(zoop_group_data$prey_group_simple, levels = zoop_levels)
@@ -118,7 +136,21 @@ zoop_group_data$prey_group_simple <- factor(zoop_group_data$prey_group_simple, l
 zoop_group_sum <- zoop_group_data %>%
   group_by(site_id, survey_date, year, prey_group_simple) %>%
   summarise(total_abd=sum(abundance))
-#summarise total abundance for each sample to plot relative abd of zoops
+#summarise total abundance for each sample to plot relative abd of zoops (groups with other)
+
+zoop_group_wide <- zoop_group_sum %>%
+  spread(prey_group_simple, (total_abd), fill=0)
+
+zoop_group_mat <- zoop_group_wide %>% 
+  ungroup() %>% 
+  select(-site_id, -survey_date, -year) %>%
+  decostand("total")
+
+zoop_group_percent <- zoop_group_mat*100
+
+zoop_group_rel_abd <- zoop_group_percent %>%
+  mutate(site_id=zoop_group_wide$site_id, survey_date=zoop_group_wide$survey_date, year=zoop_group_wide$year) %>%
+  gather("prey_group_simple", "total_abd", Calanoida:Other)
 
 ##### ENVR + ZOOP GRAPHS #####
 
@@ -158,6 +190,8 @@ temp_zoop_ww %>%
   scale_fill_brewer(palette = "Dark2")+
   scale_x_date(date_breaks = "11 days", date_labels = "%b %d")+ 
   facet_grid(site_id~year, scales = "free_x")+
+  scale_y_continuous(expand = c(0,0), limits=c(0, 1300))+
+  geom_text(data = filter(temp_zoop_ww, site_id=="J07" & year==2016), aes(x=as.Date("2016-07-05"), y=50), label="X", size=4, color="#000000")+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
         axis.ticks.x = element_blank(), axis.text.x = element_text(color="black"),
         axis.text.y=element_text(color="black"),
@@ -171,45 +205,134 @@ ggsave(here("figs", "temporal_figs", "zoop_biomass_temporal.png"))
 
 # Zoop taxa composition graph:
 
-zoop_group_sum %>%
+zoop_group_rel_abd$prey_group_simple <- factor(zoop_group_rel_abd$prey_group_simple, levels = zoop_levels)
+
+zoop_group_rel_abd %>%
   ggplot(aes(survey_date, total_abd))+
-  geom_bar(aes(fill=prey_group_simple), width=2, stat="identity", position="fill")+
+  geom_bar(aes(fill=prey_group_simple), width=2, stat="identity"#, position="fill"
+           )+
+  #geom_vline(data=filter(zoop_group_sum, site_id=="D07" & year==2015), aes(xintercept=as.Date("2015-06-06")))+
   scale_fill_manual(values=zoop_colors)+
+  geom_segment(data=filter(zoop_group_rel_abd, site_id=="D07" & year==2015), aes(x=as.Date("2015-06-06"), xend=as.Date("2015-06-06"), y=0.1, yend=99.9), size=0.5, color="#000000", inherit.aes = F)+
   theme_bw()+
+  geom_text(data = filter(zoop_group_rel_abd, site_id=="J07" & year==2016), aes(x=as.Date("2016-07-05"), y=5), label="X", size=4, color="#000000")+
   facet_grid(site_id~year, scales = "free_x")+
-  scale_y_continuous(labels=scales::comma)+
+  scale_y_continuous(#labels=c(25, 50, 75, 100), breaks = c(25, 50, 75, 100),
+                     expand = c(0,0), limits = c(0, 105))+
+  scale_x_date(date_breaks = "11 days", date_labels = "%b %d", limits = c(NULL, NULL))+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        #panel.spacing.y = unit(2, "lines"),
+        #panel.spacing.x = unit(1, "lines"),
         axis.ticks.x = element_blank(), axis.text.x = element_text(color="black"),
         axis.text.y=element_text(color="black"),
         axis.title = element_text(size=14), axis.text = element_text(size=12),
         legend.text = element_text(size=12), legend.title = element_text(size=14))+
-  labs(x="Site", y="Abundance (#/m³)", fill="Zooplankton Group")
+  labs(x=NULL, y="Relative Abundance (%)", fill="Zooplankton Group")
 #zoop comp graph 
 
 ggsave(here("figs", "temporal_figs", "zoop_comp_temporal.png"))
 #save the zoop taxa comp. graph
 
-##### SALMON DATA - READ IN #####
+##### ENVR + ZOOP TABLES #####
 
-# Read in main data file for temporal diets:
+# Sampling table:
 
-temp_diet_raw <- read.csv(here("processed", "temporal_data", "temporal_pink_chum_diets.csv"), stringsAsFactors = FALSE)
-#read in temporal diet data
+zoop_table <- temp_zoop_ww %>%
+  select(site_id, survey_date, sieve, biomass) %>%
+  group_by(site_id, survey_date, sieve) %>% 
+  summarise(biomass=round(sum(biomass), digits = 2)) %>% 
+  spread(sieve, biomass, fill=0) %>%
+  mutate(Total=sum(`250`, `1000`, `2000`))
 
-temp_diet_raw$survey_date <- as.Date(temp_diet_raw$survey_date)
-#make sure dates are treated like dates
+diet_raw_info <- select(temp_diet_raw, ufn, fish_species, survey_date, site_id)
 
-# Reorder salmon species + date as factors for creating better graphs:
+sample_sizes <- diet_raw_info %>% 
+  group_by(ufn, site_id, survey_date) %>%
+  unique() %>% 
+  ungroup() %>%
+  group_by(site_id, survey_date) %>% 
+  count(fish_species) %>%
+  spread(key=fish_species, value=n, fill=0)
 
-species_order <- c("Pink", "Chum") #make vector for rearranging species
-temp_diet_raw$fish_species <- factor(temp_diet_raw$fish_species, levels = species_order)
-#reorder species from alphabetical to pink salmon first before chum salmon
+zoop_table_intermediate <- left_join(temp_envr_surface, zoop_table, by=c("site_id", "survey_date"))
 
-temp_data_combo <- left_join(temp_diet_raw, temp_zoop_envr, by=c("site_id", "survey_id", "survey_date", "yday", "year"))
-#join together the salmon and zoop/envr data
+zoop_envr_table <- left_join(zoop_table_intermediate, sample_sizes, by=c("site_id", "survey_date")) %>%
+  mutate(`Region (Site)`=c("Discovery Islands", "(D07)", rep("", 5), "Johnstone Strait", "(J07)", rep("", 4)),
+         Year=c("2015", "", "", "", "2016", "", "", "2015", "", "", "2016", "", "")) %>% 
+  select(`Region (Site)`, site_id, Date=survey_date, Year, `$\\#$ Pink`=Pink, `$\\#$ Chum`=Chum,
+         `Temp. (°C)`=temperature, `Salinity (‰)`=salinity,
+         `250 $\\mu$m`=`250`, `1000 $\\mu$m`=`1000`, `2000 $\\mu$m`=`2000`, Total)
 
-temp_diet_copy <- filter(temp_data_combo, prey_info!="Digested_food")
-#make a copy of data before modifying the raw data (and remove dig. food)
+for (i in 4:ncol(zoop_envr_table)){
+  zoop_envr_table[, i][which(is.na(zoop_envr_table[, i]))] <- "No Data"
+}
+
+zoop_envr_table$Date <- format(zoop_envr_table$Date, format="%B %d")
+
+select(zoop_envr_table, -site_id) %>%  
+  kable("latex", booktabs=TRUE, linesep=c(rep("", 3), '\\addlinespace', "", "", "\\addlinespace", "", "", "\\addlinespace", "", ""),
+        escape = FALSE, align=c("l", "l", "l", "c", "c", "c", "c", "r", "r", "r", "r")) %>%
+  add_header_above(c(" "=7, "Zooplankton Biomass (mg/m³)"=4)) %>% 
+  save_kable(here("tables", "temporal_tables", "sampling_table.pdf"))
+# 95 pink + 117 chum = 212 salmon
+
+# Zooplankton abundance:
+
+zoop_comp <- temp_zoop_intermediate %>%
+  group_by(site_id, survey_date, prey_group) %>%
+  summarise(abd_group=round(sum(abundance), digits=1)) %>%
+  spread(prey_group, abd_group, fill=0)
+
+zoop_comp_rel_abd <- zoop_comp %>%
+  ungroup() %>% 
+  select(-c(site_id, survey_date, Actinopterygii, Ochrophyta, Platyhelminthes, Ctenophora, Insecta)) %>%
+  decostand("total") 
+
+zoop_comp_percent <- zoop_comp_rel_abd*100
+
+prey_level_details <- c("Calanoida", "Decapoda", "Cladocera", "Balanomorpha", "Echinodermata",
+                        "Euphausiidae Eggs", "Cnidaria", "Ctenophora", "Appendicularia",
+                        "Chaetognatha", "Actinopterygii", "Cyclopoida", "Harpacticoida",
+                        "Euphausiidae Larvae", "Euphausiidae", "Amphipoda", "Mysida", "Isopoda",
+                        "Insecta", "Arachnida", "Pteropoda", "Bivalvia", "Polychaeta", "Bryozoa", "Object")
+
+zoop_comp_long_data <- zoop_comp_percent %>% 
+  mutate(site_id=zoop_comp$site_id, Date=zoop_comp$survey_date) %>% 
+  select(site_id, Date, everything()) %>%
+  gather("prey", "abd", Amphipoda:Pteropoda)
+
+zoop_comp_long_data$prey <- factor(zoop_comp_long_data$prey, levels=prey_level_details)
+
+zoop_comp_groups <- zoop_comp_long_data %>%
+  droplevels() %>% 
+  arrange(prey) %>% 
+  group_by(site_id, Date, prey) %>% 
+  transmute(abd=round(abd, digits=1)) %>% 
+  spread(prey, abd, fill="-")
+
+zoop_comp_groups$Date <- format(zoop_comp_groups$Date, format="%B %d")
+
+zoop_comp_intermediate <- left_join(zoop_envr_table, zoop_comp_groups, by=c("site_id", "Date"))
+
+for (i in 1:ncol(zoop_comp_intermediate)){
+  zoop_comp_intermediate[, i][which(is.na(zoop_comp_intermediate[, i]))] <- " "
+  zoop_comp_intermediate[, i][which(zoop_comp_intermediate[, i]==0)] <- "-"
+}
+
+zoop_comp_intermediate$Calanoida[which(zoop_comp_intermediate$Calanoida==" ")] <- "No Data"
+
+zoop_comp_table <- select(zoop_comp_intermediate, Calanoida:Bryozoa) %>%
+  t()
+
+colnames(zoop_comp_table) <- zoop_comp_intermediate$Date
+
+kable(zoop_comp_table, "latex", booktabs=TRUE, escape = FALSE, align = c("r"), linesep=rep(c("", "\\addlinespace"))) %>% 
+  add_header_above(c(" "=1, "2015"=4, "2016"=3, "2015"=3, "2016"=3)) %>% 
+  add_header_above(c(" "=1, "Discovery Islands (D07)"=7, "Johnstone Strait (J07)"=6)) %>%
+  pack_rows("Gelatinous", 7, 7) %>% 
+  pack_rows("Other", 10, nrow(zoop_comp_table)) %>% 
+  add_indent(c(7, 10:nrow(zoop_comp_table))) %>% 
+  save_kable(here("tables", "temporal_tables", "zoop_relA_table.pdf"))
 
 ##### SALMON DATA - TAXA REGROUP #####
 
@@ -289,7 +412,7 @@ temp_diet_intermediate <- temp_diet_copy %>%
                     if_else(suborder=="Balanomorpha", suborder,
                     if_else(family=="Euphausiidae" & life_stage=="", family,
                     if_else(family=="Euphausiidae" & life_stage=="Egg", "Euphausiidae Eggs",
-                    if_else(family=="Euphausiidae" & (life_stage=="Furcilia" | life_stage=="Calyptopis" | life_stage=="Nauplii"), "Euphausiidae_Larvae",
+                    if_else(family=="Euphausiidae" & (life_stage=="Furcilia" | life_stage=="Calyptopis" | life_stage=="Nauplii"), "Euphausiidae Larvae",
                     if_else(family=="Podonidae", "Cladocera",
                     if_else(class=="Insecta" | class=="Arachnida", class, #"Insecta_Arachnida",
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Cnidaria_Ctenophora",
@@ -346,13 +469,8 @@ prey_levels <- c("Calanoida", "Decapoda", "Cladocera", "Balanomorpha", "Echinode
                  "Euphausiidae Eggs", "Gelatinous", "Appendicularia", "Chaetognatha", "Other")
 #vector to reorder prey groups into what makes sense for diet comp bargraph
 
-color_temp <- c("#E41A1C", #"#FDB462", 
-                "#FF7F00",
-                "goldenrod1", #"#E6AB02", 
-                "#A65628", "#999999",
-                #clad yell, #barn brown, #echin grey
-                "#1B9E77", #Eggs teal 
-                "#80B1D3", "#1F78B4", "#BEAED4", "#984EA3")
+color_temp <- c("#E41A1C", "#FF7F00", "goldenrod1", "#A65628", "#999999",
+                "#1B9E77", "#80B1D3", "#1F78B4", "#BC80BD", "#6A3D9A")
 
 temp_diet_all$prey_group_simple <- factor(temp_diet_all$prey_group_simple, levels = prey_levels)
 #reorder taxa groups into correct order for printing graphs (and tables)
@@ -429,104 +547,165 @@ diet_chum_graph <- diet_group_biomass_ave %>%
   arrange(Prey_Group) %>%
   mutate(pos = cumsum(Ave_Rel_Bio) - Ave_Rel_Bio / 2)
 
-##### ENVR + ZOOP TABLES #####
+temporalk <- temp_stomachs %>%
+  mutate(k=((100000*weight)/(fork_length^3)))
 
-# Sampling table:
+##### SALMON TABLE - INDICES #####
 
-zoop_table <- temp_zoop_ww %>%
-  select(site_id, survey_date, sieve, biomass) %>%
-  group_by(site_id, survey_date, sieve) %>% 
-  summarise(biomass=round(sum(biomass), digits = 2)) %>% 
-  spread(sieve, biomass, fill=0) %>%
-  mutate(Total=sum(`250`, `1000`, `2000`))
+temporalk$year <- as.character(temporalk$year)
 
-sample_sizes <- temp_stomachs %>% 
-  group_by(site_id, survey_date) %>%
-  count(fish_species) %>%
-  spread(key=fish_species, value=n, fill=0)
+temp_gfi_all_data <- temporalk %>%
+  filter(is.na(weight)!=TRUE) %>% 
+  select(fish_species, site_id, survey_date, year, weight, food_weight_corr, fork_length, k) %>%
+  mutate(weight_corr= weight*1000, # grams to milligrams? * FIX IN RAW DATA LATER ! *
+         gfi=food_weight_corr/weight_corr*100)
 
-zoop_table_intermediate <- left_join(temp_envr_surface, zoop_table, by=c("site_id", "survey_date"))
+temp_gfi_table <- temp_gfi_all_data %>% 
+  group_by(fish_species, year, site_id) %>%
+  summarise(mean_ww=round(mean(weight_corr), digits=1), se_ww=round(sd(weight_corr), digits=1),
+            mean_food=round(mean(food_weight_corr), digits=1), se_food=round(sd(food_weight_corr), digits=1),
+            mean_gfi=round(mean(gfi), digits=2), se_gfi=round(sd(gfi), digits=2))
+#divide by 10 is supposed to be sample size ... would have to change it since n!=10 here *****
 
-zoop_envr_table <- left_join(zoop_table_intermediate, sample_sizes, by=c("site_id", "survey_date")) %>%
-  mutate(`Region (Site)`=c("Discovery Islands", "(D07)", rep("", 5), "Johnstone Strait", "(J07)", rep("", 4)),
-         Year=c("2015", "", "", "", "2016", "", "", "2015", "", "", "2016", "", "")) %>% 
-  select(`Region (Site)`, site_id, Date=survey_date, Year, `$\\#$ Pink`=Pink, `$\\#$ Chum`=Chum,
-    `Temp. (°C)`=temperature, `Salinity (‰)`=salinity,
-    `250 $\\mu$m`=`250`, `1000 $\\mu$m`=`1000`, `2000 $\\mu$m`=`2000`, Total)
-  
-for (i in 4:ncol(zoop_envr_table)){
-  zoop_envr_table[, i][which(is.na(zoop_envr_table[, i]))] <- "No Data"
-}
+# temporary solution: use SD instead of SE ! 
 
-zoop_envr_table$Date <- format(zoop_envr_table$Date, format="%B %d")
+temp_length_table <- temporalk %>%
+  filter(is.na(fork_length)!=TRUE) %>%
+  select(fish_species, site_id, year, fork_length, k) %>%
+  group_by(fish_species, year, site_id) %>%
+  summarise(mean_fl=round(mean(fork_length), digits=1), se_fl=round(sd(fork_length), digits=1),
+            mean_k=round(mean(na.omit(k)), digits=2), se_k=round(sd(na.omit(k)), digits=2))
 
-select(zoop_envr_table, -site_id) %>%  
-kable("latex", booktabs=TRUE, linesep=c(rep("", 3), '\\addlinespace', "", "", "\\addlinespace", "", "", "\\addlinespace", "", ""),
-      escape = FALSE, align=c("l", "l", "l", "c", "c", "c", "c", "r", "r", "r", "r")) %>%
-  add_header_above(c(" "=7, "Zooplankton Biomass (mg/m³)"=4)) %>% 
-  save_kable(here("tables", "temporal_tables", "sampling_table.pdf"))
-# 95 pink + 117 chum = 212 salmon
+temp_empty_table <- temporalk %>%
+  filter(food_weight_corr==0) %>%
+  group_by(fish_species, site_id, year) %>%
+  count() %>%
+  mutate(per_empty=n*10)
 
-# Zooplankton abundance:
+summed_data <- temporal_diets %>%
+  filter(!prey_info %in% c("Coscinodiscophycidae", "Microplastic_chunk_Object",
+                           "Object", "Parasites", "Detritus")) %>% 
+  select(fish_species, site_id, survey_date, year, prey_info, prey_weight_corr) %>%
+  group_by(fish_species, site_id, survey_date, year, prey_info) %>%
+  summarise(totalw=sum(prey_weight_corr)) %>%
+  spread(key=prey_info, value=totalw, fill=0) 
 
-zoop_comp <- temp_zoop_intermediate %>%
-  group_by(site_id, survey_date, prey_group) %>%
-  summarise(abd_group=round(sum(abundance), digits=1)) %>%
-  spread(prey_group, abd_group, fill=0) %>%
+summed_matrix <- summed_data %>%
   ungroup() %>% 
-  select(site_id, Date=survey_date, everything(), -c("Actinopterygii", "Ochrophyta", "Insecta")) #%>% 
-  #t()
-# if < 1 individual / m3 for each site = group gets filtered out
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method="total")
 
-zoop_comp$Date <- format(zoop_comp$Date, format="%B %d")
+sites <- summed_data$site_id
+dates <- summed_data$survey_date
+years <- summed_data$year
+salmon <- summed_data$fish_species
 
-zoop_comp_intermediate <- left_join(zoop_envr_table, zoop_comp, by=c("site_id", "Date"))
+proportional_sums <- cbind(sites, dates, years, salmon, summed_matrix)
 
-for (i in 1:ncol(zoop_comp_intermediate)){
-  zoop_comp_intermediate[, i][which(is.na(zoop_comp_intermediate[, i]))] <- ""
+calculate_overlap <- function(dataset, site, date) {
+  dataset %>%
+    filter(sites==site & dates==date) %>%
+    select(-c(sites, dates, years, salmon)) %>%
+    summarise_all(min) %>%
+    rowSums()
 }
 
-zoop_comp_intermediate$Amphipoda[which(zoop_comp_intermediate$Amphipoda=="")] <- "No Data"
+proportional_sums$dates[which(proportional_sums$dates=="2015-06-05")] <- "2015-06-06"
+proportional_sums$dates[which(proportional_sums$dates=="2015-06-05")] <- "2015-06-06"
 
-zoop_comp_table <- select(zoop_comp_intermediate, Amphipoda:Polychaeta) %>%
-  t()
+D07simA <- calculate_overlap(proportional_sums, "D07", "2015-05-21")
+D07simB <- calculate_overlap(proportional_sums, "D07", "2015-06-06")
+D07simC <- calculate_overlap(proportional_sums, "D07", "2015-06-13")
+D07simD <- calculate_overlap(proportional_sums, "D07", "2016-05-19")
+D07simE <- calculate_overlap(proportional_sums, "D07", "2016-06-03")
+D07simF <- calculate_overlap(proportional_sums, "D07", "2016-06-16")
 
-colnames(zoop_comp_table) <- zoop_comp_intermediate$Date
+J07simA <- calculate_overlap(proportional_sums, "J07", "2015-06-02")
+J07simB <- calculate_overlap(proportional_sums, "J07", "2015-06-14")
+J07simC <- calculate_overlap(proportional_sums, "J07", "2015-06-29")
+J07simD <- calculate_overlap(proportional_sums, "J07", "2016-06-03")
+J07simE <- calculate_overlap(proportional_sums, "J07", "2016-06-20")
+J07simF <- calculate_overlap(proportional_sums, "J07", "2016-07-05")
 
-kable(zoop_comp_table, "latex", booktabs=TRUE, escape = FALSE, align = c("r"), linesep=rep(c("", "\\addlinespace"))) %>% 
-  add_header_above(c(" "=1, "2015"=4, "2016"=3, "2015"=3, "2016"=3)) %>% 
-  add_header_above(c(" "=1, "Discovery Islands (D07)"=7, "Johnstone Strait (J07)"=6)) %>%
-  pack_rows("Gelatinous", 8, 9) %>% 
-  pack_rows("Other", 10, nrow(zoop_comp_table)) %>% 
-  save_kable(here("tables", "temporal_tables", "zoop_rawA_table.pdf"))
+per_overlap <- data.frame(site_id=c(rep("D07", 6), rep("J07", 6)),
+                          date_id=c("May 21", "June 6", "June 13", "May 19", "June 3", "June 16",
+                                    "June 2", "June 14", "June 29", "June 3", "June 20", "July 5"),
+                          year=c(rep("2015", 3), rep("2016", 3), rep("2015", 3), rep("2016", 3)),
+                          overlap=c(D07simA, D07simB, D07simC, D07simD, D07simE, D07simF,
+                                    J07simA, J07simB, J07simC, J07simD, J07simE, J07simF))
 
-# Need to update this to fix zoop groups and reorganize them (break up DI and JS?)
+overlap_summary <- per_overlap %>%
+  group_by(site_id, year) %>% 
+  summarise(ave_overlap=round(mean(overlap)*100, digits=1))
+# average = 61, 48, 17, 10 % overlap from DI15 -> Di16 -> js15 -> js16
 
+#58, 66, 9, 7% when calculated all together (mean calculation is better, more representative)
+
+dates_b_d=c("May 21", "June 6", "June 13", "May 19", "June 3", "June 16",
+            "June 2", "June 14", "June 29", "June 3", "June 20", "July 5")
+
+# this one needs updating before moving forward: (average by site/year. OR calculate for site/year.)
+
+#duplicateddata <- data.frame(site_id=c(rep("D07", 12), rep("J07", 12)),
+#                             date_id=c(rep(dates_b_d, each=2)),
+#                             overlap=c(round(J02sim*100, digits = 1), "", round(J08sim*100, digits = 1), "", round(J06sim*100, digits = 1), "", round(D11sim*100, digits = 1), "", round(D07sim*100, digits = 1), "", round(D07sim*100, digits = 1), "",
+#                                       round(J02sim*100, digits = 1), "", round(J08sim*100, digits = 1), "", round(J06sim*100, digits = 1), "", round(D11sim*100, digits = 1), "", round(D07sim*100, digits = 1), "", round(D07sim*100, digits = 1), ""))
+#D09 sim = 33.00698 and rounded = 33.0 but round doesn't include zeros. so code is 33.0
+
+# merge peroverlap, spat_empty_table (replace NAs), spat_length_table, spat_gfi_table:
+
+gfi_fl_table <- left_join(temp_gfi_table, temp_length_table, by=c("fish_species", "site_id", "year"))
+
+gfi_empty_table <- left_join(gfi_fl_table, temp_empty_table, by=c("fish_species", "site_id", "year"))
+
+overlap_vector <- data.frame(overlap=c(overlap_summary$ave_overlap, rep("", 4)))
+
+gfi_overlap_table <- left_join(gfi_empty_table, overlap_summary, by=c("site_id", "year"))
+
+gfi_overlap_table$n[which(is.na(gfi_overlap_table$n)==TRUE)] <- 0
+gfi_overlap_table$per_empty[which(is.na(gfi_overlap_table$per_empty)==TRUE)] <- 0
+gfi_overlap_table$ave_overlap[which(gfi_overlap_table$ave_overlap==61)] <- "61.0"
+
+gfi_overlap_table$ave_overlap <- c(unique(gfi_overlap_table$ave_overlap), rep(" ", 4))
+
+gfi_all_data_table <- gfi_overlap_table %>%
+  ungroup() %>% 
+  arrange(site_id, year) %>% 
+  mutate(fl= paste(mean_fl, se_fl, sep=" ± "),
+         fishw= paste(comma(mean_ww, digits=0), comma(se_ww, digits=0), sep=" ± "),
+         food= paste(mean_food, se_food, sep=" ± "),
+         GFI= paste(mean_gfi, se_gfi, sep=" ± "),
+         K=paste(mean_k, se_k, sep = " ± "),
+         Year=c("2015", " ", "2016", " ", "2015", " ", "2016", " "),
+         #Overlap=c(unique(ave_overlap), rep(" ", 4)),
+         Site=c("D07", rep(" ", 3), "J07", rep(" ", 3))) %>%
+  select(Species=fish_species, Site, Year, `Fish FL (mm)`=fl, `Fish WW (mg)`=fishw, `Condition (K)`=K,
+         #`Food WW (mg)`=food,
+         GFI=GFI, `# Empty`=n, #`% Empty Stom.`=per_empty,
+         Overlap=ave_overlap) %>%
+  unique()
+
+kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 4), rep("c", 3)),
+      linesep= c('', '\\addlinespace')) %>% 
+  save_kable(here("tables", "temporal_tables", "index_table.pdf"))
 
 ##### SALMON TABLE - PREY COMP  #####
 
 # summary table (ave % ww by year/site/sp) for main chapter:
 
 rel_bio_sum <- temp_diet_rel_bio %>%
-  filter() %>% 
   gather(key="taxa", value="rel_bio", Actinopterygii:Pteropoda) %>% 
   group_by(site_id, year, fish_species, taxa) %>%
   summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) 
 
 rel_bio_sum$ave_rel_bio[which(rel_bio_sum$ave_rel_bio==0)] <- "-"
 
-prey_level_details <- c("Calanoida", "Cyclopoida", "Harpacticoida", "Decapoda", "Cladocera",
-                        "Balanomorpha", "Echinodermata", "Euphausiidae Eggs", "Euphausiidae_Larvae",
-                        "Euphausiidae","Cnidaria", "Ctenophora", "Appendicularia", "Chaetognatha", 
-                        "Actinopterygii", "Amphipoda", "Mysida", "Isopoda", "Insecta", "Arachnida",
-                        "Pteropoda", "Bivalvia", "Polychaeta", "Bryozoa", "Object")
-
 rel_bio_sum$taxa <- factor(rel_bio_sum$taxa, levels=prey_level_details)
 
 rel_bio_chr <- rel_bio_sum %>%
   arrange(taxa) %>% 
   spread(taxa, ave_rel_bio) %>%
-  rename(` `=fish_species, Larvae=Euphausiidae_Larvae, Eggs=`Euphausiidae Eggs`, Adults=Euphausiidae)
+  rename(` `=fish_species)
 
 group_bio_data <- t(rel_bio_chr)
 
@@ -539,11 +718,9 @@ colnames(diet_table) <- rep(c("Pink", "Chum"), 4)
 kable(diet_table, "latex", booktabs=TRUE) %>%
   add_header_above(c(" "=1, "2015"=2, "2016"=2, "2015"=2, "2016"=2)) %>% 
   add_header_above(c(" "=1, "D07"=4, "J07"=4)) %>%
-  pack_rows("Gelatinous", 11, 12) %>% 
-  pack_rows("Copepoda", 1, 3) %>% 
-  pack_rows("Euphausiidae", 8, 10) %>% 
-  pack_rows("Other", 15, nrow(diet_table)) %>% 
-  add_indent(c(1:3, 8:12, 15:nrow(diet_table))) %>% 
+  pack_rows("Gelatinous", 7, 8, latex_gap_space = "0em") %>% 
+  pack_rows("Other", 11, nrow(diet_table), latex_gap_space = "0em") %>% 
+  add_indent(c(7:8, 11:nrow(diet_table))) %>% 
   save_kable(here("tables", "temporal_tables", "diet_comp_table.pdf"))
 
 # more detailed table (ave % ww by date) for appendix:
@@ -561,7 +738,7 @@ rel_bio_chr_detail <- rel_bio_sum_detail %>%
   arrange(taxa) %>% 
   spread(taxa, ave_rel_bio) %>%
   arrange(year) %>% 
-  rename(` `=fish_species, Larvae=Euphausiidae_Larvae, Eggs=`Euphausiidae Eggs`, Adults=Euphausiidae)
+  rename(` `=fish_species)
 
 group_bio_data_detail <- t(rel_bio_chr_detail)
 
@@ -574,142 +751,13 @@ colnames(diet_table_detail) <- rep(c("Pink", "Chum"), 12)
 kable(diet_table_detail, "latex", booktabs=TRUE, linesep="") %>%
   add_header_above(c(" "=1, "May 21"=2, "June 05"=1, "June 07"=1, "June 13"=2, "June 02"=2, "June 14"=2, "June 29"=2, 
                      "May 19"=2, "June 03"=2, "June 16"=2, "June 03"=2, "June 20"=2, "July 05"=2)) %>% 
-  add_header_above(c(" "=1, "D07"=6, "J07"=6, "D07"=6, "J07"=6), bold=T) %>%
-  add_header_above(c(" "=1, "2015"=12, "2016"=12), bold=T) %>% 
-  pack_rows("Gelatinous", 11, 12, latex_gap_space = "0em") %>% 
-  pack_rows("Copepoda", 1, 3) %>% 
-  pack_rows("Euphausiidae", 8, 10, latex_gap_space = "0em") %>% 
-  pack_rows("Other", 15, nrow(diet_table_detail), latex_gap_space = "0em") %>% 
-  add_indent(c(1:3, 8:12, 15:nrow(diet_table_detail))) %>% 
+  add_header_above(c(" "=1, "Discovery Islands (D07)"=6, "Johnstone Strait (J07)"=6,
+                     "Discovery Islands (D07)"=6, "Johnstone Strait (J07)"=6), bold=T) %>%
+  add_header_above(c(" "=1, "2015"=12, "2016"=12), bold=T, font_size = 12) %>% 
+  pack_rows("Gelatinous", 7, 8, latex_gap_space = "0em") %>% 
+  pack_rows("Other", 11, nrow(diet_table_detail), latex_gap_space = "0em") %>% 
+  add_indent(c(7:8, 11:nrow(diet_table_detail))) %>% 
   save_kable(here("tables", "temporal_tables", "diet_comp_table_detailed.pdf"))
-
-##### SALMON TABLE - INDICES #####
-
-temp_gfi_table <- temp_stomachs %>%
-  filter(is.na(weight)!=TRUE) %>% 
-  select(fish_species, site_id, year, weight, food_weight_corr, fork_length) %>%
-  mutate(weight_corr= weight*1000, # grams to milligrams? * FIX IN RAW DATA LATER ! *
-         gfi=food_weight_corr/weight_corr*100) %>% 
-  group_by(fish_species, year, site_id) %>%
-  summarise(mean_ww=round(mean(weight_corr), digits=1), se_ww=round(sd(weight_corr)/10, digits=1),
-            mean_food=round(mean(food_weight_corr), digits=1), se_food=round(sd(food_weight_corr)/10, digits=1),
-            mean_gfi=round(mean(gfi), digits=2), se_gfi=round(sd(gfi)/10, digits=2))
-
-temp_length_table <- temp_stomachs %>%
-  filter(is.na(fork_length)!=TRUE) %>%
-  select(fish_species, site_id, year, fork_length) %>%
-  group_by(fish_species, year, site_id) %>%
-  summarise(mean_fl=round(mean(fork_length), digits=1), se_fl=round(sd(fork_length)/10, digits=1))
-
-temp_empty_table <- temp_stomachs %>%
-  filter(food_weight_corr==0) %>%
-  group_by(fish_species, site_id, year) %>%
-  count() %>%
-  mutate(per_empty=n*10)
-
-summed_data <- temporal_diets %>%
-  filter(!prey_info %in% c("Coscinodiscophycidae", "Microplastic_chunk_Object",
-                           "Object", "Parasites", "Detritus")) %>% 
-  select(fish_species, site_id, year, prey_info, prey_weight_corr) %>%
-  group_by(fish_species, site_id, year, prey_info) %>%
-  summarise(totalw=sum(prey_weight_corr)) %>%
-  spread(key=prey_info, value=totalw, fill=0) 
-
-sites <- summed_data$site_id
-salmon <- summed_data$fish_species
-
-summed_matrix <- summed_data %>%
-  ungroup() %>% 
-  select(Acartia:Tortanus_discaudatus) %>% 
-  decostand(method="total")
-
-proportional_sums <- cbind(sites, salmon, summed_matrix)
-
-# fix this overlap part later: issue of unequal sample size. ignore calculation?
-
-#calculate_overlap <- function(dataset, site) {
-#  dataset %>%
-#    filter(sites==site) %>%
-#    select(-c(sites, salmon)) %>%
-#    summarise_all(min) %>%
-#    rowSums()
-#}
-
-#D07sim <- calculate_overlap(proportional_sums, "D07")
-#D09sim <- calculate_overlap(proportional_sums, "D09")
-#D11sim <- calculate_overlap(proportional_sums, "D11")
-#J06sim <- calculate_overlap(proportional_sums, "J06")
-#J08sim <- calculate_overlap(proportional_sums, "J08")
-#J02sim <- calculate_overlap(proportional_sums, "J02")
-
-#per_overlap <- data.frame(site_id=c("J02", "J08", "J06", "D11", "D09", "D07"),
-#                          overlap=c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim))
-
-#per_overlap$site_id <- factor(per_overlap$site_id, levels = reverse_spat_sites)
-
-#duplicateddata <- data.frame(site_id=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 2),
-#                             overlap=c(round(J02sim*100, digits = 1), round(J08sim*100, digits = 1), round(J06sim*100, digits = 1), round(D11sim*100, digits = 1), "33.0", round(D07sim*100, digits = 1), "", "", "", "", "", ""))
-#D09 sim = 33.00698 and rounded = 33.0 but round doesn't include zeros. so code is 33.0
-
-# merge peroverlap, spat_empty_table (replace NAs), spat_length_table, spat_gfi_table:
-
-gfi_fl_table <- left_join(temp_gfi_table, temp_length_table, by=c("fish_species", "site_id", "year"))
-
-gfi_empty_table <- left_join(gfi_fl_table, temp_empty_table, by=c("fish_species", "site_id", "year"))
-
-#gfi_overlap_table <- bind_cols(gfi_empty_table, duplicateddata)
-
-gfi_empty_table$n[which(is.na(gfi_empty_table$n)==TRUE)] <- 0
-gfi_empty_table$per_empty[which(is.na(gfi_empty_table$per_empty)==TRUE)] <- 0
-
-#gfi_overlap_table$site_id <- factor(gfi_overlap_table$site_id, levels = reverse_spat_sites)
-
-gfi_all_data_table <- gfi_empty_table %>%
-  mutate(fl= paste(mean_fl, se_fl, sep=" ± "),
-         fishw= paste(comma(mean_ww, digits=1), se_ww, sep=" ± "),
-         food= paste(mean_food, se_food, sep=" ± "),
-         GFI= paste(mean_gfi, se_gfi, sep=" ± ")) %>%
-  select(Species=fish_species, Site=site_id, `Fish FL (mm)`=fl, `Fish WW (mg)`=fishw,
-         #`Food WW (mg)`=food,
-         GFI=GFI, `# Empty`=n#, #`% Empty Stom.`=per_empty,
-         #`Overlap`=overlap
-         ) %>%
-  unique() #%>%
-  #arrange(Site, c("D07", "D07", "D09", "D09", "D11", "D11", "J06", "J06", "J08", "J08", "J02", "J02"))
-
-kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 4), rep("c", 3)),
-      linesep= c('', '\\addlinespace')) %>% 
-  save_kable(here("tables", "temporal_tables", "index_table.pdf"))
-
-
-##### SALMON GRAPH - SIZE BINS #####
-
-ggplot(temp_stomachs)+
-  geom_histogram(aes(fork_length, fill=fish_species), position="dodge", binwidth = 5)+
-  facet_grid(site_id~year)+
-  geom_vline(aes(xintercept=87.5))+
-  geom_vline(aes(xintercept=117.5))+
-  scale_fill_manual(values=c("#d294af", "#516959"))+
-  theme_bw()+
-  theme(axis.title.y.right = element_text(color = "red"),
-        panel.grid=element_blank(),
-        axis.text.y.right = element_text(color="red"),
-        axis.text.y.left = element_text(color="black"),
-        axis.text.x = element_text(color="black"),
-        strip.text = element_text(size=16),
-        axis.ticks.x = element_blank(),
-        axis.title = element_text(size=14), axis.text = element_text(size=12),
-        legend.text = element_text(size=12), legend.title = element_text(size=14))+
-  labs(x="Fork Length (mm)", y="Count", fill="Species")
-
-ggsave(here("figs", "temporal_figs", "salmon_size_temporal.png"))
-
-size_summary <- temp_stomachs %>%
-  mutate(fish_size=if_else(fork_length<87, "Small",
-                           if_else(fork_length>117, "Large", "Medium"))) %>%
-  group_by(fish_size) %>% 
-  tally()
-
 
 ##### SALMON GRAPH - PREY COMP #####
 
@@ -722,6 +770,7 @@ ggplot() +
            mapping = aes(x = Date + barwidth + 0.5, y = Ave_Rel_Bio, fill = factor(Prey_Group, levels = prey_levels)), 
            stat="identity", position='stack', width = barwidth) + 
   scale_fill_manual(values=color_temp)+
+  scale_y_continuous(expand = c(0,0), limits=c(0, 110))+
   geom_rect(data = diet_pink_graph, aes(xmin = Date - 1, xmax=Date+1, ymin = 0, ymax = 100), color="#d294af", fill=NA)+
   geom_rect(data = diet_chum_graph, aes(xmin = Date+ barwidth - 0.5, xmax=Date+ barwidth+1.5, ymin = 0, ymax = 100), color="#516959", fill=NA)+
   geom_text(data = diet_pink_graph, aes(x = Date - 0.75, y = 105), label = "PI", color="#d294af")+
@@ -739,3 +788,118 @@ ggplot() +
 
 ggsave(here("figs", "temporal_figs", "temporal_diet_comp.png"))
 
+##### SALMON GRAPH - SIZE BINS #####
+
+mean_fl_no_sp <- temp_stomachs %>%
+  group_by(year, site_id) %>%
+  filter(is.na(fork_length)!=TRUE) %>% 
+  summarize(mean_no_sp=round(mean(fork_length), digits=1))
+
+ggplot(temp_stomachs)+
+  geom_histogram(aes(fork_length, fill=fish_species), position="dodge", binwidth = 5)+
+  facet_grid(site_id~year)+
+  geom_vline(data=mean_fl_no_sp, aes(xintercept=mean_no_sp), size=1, color="darkred", linetype="dashed")+
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  theme_bw()+
+  scale_y_continuous(expand = c(0,0), limits = c(0, 9.5))+
+  theme(axis.title.y.right = element_text(color = "red"),
+        panel.grid=element_blank(),
+        axis.text.y.right = element_text(color="red"),
+        axis.text.y.left = element_text(color="black"),
+        axis.text.x = element_text(color="black"),
+        strip.text = element_text(size=16),
+        axis.ticks.x = element_blank(),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14))+
+  labs(x="Fork Length (mm)", y="Count", fill="Species")
+
+ggsave(here("figs", "temporal_figs", "salmon_size_temporal.png"))
+
+# maybe later: divide into small and large halfs according to each sample event and species
+##### SALMON GRAPH - CONDITION #####
+
+temporalk$survey_date[which(temporalk$survey_date=="2015-06-07")] <- "2015-06-04"
+#change for better plotting (so pink comes before chum)
+
+ggplot(data=temporalk, aes(x=survey_date, y=k, fill=fish_species, group=interaction(fish_species, survey_date)))+
+  geom_boxplot(data=temporalk, aes(x=survey_date, y=k, fill=fish_species), width=5)+
+  labs(title=NULL, y="Fulton's K", x="Date", fill="Fish Species")+
+  theme_bw()+
+  geom_hline(aes(yintercept=1), color="darkred", linetype="dashed")+
+  scale_x_date(date_breaks = "17 days", date_labels = "%b %d")+
+  facet_grid(site_id~year, scales="free")+
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5))
+#K for temporal
+
+ggsave(here("figs", "temporal_figs", "temporal_condition.png"))
+
+##### SALMON GRAPH - GFI #####
+
+temp_gfi_all_data %>% 
+  ggplot(aes(survey_date, gfi, group=interaction(fish_species, survey_date)))+
+  geom_boxplot(aes(fill=fish_species), width=5)+
+  labs(title=NULL, y="GFI (% Body Weight)", fill="Species",
+       x=NULL)+
+  theme_bw()+
+  scale_x_date(date_breaks = "17 days", date_labels = "%b %d")+
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text.y = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5),
+        axis.text.x = element_text(size=12))+
+  facet_grid(site_id~year, scales = "free_x")
+
+ggsave(here("figs", "temporal_figs", "temporal_gfi.png"))
+
+##### SALMON GRAPH - Niche Breadth #####
+
+temp_data_wide <- temporal_diets %>%
+  group_by(ufn, prey_info, site_id, fish_species, survey_date, year) %>% 
+  summarise(ww=sum(prey_weight_corr)) %>% 
+  spread(prey_info, ww, fill=0) %>%
+  ungroup()
+
+temp_data_wide_info <- select(temp_data_wide, ufn, site_id, fish_species, survey_date, year)
+
+temp_data_pa <- temp_data_wide %>% 
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method = "pa")
+
+totals <- vector(length = nrow(temp_data_pa))
+#create an empty vector
+totals <- rowSums(temp_data_pa)
+#fill that vector with calculated row totals (total per stom.)
+totals <- as.data.frame(totals)
+
+temp_data_taxa_sum <- cbind(temp_data_wide_info, totals)
+
+count(temp_data_taxa_sum)
+
+temp_data_taxa_sum %>%
+  group_by(site_id, fish_species, survey_date, year) %>%
+  summarise(mean(totals))
+
+temp_data_taxa_sum %>% 
+  ggplot(aes(survey_date, totals, group=interaction(fish_species, survey_date)))+
+  geom_boxplot(aes(fill=fish_species), width=5)+
+  labs(title=NULL, y="Number of taxanomic groups", fill="Species",
+       x=NULL)+
+  theme_bw()+
+  scale_x_date(date_breaks = "17 days", date_labels = "%b %d")+
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        axis.title = element_text(size=14), axis.text.y = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5),
+        axis.text.x = element_text(size=12))+
+  facet_grid(site_id~year, scales = "free_x")#+
+#  scale_x_discrete(labels=c("DI_Early"="May", "DI_June_Early"="Early June", "DI_June_Mid"="Mid-June",
+#                            "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))
+#boxplot for simple version of niche breadth (just number of taxa in each fish stomach)
+
+ggsave(here("figs","temporal_figs","temporal_niche_breadth.png"))
