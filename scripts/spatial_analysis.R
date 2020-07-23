@@ -68,7 +68,7 @@ spat_biomass_data <- spat_data_mod %>%
                        #"U5168", #only oikopleura <0.1 mg. not outlier though...
                        "U5161", #bunch of fish eggs and not much else...
                        "U5285", #single spider 3.5 mg
-                       "U5319", #one gammarid and fly larvae... < 5 mg
+                       #"U5319", #one gammarid and fly larvae... < 5 mg
                        "U5284" #pteropods and other weird things < 3 mg
                        )) %>%
   group_by(ufn, fish_species, sample_date, sample_site, taxa_detail_calc, semsp_id,

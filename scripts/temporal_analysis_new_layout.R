@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified july 13, 2020
+#last modified july 14, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -552,31 +552,60 @@ temporalk <- temp_stomachs %>%
 
 ##### SALMON TABLE - INDICES #####
 
-temporalk$year <- as.character(temporalk$year)
+temp_data_wide <- temporal_diets %>%
+  group_by(ufn, prey_info, site_id, fish_species, survey_date, year) %>% 
+  summarise(ww=sum(prey_weight_corr)) %>% 
+  spread(prey_info, ww, fill=0) %>%
+  ungroup()
 
-temp_gfi_all_data <- temporalk %>%
+temp_data_wide_info <- select(temp_data_wide, ufn, site_id, fish_species, survey_date, year)
+
+temp_data_pa <- temp_data_wide %>% 
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method = "pa")
+
+totals <- vector(length = nrow(temp_data_pa))
+#create an empty vector
+totals <- rowSums(temp_data_pa)
+#fill that vector with calculated row totals (total per stom.)
+totals <- as.data.frame(totals)
+
+temp_data_taxa_sum <- cbind(temp_data_wide_info, totals)
+
+count(temp_data_taxa_sum)
+
+temp_data_taxa_sum %>%
+  group_by(site_id, fish_species, survey_date, year) %>%
+  summarise(mean(totals))
+
+temp_indices <- left_join(temporalk, temp_data_taxa_sum, by=c("ufn", "fish_species", "site_id", "year", "survey_date"))
+
+temp_indices$year <- as.character(temp_indices$year)
+
+temp_gfi_all_data <- temp_indices %>%
   filter(is.na(weight)!=TRUE) %>% 
-  select(fish_species, site_id, survey_date, year, weight, food_weight_corr, fork_length, k) %>%
+  select(fish_species, site_id, survey_date, year, weight, food_weight_corr, fork_length, k, totals) %>%
   mutate(weight_corr= weight*1000, # grams to milligrams? * FIX IN RAW DATA LATER ! *
          gfi=food_weight_corr/weight_corr*100)
 
 temp_gfi_table <- temp_gfi_all_data %>% 
   group_by(fish_species, year, site_id) %>%
-  summarise(mean_ww=round(mean(weight_corr), digits=1), se_ww=round(sd(weight_corr), digits=1),
+  summarise(mean_ww=round(mean(weight), digits=1), se_ww=round(sd(weight), digits=1),
             mean_food=round(mean(food_weight_corr), digits=1), se_food=round(sd(food_weight_corr), digits=1),
-            mean_gfi=round(mean(gfi), digits=2), se_gfi=round(sd(gfi), digits=2))
+            mean_gfi=round(mean(gfi), digits=2), se_gfi=round(sd(gfi), digits=2),
+            mean_rich=round(mean(totals), digits=1), se_rich=round(sd(totals), digits=1))
 #divide by 10 is supposed to be sample size ... would have to change it since n!=10 here *****
 
 # temporary solution: use SD instead of SE ! 
 
-temp_length_table <- temporalk %>%
+temp_length_table <- temp_indices %>%
   filter(is.na(fork_length)!=TRUE) %>%
   select(fish_species, site_id, year, fork_length, k) %>%
   group_by(fish_species, year, site_id) %>%
   summarise(mean_fl=round(mean(fork_length), digits=1), se_fl=round(sd(fork_length), digits=1),
             mean_k=round(mean(na.omit(k)), digits=2), se_k=round(sd(na.omit(k)), digits=2))
 
-temp_empty_table <- temporalk %>%
+temp_empty_table <- temp_indices %>%
   filter(food_weight_corr==0) %>%
   group_by(fish_species, site_id, year) %>%
   count() %>%
@@ -672,20 +701,21 @@ gfi_all_data_table <- gfi_overlap_table %>%
   ungroup() %>% 
   arrange(site_id, year) %>% 
   mutate(fl= paste(mean_fl, se_fl, sep=" ± "),
-         fishw= paste(comma(mean_ww, digits=0), comma(se_ww, digits=0), sep=" ± "),
+         fishw= paste(mean_ww, se_ww, sep=" ± "),
          food= paste(mean_food, se_food, sep=" ± "),
-         GFI= paste(mean_gfi, se_gfi, sep=" ± "),
+         `GFI (%BW)`= paste(mean_gfi, se_gfi, sep=" ± "),
          K=paste(mean_k, se_k, sep = " ± "),
+         Richness=paste(mean_rich, se_rich, sep=" ± "),
          Year=c("2015", " ", "2016", " ", "2015", " ", "2016", " "),
          #Overlap=c(unique(ave_overlap), rep(" ", 4)),
          Site=c("D07", rep(" ", 3), "J07", rep(" ", 3))) %>%
-  select(Species=fish_species, Site, Year, `Fish FL (mm)`=fl, `Fish WW (mg)`=fishw, `Condition (K)`=K,
+  select(Species=fish_species, Site, Year, `Fish FL (mm)`=fl, `Fish WW (g)`=fishw, `Condition (K)`=K,
          #`Food WW (mg)`=food,
-         GFI=GFI, `# Empty`=n, #`% Empty Stom.`=per_empty,
-         Overlap=ave_overlap) %>%
+         `GFI (%BW)`, `# Empty`=n, #`% Empty Stom.`=per_empty,
+         Overlap=ave_overlap, Richness) %>%
   unique()
 
-kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 4), rep("c", 3)),
+kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 7), rep("c", 2), "l"),
       linesep= c('', '\\addlinespace')) %>% 
   save_kable(here("tables", "temporal_tables", "index_table.pdf"))
 
@@ -857,32 +887,6 @@ temp_gfi_all_data %>%
 ggsave(here("figs", "temporal_figs", "temporal_gfi.png"))
 
 ##### SALMON GRAPH - Niche Breadth #####
-
-temp_data_wide <- temporal_diets %>%
-  group_by(ufn, prey_info, site_id, fish_species, survey_date, year) %>% 
-  summarise(ww=sum(prey_weight_corr)) %>% 
-  spread(prey_info, ww, fill=0) %>%
-  ungroup()
-
-temp_data_wide_info <- select(temp_data_wide, ufn, site_id, fish_species, survey_date, year)
-
-temp_data_pa <- temp_data_wide %>% 
-  select(Acartia:Tortanus_discaudatus) %>% 
-  decostand(method = "pa")
-
-totals <- vector(length = nrow(temp_data_pa))
-#create an empty vector
-totals <- rowSums(temp_data_pa)
-#fill that vector with calculated row totals (total per stom.)
-totals <- as.data.frame(totals)
-
-temp_data_taxa_sum <- cbind(temp_data_wide_info, totals)
-
-count(temp_data_taxa_sum)
-
-temp_data_taxa_sum %>%
-  group_by(site_id, fish_species, survey_date, year) %>%
-  summarise(mean(totals))
 
 temp_data_taxa_sum %>% 
   ggplot(aes(survey_date, totals, group=interaction(fish_species, survey_date)))+

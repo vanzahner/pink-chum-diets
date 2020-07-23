@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified july 13, 2020
+#last modified july 22, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -359,7 +359,9 @@ spat_diet_groups <- spat_diet_sum %>%
                   if_else(family=="Pleuronectidae", family,
                   if_else(genus=="Neocalanus", genus,
                   if_else(class=="Trematoda", "Parasites",
-                  taxa_info)))))),
+                  #if_else(subphylum=="Chelicerata" | subphylum=="Hexapoda", phylum, #try fix outlier
+                  taxa_info))))))#)
+         ,
          life_stage_new=if_else(str_detect(life_stage, "Zoea") | 
                         order=="Decapoda" & life_stage=="Megalopa" | 
                         order=="Calanoida" & (life_stage=="Nauplii" | life_stage=="Copepodite"), "Larvae",
@@ -496,7 +498,7 @@ spat_gfi_table <- spat_stomachs %>%
   mutate(weight_corr= weight*1000, # grams to milligrams * FIX IN RAW DATA LATER ! *
            gfi=food_weight_corr/weight_corr*100) %>% 
   group_by(fish_species, site_id) %>%
-  summarise(mean_ww=round(mean(weight_corr), digits=1), se_ww=round(sd(weight_corr)/10, digits=1),
+  summarise(mean_ww=round(mean(weight), digits=1), se_ww=round(sd(weight)/10, digits=1),
             mean_food=round(mean(food_weight_corr), digits=1), se_food=round(sd(food_weight_corr)/10, digits=1),
             mean_gfi=round(mean(gfi), digits=2), se_gfi=round(sd(gfi)/10, digits=2))
 
@@ -571,12 +573,12 @@ gfi_overlap_table$site_id <- factor(gfi_overlap_table$site_id, levels = reverse_
 
 gfi_all_data_table <- gfi_overlap_table %>%
   mutate(fl= paste(mean_fl, se_fl, sep=" ± "),
-         fishw= paste(comma(mean_ww, digits=1), se_ww, sep=" ± "),
+         fishw= paste(mean_ww, se_ww, sep=" ± "),
          food= paste(mean_food, se_food, sep=" ± "),
          GFI= paste(mean_gfi, se_gfi, sep=" ± ")) %>%
-  select(Species=fish_species, Site=site_id, `Fish FL (mm)`=fl, `Fish WW (mg)`=fishw,
+  select(Species=fish_species, Site=site_id, `Fish FL (mm)`=fl, `Fish WW (g)`=fishw,
          #`Food WW (mg)`=food,
-         GFI=GFI, `# Empty`=n, #`% Empty Stom.`=per_empty,
+         `GFI (%BW)`=GFI, `# Empty`=n, #`% Empty Stom.`=per_empty,
          `Overlap`=overlap) %>%
   unique() %>%
   arrange(Site, c("D07", "D07", "D09", "D09", "D11", "D11", "J06", "J06", "J08", "J08", "J02", "J02"))
@@ -649,33 +651,33 @@ kable(diet_table, "latex", booktabs=TRUE, linesep="") %>%
 
 ##### SALMON GRAPHS - DIET COMP #####
 
-diet_biomass <- spatial_diets %>%
+diet_biomass_detail <- spatial_diets %>%
   filter(food_weight_corr!=0) %>% 
   group_by(ufn, fish_species, site_id, prey_group_simple) %>%
   summarise(prey_weight_sum=sum(prey_weight_corr))
 #summarize biomass for each fish
 
-diet_bio_wide <- diet_biomass %>%
+diet_bio_wide_detail <- diet_biomass_detail %>%
   ungroup() %>%
   select(ufn, fish_species, site_id, prey_group_simple, prey_weight_sum) %>% 
   group_by(ufn, fish_species, site_id) %>% 
   spread(key=prey_group_simple, value = prey_weight_sum, fill=0)
 #wide data set (might not need it, but it's a good double check that n=120!)  
 
-diet_bio_mat <- diet_bio_wide %>%
+diet_bio_mat_detail <- diet_bio_wide_detail %>%
   ungroup() %>% 
   select(-c(ufn, fish_species, site_id)) %>%
   decostand(method="total")
 
-diet_bio_per <- diet_bio_mat*100
+diet_bio_per_detail <- diet_bio_mat_detail*100
 
-diet_bio_data <- diet_bio_per %>%
-  mutate(site=group_bio_wide$site_id, fish=group_bio_wide$fish_species) %>%
+diet_bio_data_detail <- diet_bio_per_detail %>%
+  mutate(site=diet_bio_wide_detail$site_id, fish=diet_bio_wide_detail$fish_species) %>%
   gather(key="taxa", value="rel_bio", Amphipoda:Other) %>% 
   group_by(site, fish, taxa) %>%
   summarise(rel_bio=round(mean(rel_bio), digits=1))
 
-ggplot(diet_bio_data) + 
+ggplot(diet_bio_data_detail) + 
   geom_bar(aes(x = site, y = rel_bio, fill = factor(taxa, levels = prey_levels)), 
            stat="identity", position='stack') + 
   scale_fill_manual(values=color_levels)+
@@ -693,3 +695,214 @@ ggplot(diet_bio_data) +
 
 ggsave(here("figs", "spatial_figs", "spatial_diet_comp.png"))
 
+##### SALMON GRAPHS - CLUSTER #####
+
+spat_diet_wide_detail <- spatial_diets %>%
+  mutate(region=if_else(site_id=="D07" | site_id=="D09" | site_id=="D11", "DI", "JS")) %>% 
+  filter(food_weight_corr!=0 & prey_info!="Crustacea" & prey_info!="Copepoda" &
+           prey_info!="Parasites" & prey_info !="Detritus" & prey_info != "Coscinodiscophycidae" &
+           prey_info!="Object" & prey_info!="Microplastic_chunk_Object"
+  ) %>% 
+  group_by(ufn, fish_species, site_id, region, prey_info) %>%
+  summarise(biomass=sum(prey_weight_corr)) %>%
+  spread(key=prey_info, value = biomass, fill=0) %>%
+  ungroup()
+#calculate wide data set with new prey groups (detailed and general!)
+
+spat_diet_wide_detail$region <- factor(spat_diet_wide_detail$region, levels=c("JS", "DI"))
+
+site_names <- spat_diet_wide_detail$site_id
+species_names <- spat_diet_wide_detail$fish_species
+region_names <- spat_diet_wide_detail$region
+ufn_names <- spat_diet_wide_detail$ufn
+#create dataframe with UFNs, site and species for reattaching to matrices
+
+site_sp_names <- transmute(spat_diet_wide_detail, site_sp=paste(site_id, fish_species, sep = "_"))
+
+spat_diet_matrix_detail <- spat_diet_wide_detail %>%
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method="total")
+#matrix to calculation relative biomass of 25 different prey groups
+
+spat_diet_rel_bio_detail <- cbind(ufn_names, spat_diet_matrix_detail)
+#combine ufn/site/species back onto relative biomass of prey groups data
+
+#create a matrix with ufns as row names
+matrix1<-as.matrix(spat_diet_rel_bio_detail)
+row.names(matrix1) <- matrix1[,1]
+spat_diet_matrix <- matrix1[,-1]
+class(spat_diet_matrix)<-"numeric"
+spat_trans_matrix <- asin(sqrt(spat_diet_matrix))
+#need to rename in between matrices and dataframes better...
+
+Bray_Curtis_Dissimilarity <- vegdist(spat_trans_matrix, method = "bray")
+bcclust <- hclust(Bray_Curtis_Dissimilarity, method = "average")
+#make dendrogram data (heirarchical clustering by average linkages method)
+
+dendr <- dendro_data(bcclust, type = "rectangle")
+#put it in ggdendro form
+
+bcd <- as.dendrogram(bcclust)
+#put it in dendextend form...
+
+library()
+
+bcd <- bcclust %>% 
+  as.dendrogram() %>% 
+  set("leaves_col")
+
+ # RESUME HERE LATER, NOT SURE WHERE / WHY THE ISSUE IS HERE.
+
+#making labels with site and species for dendro:
+#simple_semsp_names <- as.character(simple_semsp_names)
+#site_sp_names <- vector(length = length(simple_semsp_names))
+#for(i in 1:length(simple_semsp_names)){
+#  site_sp_names[i] <- substring(simple_semsp_names[i], first=1, last=6)
+#}
+site_sp_names <- as.factor(site_sp_names)
+#make vector with semsp id (for cluster dendrogram)
+
+data_w_site_sp_combo <- cbind(diets_w_labels, site_sp_names)
+
+fishsp <- data_w_site_sp_combo %>%
+  ungroup() %>%
+  select(ufn=simple_semsp_names, Sp=site_sp_names)
+
+labs <- label(dendr)
+
+colnames(labs) <- c("x", "y", "ufn")
+
+lab <- left_join(labs, fishsp, by = "ufn")
+
+ggplot()+
+  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend#, color="NA"
+  ))+
+  geom_text(data=label(dendr), aes(x=x, y=y, label=label, hjust=0, color=lab$Sp), size=5) +
+  coord_flip() + scale_y_reverse(expand=c(0.2, 0)) +
+  scale_colour_manual(values = c(#"#053061", "#1F78B4", "#A6CEE3", 
+    #"#F781BF", "#E41A1C", "#B2182B",
+    
+    "#B2182B","#B2182B","#E41A1C","#E41A1C",
+    "#F781BF","#F781BF","#053061","#053061",
+    "lightseagreen", "lightseagreen",                          # "#A6CEE3","#A6CEE3",
+    "#1F78B4","#1F78B4"#, "grey50"
+    #"#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
+    #"#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928", "grey50"
+  ),
+  name="Site and Species")+
+  theme(axis.line.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text = element_text(size=24),
+        axis.title = element_text(size=26),
+        legend.text = element_text(size=24),
+        legend.title = element_text(size=26),
+        #panel.background=element_rect(fill="black"),
+        panel.grid=element_blank(), legend.position = "right")+
+  labs(#title="Cluster By Fish ID"
+    y="Dissimilarity")
+#plot the dendrogram data for the different fish ID's
+
+library(dendextend)
+
+ggsave(here("figs", "spatial", "spatial_cluster.png"), width=15, height=20)
+#cluster groups (top to bottom) DI CU; DI PI; J02 CU, J02 PI, J08 PI, J08 CU, J06 CU...
+#outliers scattered amongst other clusters: D11 and J06 (lowest fullness, most empty!)
+
+plot(bcd, xlab="Dissimilarity", horiz = TRUE)
+
+#simproftest <- simprof(spat_trans_matrix, method.cluster = "average", method.distance = "braycurtis", num.expected = 100, num.simulated = 99)
+#simprof.plot(simproftest)
+#takes a long time to run this code...
+
+##### SALMON GRAPHS - NMDS #####
+
+spat_diet_wide_nmds <- spatial_diets %>%
+  mutate(region=if_else(site_id=="D07" | site_id=="D09" | site_id=="D11", "DI", "JS")) %>% 
+  filter(food_weight_corr!=0 #& prey_info!="Crustacea" & prey_info!="Copepoda" &
+         #prey_info!="Parasites" & prey_info !="Detritus" & prey_info != "Coscinodiscophycidae" &
+         #prey_info!="Object" & prey_info!="Microplastic_chunk_Object"
+          & ufn!="U5285" # spider
+         ) %>% 
+  group_by(ufn, fish_species, site_id, region, prey_info) %>%
+  summarise(biomass=sum(prey_weight_corr)) %>%
+  spread(key=prey_info, value = biomass, fill=0) %>%
+  ungroup()
+#calculate wide data set with new prey groups (detailed and general!)
+
+spat_diet_wide_nmds$region <- factor(spat_diet_wide_nmds$region, levels=c("JS", "DI"))
+
+site_names_nmds <- spat_diet_wide_nmds$site_id
+species_names_nmds <- spat_diet_wide_nmds$fish_species
+region_names_nmds <- spat_diet_wide_nmds$region
+ufn_names_nmds <- spat_diet_wide_nmds$ufn
+#create dataframe with UFNs, site and species for reattaching to matrices
+
+spat_diet_matrix_nmds <- spat_diet_wide_nmds %>%
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method="total")
+#matrix to calculation relative biomass of 25 different prey groups
+
+spat_diet_rel_bio_nmds <- cbind(ufn_names_nmds, spat_diet_matrix_nmds)
+#combine ufn/site/species back onto relative biomass of prey groups data
+
+#create a matrix with ufns as row names
+matrixA<-as.matrix(spat_diet_rel_bio_nmds)
+row.names(matrixA) <- matrixA[,1]
+spat_nmds_matrix <- matrixA[,-1]
+class(spat_nmds_matrix)<-"numeric"
+spat_trans_nmds <- asin(sqrt(spat_nmds_matrix))
+#need to rename in between matrices and dataframes better...
+
+#region, proportion based dissimilarity - bray curtis
+eco.nmds.bc<- metaMDS(spat_trans_nmds,distance="bray",labels=region_names_nmds, trymax = 100, autotransform = FALSE)
+eco.nmds.bc
+plot(eco.nmds.bc)
+
+NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=region_names_nmds)
+#plot NMDS, only once (picking Bray because all similar), no presence absence
+
+ord.bc<-ordiellipse(eco.nmds.bc,region_names_nmds,display="sites",kind="sd", conf = 0.95, label=T)
+#Ellipses are standard deviation, no scaling of data (can use standard error, scaling, and confidence limit options)
+
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
+{
+  theta <- (0:npoints) * 2 * pi/npoints
+  Circle <- cbind(cos(theta), sin(theta))
+  t(center + scale * t(Circle %*% chol(cov)))
+}
+
+df_ell.bc <- data.frame()
+for(g in levels(NMDS.bc$group)){
+  df_ell.bc <- rbind(df_ell.bc, cbind(as.data.frame(with(NMDS.bc[NMDS.bc$group==g,],
+                                                         veganCovEllipse(ord.bc[[g]]$cov,ord.bc[[g]]$center))),group=g))
+}
+
+a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
+  geom_point(stat = "identity", aes(shape=species_names_nmds, fill=site_names_nmds), size=3)+#, color = "black")+
+  geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
+  scale_shape_manual(values=c(21, 24), name="Species")+
+  scale_fill_manual(values=c("#053061", "#1F78B4", "#A6CEE3", 
+                             "#F781BF", "#e41a1c", "darkred"
+  ),
+  
+  name="Site", guide="legend") +
+  guides(fill= guide_legend(override.aes = list(shape=21)))+#, order = 2),
+  #shape=guide_legend(order = 1))+
+  labs(x="NMDS 1", y="NMDS 2"#, title = "Diet Dissimilarity NMDS"
+  )+
+  scale_colour_manual(values=c("#053061", "#B2182B"), name="Region") +
+  theme_bw()+
+  theme(axis.text.x=element_text(size=12),
+        axis.title.x=element_text(size=12),
+        axis.title.y=element_text(angle=90,size=12),
+        axis.text.y=element_text(size=12),
+        panel.grid.minor=element_blank(),panel.grid.major=element_blank(),
+        axis.ticks = element_blank()) + coord_fixed() +
+  annotate("text",x=1.5,y=-1.7,label="(stress = 0.17)",size=4, hjust = 0)
+#NMDS graph for the different sites!
+
+a
+
+ggsave(here("figs","spatial_figs","spatial_NMDS.png"))

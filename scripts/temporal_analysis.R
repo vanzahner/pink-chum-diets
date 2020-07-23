@@ -42,9 +42,9 @@ date_categories <- data.frame(date=c(unique(temp_data_raw$survey_date)),
                                        "Late May", "Early June",
                                        "Mid-June", "Mid-June", "Early July"))
 
-temp_data_dates <- left_join(temp_data_raw, date_categories, by="date")
+#temp_data_dates <- left_join(temp_data_raw, date_categories, by="date")
 
-temp_data <- temp_data_dates
+temp_data <- temp_data_raw
 #make a copy before modifying the taxanomic groups
 
 #load in file with old and new taxa names to be assigned
