@@ -28,13 +28,13 @@ here()
 spat_data_raw <- read_csv(here("processed", "spatial_pink_chum_diets.csv"))
 #read in spatial diet data
 
-#calanoid_fixing <- filter(spat_data_raw, taxa_detail_calc=="Calanoida")
-#no_calanoids <- anti_join(spat_data_raw, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
-#small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
-#large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
-#small_calanoids$taxa_detail_calc <- "Calanoids_Small"
-#large_calanoids$taxa_detail_calc <- "Calanoids_Large"
-#spat_diet_data <- rbind(no_calanoids, small_calanoids, large_calanoids)
+calanoid_fixing <- filter(spat_data_raw, taxa_detail_calc=="Calanoida")
+no_calanoids <- anti_join(spat_data_raw, calanoid_fixing)#, by=c("ufn", "vfid", "semsp_id"))
+small_calanoids <- filter(calanoid_fixing, size_class %in% c("<1", "1 to 2"))
+large_calanoids <- filter(calanoid_fixing, size_class %in% c("2 to 5", "5 to 10"))
+small_calanoids$taxa_detail_calc <- "Calanoids_Small"
+large_calanoids$taxa_detail_calc <- "Calanoids_Large"
+spat_diet_data <- rbind(no_calanoids, small_calanoids, large_calanoids)
 
 spat_diet_data <- spat_data_raw # no dig. calanoid size differentiation *
 

@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified july 22, 2020
+#last modified july 23, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -78,21 +78,24 @@ spat_zoop_envr <- left_join(spat_envr_data, spat_zoop_ww_total, by="site_id")
 spat_zoop_intermediate <- spat_zoop_data %>%
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Echinodermata" | phylum=="Ochrophyta" | phylum=="Bryozoa", phylum,
                     if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" | class=="Insecta" | class=="Bivalvia", class,
-                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Cnidaria_Ctenophora",
+                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, 
                     if_else(family=="Caligidae", "Parasites",
                     if_else(class=="Gastropoda", "Pteropoda",
                     if_else(prey_info=="Unknown_egg", "Euphausiidae Eggs",
-                    if_else(prey_info=="Copepoda_nauplius", "Calanoida",
-                    if_else(order=="Calanoida" | order=="Decapoda" | order=="Amphipoda" |
+                    if_else(order=="Decapoda" | order=="Amphipoda" |
                             order=="Harpacticoida" | order=="Cyclopoida", order,
-                    #if_else(suborder=="Hyperiidea" | suborder=="Senticaudata", suborder,
+                    if_else(order=="Calanoida" & (size_class=="<1" | size_class=="1 to 2"), "Small (<2mm)",
+                    if_else(order=="Calanoida" & (size_class=="2 to 5" | size_class=="5 to 10"), "Large (>2mm)",
+                    if_else(prey_info=="Copepoda_nauplius", "Small (<2mm)",
                     if_else(infraorder=="Balanomorpha", infraorder,
                     if_else(family=="Euphausiidae", "Euphausiidae Larvae",
                     if_else(family=="Podonidae", "Cladocera",
-                            prey_info))))))))))))#)
+                            prey_info))))))))))))))
 #update zooplankton groups for summary and graphs
 
-prey_level_details <- c("Hyperiidea", "Senticaudata", "Amphipoda", "Calanoida", "Euphausiidae", "Adults",
+str(spat_zoop_intermediate$size_class)
+
+prey_level_details <- c("Hyperiidea", "Senticaudata", "Amphipoda", "Small (<2mm)", "Large (>2mm)", "Euphausiidae", "Adults",
                         "Euphausiidae Larvae", "Larvae", "Decapoda", "Insecta", "Arachnida",
                         "Harpacticoida", "Cnidaria", "Ctenophora", "Appendicularia", "Chaetognatha",
                         "Cyclopoida", "Bivalvia", "Pteropoda", "Polychaeta", "Actinopterygii",
@@ -101,13 +104,14 @@ prey_level_details <- c("Hyperiidea", "Senticaudata", "Amphipoda", "Calanoida", 
 
 zoop_group_data <- spat_zoop_intermediate %>%
   mutate(prey_group_simple=if_else(prey_group=="Cnidaria" | prey_group=="Ctenophora", "Gelatinous",
+                           if_else(prey_group=="Small (<2mm)" | prey_group=="Large (>2mm)", "Calanoida", 
                            if_else(prey_group=="Euphausiidae Larvae", "Euphausiidae",
-                           if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & #prey_group!="Amphipoda" &
+                           if_else(prey_group!="Decapoda" & #prey_group!="Amphipoda" &
                                    #prey_group!="Harpacticoida" &
                                    prey_group!="Appendicularia" & #prey_group!="Chaetognatha" &
                                    #prey_group!="Balanomorpha" & prey_group!="Cladocera" & prey_group!="Mollusca" 
                                    prey_group!="Bivalvia" & prey_group!="Cyclopoida", 
-                                   "Other", prey_group))))
+                                   "Other", prey_group)))))
 # keep prey groups that are substantial, rest = "Other" prey category
 
 zoop_levels <- c("Calanoida", "Euphausiidae", "Decapoda", #"Harpacticoida",
@@ -163,7 +167,7 @@ zoop_percent <- zoop_mat*100
 
 zoop_rel_abd <- zoop_percent %>%
   mutate(site_id=zoop_group_wide$site_id) %>% 
-  gather("prey_group_simple", "total_abd", Actinopterygii:Pteropoda)
+  gather("prey_group_simple", "total_abd", Actinopterygii:`Small (<2mm)`)
 
 zoop_rel_abd$prey_group_simple <- factor(zoop_rel_abd$prey_group_simple, levels = prey_level_details)
 
@@ -290,9 +294,10 @@ zoop_comp_table <- zoop_rel_abd_sum %>%
 colnames(zoop_comp_table) <- spat_site_order
 
 kable(zoop_comp_table, "latex", booktabs=TRUE, escape = FALSE, linesep="") %>% 
+  pack_rows("Calanoida", 2, 3, latex_gap_space = "0em") %>% 
   pack_rows("Gelatinous", 6, 7, latex_gap_space = "0em") %>% 
   pack_rows("Other", 12, nrow(zoop_comp_table), latex_gap_space = "0em") %>% 
-  add_indent(c(6, 7, 12:nrow(zoop_comp_table))) %>% 
+  add_indent(c(2, 3, 6, 7, 12:nrow(zoop_comp_table))) %>% 
   save_kable(here("tables", "spatial_tables", "zoop_relA_table.pdf"))
 
 colSums(zoop_comp_table)
@@ -396,9 +401,10 @@ spat_diet_filtered <- spat_diet_check %>%
 spat_diet_intermediate <- spat_diet_copy %>%
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Echinodermata" | phylum=="Ochrophyta", phylum,
                     if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" | class=="Bivalvia", class,
-                    if_else(order=="Calanoida" | order=="Decapoda" 
-                            | order=="Cumacea" | order=="Isopoda"  | order=="Pteropoda"
-                            | order=="Harpacticoida" | order=="Cyclopoida", order,
+                    if_else(order=="Decapoda" | order=="Cumacea" | order=="Isopoda"  |
+                            order=="Pteropoda" | order=="Harpacticoida" | order=="Cyclopoida", order,
+                    if_else(order=="Calanoida" & (size_class=="<1" | size_class=="1 to 2"), "Small (<2mm)",
+                    if_else(order=="Calanoida" & (size_class=="2 to 5" | size_class=="5 to 10"), "Large (>2mm)",
                     if_else(suborder=="Balanomorpha" | suborder=="Hyperiidea" | suborder=="Senticaudata", suborder,
                     if_else(family=="Euphausiidae" & life_stage=="" | family=="Podonidae", family,
                     if_else(family=="Euphausiidae" & life_stage!="", "Euphausiidae Larvae",
@@ -406,7 +412,7 @@ spat_diet_intermediate <- spat_diet_copy %>%
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Gelatinous", #"Cnidaria_Ctenophora",
                     if_else(prey_info=="Copepoda", "Crustacea",
                     if_else(life_stage=="Object", life_stage,
-                    prey_info)))))))))))
+                    prey_info)))))))))))))
 #create more general prey groups for any needed tables, graphs, calc, etc.
 
 ##### SALMON DATA - PREP ##### 
@@ -422,7 +428,7 @@ spat_diet_info <- select(spat_diet_wide, ufn, fish_species, site_id)
 #create dataframe with UFNs, site and species for reattaching to matrices
 
 spat_diet_matrix <- spat_diet_wide %>%
-  select(Actinopterygii:Polychaeta) %>% 
+  select(Actinopterygii:`Small (<2mm)`) %>% 
   decostand(method="total")
 #matrix to calculation relative biomass of 25 different prey groups
 
@@ -445,9 +451,10 @@ spat_diet_all <- spat_diet_intermediate %>%
                            if_else(prey_group=="Cnidaria" | prey_group=="Ctenophora", "Gelatinous",
                            if_else(prey_group=="Senticaudata" | prey_group=="Hyperiidea", "Amphipoda",
                            if_else(prey_group=="Euphausiidae" | prey_group=="Euphausiidae Larvae", "Euphausiidae",
-                           if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Harpacticoida" & 
+                           if_else(prey_group=="Small (<2mm)" | prey_group=="Large (>2mm)", "Calanoida",
+                           if_else(prey_group!="Decapoda" & prey_group!="Harpacticoida" & 
                                    prey_group!="Appendicularia" & prey_group!="Chaetognatha",
-                                   "Other", prey_group))))))
+                                   "Other", prey_group)))))))
 # keep prey groups that are substantial, rest = "Other" prey category
 
 prey_levels <- c("Amphipoda", "Calanoida", "Euphausiidae", "Decapoda", "Insecta/Arachnida",  
@@ -615,7 +622,7 @@ group_bio_data <- group_bio_per %>%
   select(-Crustacea) %>% 
   rename(Larvae=`Euphausiidae Larvae`, Adults=Euphausiidae) %>% 
   mutate(site=group_bio_wide$site_id, fish=group_bio_wide$fish_species) %>%
-  gather(key="taxa", value="rel_bio", Actinopterygii:Senticaudata) %>% 
+  gather(key="taxa", value="rel_bio", Actinopterygii:`Small (<2mm)`) %>% 
   group_by(site, fish, taxa) %>%
   summarise(rel_bio=round(mean(rel_bio), digits=1))
 #  ungroup() %>% 
@@ -642,11 +649,12 @@ colnames(diet_table) <- rep(c("PI", "CU"), 6)
 kable(diet_table, "latex", booktabs=TRUE, linesep="") %>%
   add_header_above(c(" "=1, "J02"=2, "J08"=2, "J06"=2, "D11"=2, "D09"=2, "D07"=2)) %>%
   pack_rows("Amphipoda", 1, 2) %>% 
-  pack_rows("Euphausiidae", 4, 5, latex_gap_space = "0em") %>% 
-  pack_rows("Insecta/Arachnida", 7, 8, latex_gap_space = "0em") %>% 
-  pack_rows("Gelatinous", 10, 11, latex_gap_space = "0em") %>% 
-  pack_rows("Other", 14, nrow(diet_table), latex_gap_space = "0em") %>% 
-  add_indent(c(1, 2, 4, 5, 7, 8, 10, 11, 14:nrow(diet_table))) %>% 
+  pack_rows("Calanioda", 3, 4, latex_gap_space = "0em") %>% 
+  pack_rows("Euphausiidae", 5, 6, latex_gap_space = "0em") %>% 
+  pack_rows("Insecta/Arachnida", 8, 9, latex_gap_space = "0em") %>% 
+  pack_rows("Gelatinous", 11, 12, latex_gap_space = "0em") %>% 
+  pack_rows("Other", 15, nrow(diet_table), latex_gap_space = "0em") %>% 
+  add_indent(c(1:6, 8, 9, 11, 12, 15:nrow(diet_table))) %>% 
   save_kable(here("tables", "spatial_tables", "diet_comp_table.pdf"))
 
 ##### SALMON GRAPHS - DIET COMP #####
