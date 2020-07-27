@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified july 23, 2020
+#last modified july 27, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -24,6 +24,9 @@ library(kableExtra)
 library(knitr)
 library(formattable)
 #for creating nice tables
+library(dendextend)
+library(ggdendro)
+#cluster dendrograms
 
 ##### ENVR + ZOOP DATA #####
 
@@ -750,75 +753,95 @@ bcclust <- hclust(Bray_Curtis_Dissimilarity, method = "average")
 dendr <- dendro_data(bcclust, type = "rectangle")
 #put it in ggdendro form
 
-bcd <- as.dendrogram(bcclust)
+#bcd <- as.dendrogram(cut_clust)
 #put it in dendextend form...
 
-library()
 
-bcd <- bcclust %>% 
-  as.dendrogram() %>% 
-  set("leaves_col")
 
- # RESUME HERE LATER, NOT SURE WHERE / WHY THE ISSUE IS HERE.
+#cut_clust <- cutree(bcclust, k=17)
+#cut_clust <- as.data.frame(cut_clust)
+#cut_clust <- rownames_to_column(cut_clust, var = "ufn") %>% as_tibble()
+#lab_clust <- left_join(lab, cut_clust, by="ufn")
+#dendr$labels <- cbind(dendr$labels, sites=as.factor(lab_clust$Site))
 
-#making labels with site and species for dendro:
-#simple_semsp_names <- as.character(simple_semsp_names)
-#site_sp_names <- vector(length = length(simple_semsp_names))
-#for(i in 1:length(simple_semsp_names)){
-#  site_sp_names[i] <- substring(simple_semsp_names[i], first=1, last=6)
-#}
-site_sp_names <- as.factor(site_sp_names)
-#make vector with semsp id (for cluster dendrogram)
+cut <- 17# Number of clusters
+#hc <- hclust(dist(df), "ave")       # bcclust        # hierarchical clustering
+#dendr <- dendro_data(hc, type = "rectangle") 
+clust <- cutree(bcclust, k = cut)               # find 'cut' clusters
+clust.df <- data.frame(label = names(clust), cluster = clust)
+# Split dendrogram into upper grey section and lower coloured section
+height <- unique(dendr$segments$y)[order(unique(dendr$segments$y), decreasing = TRUE)]
+cut.height <- mean(c(height[cut], height[cut-1]))
+dendr$segments$line <- ifelse(dendr$segments$y == dendr$segments$yend &
+                                dendr$segments$y > cut.height, 1, 2)
+dendr$segments$line <- ifelse(dendr$segments$yend  > cut.height, 1, dendr$segments$line)
+# Number the clusters
+dendr$segments$cluster <- c(-1, diff(dendr$segments$line))
+change <- which(dendr$segments$cluster == 1)
+for (i in 1:cut) dendr$segments$cluster[change[i]] = i + 1
+dendr$segments$cluster <-  ifelse(dendr$segments$line == 1, 1, 
+                                  ifelse(dendr$segments$cluster == 0, NA, dendr$segments$cluster))
+dendr$segments$cluster <- na.locf(dendr$segments$cluster)
+# Consistent numbering between segment$cluster and label$cluster
+clust.df$label <- factor(clust.df$label, levels = levels(dendr$labels$label))
+clust.df <- arrange(clust.df, label)
+clust.df$cluster <- factor((clust.df$cluster), levels = unique(clust.df$cluster), labels = (1:cut) + 1)
+dendr[["labels"]] <- merge(dendr[["labels"]], clust.df, by = "label")
+# Positions for cluster labels
+n.rle <- rle(dendr$segments$cluster)
+N <- cumsum(n.rle$lengths)
+N <- N[seq(1, length(N), 2)] + 1
+N.df <- dendr$segments[N, ]
+N.df$cluster <- N.df$cluster - 1
 
-data_w_site_sp_combo <- cbind(diets_w_labels, site_sp_names)
+data_w_site_sp_combo <- cbind(spat_diet_wide_detail, site_sp_names)
 
 fishsp <- data_w_site_sp_combo %>%
   ungroup() %>%
-  select(ufn=simple_semsp_names, Sp=site_sp_names)
+  select(ufn, Sp=fish_species, Site=site_id)
 
 labs <- label(dendr)
 
-colnames(labs) <- c("x", "y", "ufn")
+colnames(labs) <- c("ufn", "x", "y", "cluster")
 
 lab <- left_join(labs, fishsp, by = "ufn")
 
 ggplot()+
-  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend#, color="NA"
-  ))+
-  geom_text(data=label(dendr), aes(x=x, y=y, label=label, hjust=0, color=lab$Sp), size=5) +
-  coord_flip() + scale_y_reverse(expand=c(0.2, 0)) +
-  scale_colour_manual(values = c(#"#053061", "#1F78B4", "#A6CEE3", 
-    #"#F781BF", "#E41A1C", "#B2182B",
-    
-    "#B2182B","#B2182B","#E41A1C","#E41A1C",
-    "#F781BF","#F781BF","#053061","#053061",
-    "lightseagreen", "lightseagreen",                          # "#A6CEE3","#A6CEE3",
-    "#1F78B4","#1F78B4"#, "grey50"
-    #"#A6CEE3", "#1F78B4", "#B2DF8A", "#33A02C", "#FB9A99", "#E31A1C", "#FDBF6F", "#FF7F00",
-    #"#CAB2D6", "#6A3D9A", "#FFFF99", "#B15928", "grey50"
-  ),
-  name="Site and Species")+
-  theme(axis.line.y=element_blank(),
-        axis.ticks.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.title.y=element_blank(),
-        axis.text = element_text(size=24),
-        axis.title = element_text(size=26),
-        legend.text = element_text(size=24),
-        legend.title = element_text(size=26),
-        #panel.background=element_rect(fill="black"),
-        panel.grid=element_blank(), legend.position = "right")+
-  labs(#title="Cluster By Fish ID"
-    y="Dissimilarity")
+  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend,
+               colour=factor(cluster)), show.legend = FALSE, size=0.5) + 
+  geom_point(data=label(dendr), aes(x=x, y=y, shape=lab$Sp, fill=lab$Site), size=2)+
+  geom_hline(yintercept=0.648, linetype="dashed")+
+  scale_shape_manual(values=c(21,25), name="Species")+
+  scale_fill_manual(values = c("#053061", "#1F78B4", "lightseagreen", "#F781BF", "#E41A1C", "darkred"), name="Site")+
+  scale_color_manual(values = c(
+    "#666666", "lightseagreen", "lightseagreen", "darkred", "lightseagreen",
+    "#F781BF", "#1F78B4", "#053061", "#1F78B4", "#F781BF", "lightseagreen",
+    "#F781BF", "#E41A1C", "#E41A1C", "#F781BF", "darkred", "#E41A1C", "darkred"
+    ), guide=F)+
+  guides(fill= guide_legend(override.aes = list(shape=21)),
+         shape=guide_legend(override.aes=list(shape=c(19, 17)), order = 1))+
+  theme_bw()+
+  theme(axis.line.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.title.x=element_blank(),
+        axis.text = element_text(size=8),
+        axis.title = element_text(size=10),
+        legend.text = element_text(size=8),
+        legend.title = element_text(size=10),
+        legend.background = element_rect(color = "dark grey", fill = NA),
+        panel.grid=element_blank(), legend.position = c(0.89, .83),
+        legend.box = "horizontal")+
+  labs(y="Dissimilarity")
 #plot the dendrogram data for the different fish ID's
 
-library(dendextend)
+# legend inside !!!!!
 
-ggsave(here("figs", "spatial", "spatial_cluster.png"), width=15, height=20)
+ggsave(here("figs", "spatial_figs", "spatial_cluster.png"), width=22.75, height=15, units = "cm", dpi=600)
 #cluster groups (top to bottom) DI CU; DI PI; J02 CU, J02 PI, J08 PI, J08 CU, J06 CU...
 #outliers scattered amongst other clusters: D11 and J06 (lowest fullness, most empty!)
 
-plot(bcd, xlab="Dissimilarity", horiz = TRUE)
+#plot(bcd, xlab="Dissimilarity", horiz = TRUE)
 
 #simproftest <- simprof(spat_trans_matrix, method.cluster = "average", method.distance = "braycurtis", num.expected = 100, num.simulated = 99)
 #simprof.plot(simproftest)
@@ -891,12 +914,13 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   geom_point(stat = "identity", aes(shape=species_names_nmds, fill=site_names_nmds), size=3)+#, color = "black")+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 24), name="Species")+
-  scale_fill_manual(values=c("#053061", "#1F78B4", "#A6CEE3", 
+  scale_fill_manual(values=c("#053061", "#1F78B4", "lightseagreen", 
                              "#F781BF", "#e41a1c", "darkred"
   ),
   
   name="Site", guide="legend") +
-  guides(fill= guide_legend(override.aes = list(shape=21)))+#, order = 2),
+  guides(fill= guide_legend(override.aes = list(shape=21)),
+  shape=guide_legend(override.aes=list(shape=c(19, 17))))+
   #shape=guide_legend(order = 1))+
   labs(x="NMDS 1", y="NMDS 2"#, title = "Diet Dissimilarity NMDS"
   )+
