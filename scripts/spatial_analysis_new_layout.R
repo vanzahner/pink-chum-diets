@@ -8,23 +8,22 @@
 
 library(tidyverse)
 #data wrangling/graphs/read in data
-library(ggdendro)
-#dendrograms
 library(vegan)
 #analysis
 library(RColorBrewer)
 #graph colors
-library(clustsig)
+library(clustsig) #still needed?
 #testing cluster grouping significance
-library(dietr)
+library(dietr) #still needed?
 #selectivity indices
 library(here)
 #project oriented workflow
 library(kableExtra)
 library(knitr)
-library(formattable)
+library(formattable) #still needed?
 #for creating nice tables
-library(dendextend)
+library(dendextend) #still needed?
+library(zoo)
 library(ggdendro)
 #cluster dendrograms
 
@@ -196,7 +195,7 @@ spat_envr_data %>%
   labs(y="Temperature (°C)", x="Site")
 #temperature and salinity graph combo
 
-ggsave(here("figs", "spatial_figs", "temp_salinity_spatial.png"))
+ggsave(here("figs", "spatial_figs", "temp_salinity_spatial.png"), width = 15, height = 15, units = "cm", dpi=800)
 
 # Biomass Graph:
 
@@ -213,7 +212,7 @@ spat_zoop_ww %>%
   labs(x="Site", y="Biomass (mg/m³)", fill="Size Fraction (μm)")
 #graph of zooplankton biomass (total and by size fraction)
 
-ggsave(here("figs", "spatial_figs", "zoop_biomass_spatial.png"))
+ggsave(here("figs", "spatial_figs", "zoop_biomass_spatial.png"), width=15, height=15, units = "cm", dpi=800)
 #save zoop biomass graph to folder
 
 # Zoop taxa composition graph:
@@ -233,7 +232,7 @@ zoop_group_rel_abd %>%
   labs(x="Site", y="Relative Abundance (%)", fill="Zooplankton Group")
 #zoop comp graph 
 
-ggsave(here("figs", "spatial_figs", "zoop_comp_spatial.png"))
+ggsave(here("figs", "spatial_figs", "zoop_comp_spatial.png"), width = 15, height = 15, units = "cm", dpi=800)
 #save the zoop taxa comp. graph
 
 ##### ENVR + ZOOP TABLES #####
@@ -564,7 +563,7 @@ per_overlap <- data.frame(site_id=c("J02", "J08", "J06", "D11", "D09", "D07"),
 
 per_overlap$site_id <- factor(per_overlap$site_id, levels = reverse_spat_sites)
 
-duplicateddata <- data.frame(site_id=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 2),
+duplicateddata <- data.frame(#site_id=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 2),
                              overlap=c(round(J02sim*100, digits = 1), round(J08sim*100, digits = 1), round(J06sim*100, digits = 1), round(D11sim*100, digits = 1), "33.0", round(D07sim*100, digits = 1), "", "", "", "", "", ""))
 #D09 sim = 33.00698 and rounded = 33.0 but round doesn't include zeros. so code is 33.0
 
@@ -702,9 +701,9 @@ ggplot(diet_bio_data_detail) +
         axis.title = element_text(size=14), axis.text = element_text(size=12),
         legend.text = element_text(size=12), legend.title = element_text(size=14))+
   facet_wrap(~fish, dir = "v")+
-  labs(fill  = "Prey Group", y="Relative Biomass (%)")
+  labs(fill  = "Prey Group", y="Relative Biomass (%)", x="Site")
 
-ggsave(here("figs", "spatial_figs", "spatial_diet_comp.png"))
+ggsave(here("figs", "spatial_figs", "spatial_diet_comp.png"), width = 15, height = 15, units = "cm", dpi=800)
 
 ##### SALMON GRAPHS - CLUSTER #####
 
@@ -750,23 +749,9 @@ Bray_Curtis_Dissimilarity <- vegdist(spat_trans_matrix, method = "bray")
 bcclust <- hclust(Bray_Curtis_Dissimilarity, method = "average")
 #make dendrogram data (heirarchical clustering by average linkages method)
 
-dendr <- dendro_data(bcclust, type = "rectangle")
-#put it in ggdendro form
-
-#bcd <- as.dendrogram(cut_clust)
-#put it in dendextend form...
-
-
-
-#cut_clust <- cutree(bcclust, k=17)
-#cut_clust <- as.data.frame(cut_clust)
-#cut_clust <- rownames_to_column(cut_clust, var = "ufn") %>% as_tibble()
-#lab_clust <- left_join(lab, cut_clust, by="ufn")
-#dendr$labels <- cbind(dendr$labels, sites=as.factor(lab_clust$Site))
-
 cut <- 17# Number of clusters
 #hc <- hclust(dist(df), "ave")       # bcclust        # hierarchical clustering
-#dendr <- dendro_data(hc, type = "rectangle") 
+dendr <- dendro_data(bcclust, type = "rectangle") 
 clust <- cutree(bcclust, k = cut)               # find 'cut' clusters
 clust.df <- data.frame(label = names(clust), cluster = clust)
 # Split dendrogram into upper grey section and lower coloured section
@@ -783,7 +768,7 @@ dendr$segments$cluster <-  ifelse(dendr$segments$line == 1, 1,
                                   ifelse(dendr$segments$cluster == 0, NA, dendr$segments$cluster))
 dendr$segments$cluster <- na.locf(dendr$segments$cluster)
 # Consistent numbering between segment$cluster and label$cluster
-clust.df$label <- factor(clust.df$label, levels = levels(dendr$labels$label))
+clust.df$label <- factor(clust.df$label, levels = dendr$labels$label)
 clust.df <- arrange(clust.df, label)
 clust.df$cluster <- factor((clust.df$cluster), levels = unique(clust.df$cluster), labels = (1:cut) + 1)
 dendr[["labels"]] <- merge(dendr[["labels"]], clust.df, by = "label")
@@ -809,17 +794,20 @@ lab <- left_join(labs, fishsp, by = "ufn")
 ggplot()+
   geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend,
                colour=factor(cluster)), show.legend = FALSE, size=0.5) + 
-  geom_point(data=label(dendr), aes(x=x, y=y, shape=lab$Sp, fill=lab$Site), size=2)+
-  geom_hline(yintercept=0.648, linetype="dashed")+
-  scale_shape_manual(values=c(21,25), name="Species")+
-  scale_fill_manual(values = c("#053061", "#1F78B4", "lightseagreen", "#F781BF", "#E41A1C", "darkred"), name="Site")+
   scale_color_manual(values = c(
     "#666666", "lightseagreen", "lightseagreen", "darkred", "lightseagreen",
     "#F781BF", "#1F78B4", "#053061", "#1F78B4", "#F781BF", "lightseagreen",
     "#F781BF", "#E41A1C", "#E41A1C", "#F781BF", "darkred", "#E41A1C", "darkred"
-    ), guide=F)+
+  ), guide=F)+
+  new_scale_color()+
+  geom_point(data=label(dendr), aes(x=x, y=y, shape=lab$Sp, color=lab$Site),
+             fill="white", size=1.3, stroke = 1)+
+  geom_hline(yintercept=0.648, linetype="dashed")+
+  scale_shape_manual(values=c(21, 19), name="Species")+
+  scale_color_manual(values = c("#053061", "#1F78B4", "lightseagreen", "#F781BF", "#E41A1C", "darkred"), name="Site")+
   guides(fill= guide_legend(override.aes = list(shape=21)),
-         shape=guide_legend(override.aes=list(shape=c(19, 17)), order = 1))+
+         shape=guide_legend(#override.aes=list(shape=c(16, 1)), 
+                            order = 1))+
   theme_bw()+
   theme(axis.line.x=element_blank(),
         axis.ticks.x=element_blank(),
@@ -837,7 +825,7 @@ ggplot()+
 
 # legend inside !!!!!
 
-ggsave(here("figs", "spatial_figs", "spatial_cluster.png"), width=22.75, height=15, units = "cm", dpi=600)
+ggsave(here("figs", "spatial_figs", "spatial_cluster.png"), width=22.8, height=15, units = "cm", dpi=800)
 #cluster groups (top to bottom) DI CU; DI PI; J02 CU, J02 PI, J08 PI, J08 CU, J06 CU...
 #outliers scattered amongst other clusters: D11 and J06 (lowest fullness, most empty!)
 
@@ -854,7 +842,8 @@ spat_diet_wide_nmds <- spatial_diets %>%
   filter(food_weight_corr!=0 #& prey_info!="Crustacea" & prey_info!="Copepoda" &
          #prey_info!="Parasites" & prey_info !="Detritus" & prey_info != "Coscinodiscophycidae" &
          #prey_info!="Object" & prey_info!="Microplastic_chunk_Object"
-          & ufn!="U5285" # spider
+          & ufn!="U5285" & ufn!="U5284" & ufn!="5319"
+         # ^ = outliers (from cluster, 95% dissimilarity to all others!)
          ) %>% 
   group_by(ufn, fish_species, site_id, region, prey_info) %>%
   summarise(biomass=sum(prey_weight_corr)) %>%
@@ -911,30 +900,31 @@ for(g in levels(NMDS.bc$group)){
 }
 
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
-  geom_point(stat = "identity", aes(shape=species_names_nmds, fill=site_names_nmds), size=3)+#, color = "black")+
+  geom_point(stat = "identity", aes(shape=species_names_nmds, color=site_names_nmds), fill="white", size=2, stroke = 1)+
+  scale_color_manual(values=c("#053061", "#1F78B4", "lightseagreen", 
+                              "#F781BF", "#e41a1c", "darkred"), name="Site", guide="legend") +
+  new_scale_color()+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
-  scale_shape_manual(values=c(21, 24), name="Species")+
-  scale_fill_manual(values=c("#053061", "#1F78B4", "lightseagreen", 
-                             "#F781BF", "#e41a1c", "darkred"
-  ),
-  
-  name="Site", guide="legend") +
-  guides(fill= guide_legend(override.aes = list(shape=21)),
-  shape=guide_legend(override.aes=list(shape=c(19, 17))))+
+  scale_shape_manual(values=c(21, 19), name="Species")+
+  guides(fill= guide_legend(override.aes = list(shape=21))#,
+  #shape=guide_legend(override.aes=list(shape=c(19, 17)))
+  )+
   #shape=guide_legend(order = 1))+
   labs(x="NMDS 1", y="NMDS 2"#, title = "Diet Dissimilarity NMDS"
   )+
-  scale_colour_manual(values=c("#053061", "#B2182B"), name="Region") +
+  scale_colour_manual(values=c("#B2182B", "#053061"), name="Region",
+                      guide = guide_legend(reverse = TRUE)) +
   theme_bw()+
-  theme(axis.text.x=element_text(size=12),
-        axis.title.x=element_text(size=12),
-        axis.title.y=element_text(angle=90,size=12),
-        axis.text.y=element_text(size=12),
+  theme(axis.text.x=element_text(size=8),
+        axis.title.x=element_text(size=10),
+        axis.title.y=element_text(angle=90,size=10),
+        axis.text.y=element_text(size=8),
         panel.grid.minor=element_blank(),panel.grid.major=element_blank(),
         axis.ticks = element_blank()) + coord_fixed() +
-  annotate("text",x=1.5,y=-1.7,label="(stress = 0.17)",size=4, hjust = 0)
+  annotate("text",x=1.4,y=-1.7,label="(stress = 0.17)",size=4, hjust = 0)
 #NMDS graph for the different sites!
 
 a
 
-ggsave(here("figs","spatial_figs","spatial_NMDS.png"))
+#ggsave(here("figs","spatial_figs","spatial_NMDS.png"), width=15, height=13, units = "cm", dpi=800)
+# nmds comes out slightly differently everytime unlike other graphs. save once then forget it!
