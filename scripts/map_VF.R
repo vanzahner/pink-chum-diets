@@ -24,9 +24,18 @@ library(here)
 
 ##############################################################################################
 # Read in a csv file that contains the latitude and longitude for each of the stations/sets
-setwd("/Users/Vanessa/Desktop/msc_project")
-temp_coords <- read_csv("Map code/temp_sites.csv")
-spat_coords <- read_csv("Map code/spat_sites.csv")
+temp_coords_raw <- read_csv(here("processed", "temporal_data", "temporal_survey_ysi.csv"))
+spat_coords_raw <- read_csv(here("processed", "spatial_data", "spatial_pink_chum_diets.csv"))
+
+temp_coords <- temp_coords_raw %>%
+  filter(is.na(gather_lat)!=TRUE & is.na(gather_long)!=TRUE) %>% 
+  group_by(site_id) %>%
+  summarise(lat=mean(gather_lat), long=mean(gather_long))
+
+spat_coords <- spat_coords_raw %>%
+  filter(is.na(lat)!=TRUE & is.na(long)!=TRUE) %>% 
+  group_by(site_id) %>%
+  summarise(lat=mean(lat), long=mean(long))
 
 ##############################################################################################
 # Load North Pacific map data using the PBSmapping package from the Pacific Biological Station
@@ -103,7 +112,7 @@ study_area2 <- GOAmap1 + coord_map(projection="gilbert") +
         annotate("text", x = -132, y = 49, label = "North Pacific\nOcean", color = "dodgerblue4", size = 3.5, fontface = "italic") +
         annotate("text", x = -126, y = 56, label = "British\nColumbia", color = "grey30", size = 4)
 study_area2
-ggsave("study_area2.png", path = "./Map code/figs/map",
+ggsave("study_area2.png", path = "./figs/map",
        width = 4, height = 5, units = "cm", dpi = 300)
 
 # Run this whole piece of code to generate map with inset and save in your file folder
@@ -120,9 +129,10 @@ dev.off()
 
 # TEMPORAL map zoomed in on DI and JS highlighting D07 and J07
 temp_area1 <- GOAmap1 + coord_map(projection="gilbert") +
-        geom_point(data = temp_coords, aes(x = long, y = lat), size = 4) +
-        geom_ellipse(aes(x0 = -126.28, y0 = 50.47, a = 0.1, b = 0.66, angle = pi/2.27), size = 0.8, color = "grey30") +
-        geom_ellipse(aes(x0 = -125.1, y0 = 50.23, a = 0.45, b = 0.275, angle = 0), size = 0.8, color = "grey30") +
+        geom_point(data = temp_coords, aes(x = long, y = lat), size = 4, shape=21,
+                   fill=c("darkred", "#053061"))+
+        #geom_ellipse(aes(x0 = -126.28, y0 = 50.47, a = 0.1, b = 0.66, angle = pi/2.27), size = 0.8, color = "grey30") +
+        #geom_ellipse(aes(x0 = -125.1, y0 = 50.23, a = 0.45, b = 0.275, angle = 0), size = 0.8, color = "grey30") +
         theme_bw() +
         theme(axis.text=element_text(size=10, color="black"),
               axis.title=element_text(size=10),
@@ -150,7 +160,7 @@ temp_area1 <- GOAmap1 + coord_map(projection="gilbert") +
 #+
 #        annotate("text", x = -125.25, y = 50.9, label = "Mainland\nBritish\nColumbia", color = "grey30", size = 5)
 temp_area1
-ggsave("temp_area1.png", path = "./Map code/figs/map", width = 16, height = 12, units = "cm", dpi = 300)
+ggsave("temp_area1.png", path = "./figs/map", width = 16, height = 12, units = "cm", dpi = 300)
 
 #inset map of BC coast
 temp_area2 <- GOAmap1 + coord_map(projection="gilbert") +
@@ -165,10 +175,10 @@ temp_area2 <- GOAmap1 + coord_map(projection="gilbert") +
         annotate("text", x = -125.9, y = 56, label = "British\nColumbia", color = "grey30", size = 4) +
         theme_inset()
 temp_area2
-ggsave("temp_area2.png", path = "./Map code/figs/map", width = 4, height = 5, units = "cm", dpi = 300)
+ggsave("temp_area2.png", path = "./figs/map", width = 4, height = 5, units = "cm", dpi = 300)
 
 
-png(filename = "./Map code/figs/map/temp_map.png", width = 7, height = 5, units = "in", res = 300)#, type = "cairo")
+png(filename = "./figs/map/temp_map.png", width = 7, height = 5, units = "in", res = 300)#, type = "cairo")
 
 # create a viewport for inset
 # vp_inset width/height arguments set the size of the inset; x and y arguments set the position (from 0 to 1) of the left, top corner of the inset along each axis (i.e. not map coordinates as you have in your annotation custom). You can adjust these as you see fit.
@@ -180,11 +190,9 @@ dev.off()
 ##
 # SPATIAL map
 spat_area1 <- GOAmap1 + coord_map(projection="gilbert") +
-        geom_point(data = spat_coords, aes(x = long, y = lat), size = 3,
-                   color=c("black"#"#B2182B", "#E41A1C", "#F781BF", "#053061", "#A6CEE3", "#1F78B4"
-                           ))+
-  # D07=darkred, D09=red, D11=pink, J06=lightblue, J08=blue, J02=darkblue
-        geom_text(data = spat_coords, aes(x = long, y = lat, label = site), hjust=-0.5, vjust=-1, fontface = "bold") +
+        geom_point(data = spat_coords, aes(x = long, y = lat), size = 3, shape=21,
+                   fill=c("darkred", "#E41A1C", "#F781BF", "#053061", "lightseagreen", "#1F78B4"))+
+        geom_text(data = spat_coords, aes(x = long, y = lat, label = site_id), hjust=-0.5, vjust=-1, fontface = "bold") +
         #geom_label_repel
         #geom_ellipse(aes(x0 = -126.28, y0 = 50.47, a = 0.1, b = 0.66, angle = pi/2.27), size = 0.8, color = "grey30") +
         #geom_ellipse(aes(x0 = -125.1, y0 = 50.23, a = 0.45, b = 0.275, angle = 0), size = 0.8, color = "grey30") +
@@ -211,13 +219,12 @@ spat_area1 <- GOAmap1 + coord_map(projection="gilbert") +
         annotate("label", x = -126.7, y = 50.42, label = "Johnstone Strait", color = "grey30", size = 5) +
         annotate("text", x = -124.85, y = 49.85, label = "Strait of\nGeorgia", color = "dodgerblue4", size = 3.5, fontface = "italic") +
         annotate("text", x = -126.98, y = 50.74, label = "Queen\nCharlotte\nStrait", color = "dodgerblue4", size = 3.5, fontface = "italic") +
-        annotate("text", x = -125.75, y = 49.9, label = "Vancouver Island", color = "grey30", size = 5) 
-#+
-        #annotate("text", x = -125.25, y = 50.9, label = "Mainland\nBritish\nColumbia", color = "grey30", size = 5)
+        annotate("text", x = -125.75, y = 49.9, label = "Vancouver Island", color = "grey30", size = 5) +
+        annotate("text", x = -125.25, y = 50.9, label = "Mainland\nBritish\nColumbia", color = "grey30", size = 5)
 spat_area1
-ggsave("spat_area_basic.png", path = "./Map code/figs/map", width = 16, height = 12, units = "cm", dpi = 300)
+ggsave("spat_area_basic.png", path = "./figs/map", width = 16, height = 12, units = "cm", dpi = 300)
 
-png(filename = "./Map code/figs/map/spat_map.png", width = 7, height = 5, units = "in", res = 300)#, type = "cairo")
+png(filename = "./figs/map/spat_map.png", width = 7, height = 5, units = "in", res = 300)#, type = "cairo")
 
 # create a viewport for inset
 # vp_inset width/height arguments set the size of the inset; x and y arguments set the position (from 0 to 1) of the left, top corner of the inset along each axis (i.e. not map coordinates as you have in your annotation custom). You can adjust these as you see fit.
