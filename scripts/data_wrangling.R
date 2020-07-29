@@ -46,8 +46,7 @@ ysi_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-d
 
 # Combine datasets:
 
-survey_ysi <- left_join(survey_data, ysi_data, by=c("survey_date", "site_id")) %>%
-  select(-X) #delete erronous comment column (full of blanks/NAs)
+survey_ysi <- left_join(survey_data, ysi_data, by=c("survey_date", "site_id"))
 #combine survey data and ysi data
 
 spat_envr_data <- semi_join(survey_ysi, spatial_info, by=c("site_id", "survey_date"))

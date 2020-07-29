@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified july 27, 2020
+#last modified july 28, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -26,6 +26,10 @@ library(dendextend) #still needed?
 library(zoo)
 library(ggdendro)
 #cluster dendrograms
+library(ggnewscale)
+#for creating multiple color scales in ggplot
+select <- dplyr::select
+#prioritize select for dplyr library (not MASS library - used in map code...)
 
 ##### ENVR + ZOOP DATA #####
 
@@ -37,9 +41,12 @@ spat_envr_data_raw <- read.csv(here("processed", "spatial_data", "spatial_survey
 # Reorder spatial sites from alphabetical to migration route order:
 
 spat_site_order <- c("J02", "J08", "J06", "D11", "D09", "D07")
-# Vector to reorder alphabetical spatial sites  to migration route order:
+# Vector to reorder alphabetical spatial sites  to migration route order
 
-spat_envr_data_raw$site_id <- factor(spat_envr_data_raw$site_id, levels = spat_site_order)
+reverse_spat_sites <- c("D07", "D09", "D11", "J06", "J08", "J02")
+#changing graphs??
+
+spat_envr_data_raw$site_id <- factor(spat_envr_data_raw$site_id, levels = reverse_spat_sites)
 #reorder levels in zoop dataframe for plotting
 
 spat_envr_data <- spat_envr_data_raw %>%
@@ -52,7 +59,7 @@ spat_envr_data <- spat_envr_data_raw %>%
 spat_zoop_data <- read.csv(here("processed", "spatial_data", "spatial_zoop_data.csv"), stringsAsFactors = FALSE)
 #read in data file for zooplankton spatial data
 
-spat_zoop_data$site_id <- factor(spat_zoop_data$site_id, levels = spat_site_order)
+spat_zoop_data$site_id <- factor(spat_zoop_data$site_id, levels = reverse_spat_sites)
 #reorder sites for spatial to be same as on the map; temporal = D07, J07
 
 # Zooplankton biomass data set up:
@@ -188,10 +195,10 @@ spat_envr_data %>%
         axis.text.y.right = element_text(color="red"),
         axis.text.y.left = element_text(color="black"),
         axis.text.x = element_text(color="black"),
-        strip.text = element_text(size=16),
+        strip.text = element_text(size=14),
         axis.ticks.x = element_blank(),
-        axis.title = element_text(size=14), axis.text = element_text(size=12),
-        legend.text = element_text(size=12), legend.title = element_text(size=14))+
+        axis.title = element_text(size=12), axis.text = element_text(size=10),
+        legend.text = element_text(size=10), legend.title = element_text(size=12))+
   labs(y="Temperature (°C)", x="Site")
 #temperature and salinity graph combo
 
@@ -204,11 +211,13 @@ spat_zoop_ww %>%
   geom_bar(aes(fill=size_frac), stat="identity")+
   theme_bw()+
   scale_fill_brewer(palette = "Dark2")+
-  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+  theme(legend.background = element_rect(color = "dark grey", fill = NA),
+        panel.grid=element_blank(), legend.position = c(0.8, .83),
+        strip.text = element_text(size=14),
         axis.ticks.x = element_blank(), axis.text.x = element_text(color="black"),
         axis.text.y=element_text(color="black"),
-        axis.title = element_text(size=14), axis.text = element_text(size=12),
-        legend.text = element_text(size=12), legend.title = element_text(size=14))+
+        axis.title = element_text(size=12), axis.text = element_text(size=10),
+        legend.text = element_text(size=10), legend.title = element_text(size=12))+
   labs(x="Site", y="Biomass (mg/m³)", fill="Size Fraction (μm)")
 #graph of zooplankton biomass (total and by size fraction)
 
@@ -224,11 +233,11 @@ zoop_group_rel_abd %>%
   scale_fill_manual(values=zoop_colors)+
   theme_bw()+
   scale_y_continuous(labels=scales::comma)+
-  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+  theme(panel.grid=element_blank(), strip.text = element_text(size=14),
         axis.ticks.x = element_blank(), axis.text.x = element_text(color="black"),
         axis.text.y=element_text(color="black"),
-        axis.title = element_text(size=14), axis.text = element_text(size=12),
-        legend.text = element_text(size=12), legend.title = element_text(size=14))+
+        axis.title = element_text(size=12), axis.text = element_text(size=10),
+        legend.text = element_text(size=10), legend.title = element_text(size=12))+
   labs(x="Site", y="Relative Abundance (%)", fill="Zooplankton Group")
 #zoop comp graph 
 
@@ -243,11 +252,9 @@ zoop_table <- spat_zoop_ww %>%
   filter(site_id!="J02") %>% 
   select(site_id, sieve, biomass) %>%
   group_by(site_id, sieve) %>% 
-  summarise(biomass=round(sum(biomass), digits = 2)) %>% 
+  summarise(biomass=round(sum(biomass), digits = 1)) %>% 
   spread(sieve, biomass, fill=0) %>%
   mutate(Total=sum(`250`, `1000`, `2000`))
-
-reverse_spat_sites <- c("D07", "D09", "D11", "J06", "J08", "J02")
 
 spat_envr_data$site_id <- factor(spat_envr_data$site_id, levels = reverse_spat_sites)
 zoop_table$site_id <- factor(zoop_table$site_id, levels = reverse_spat_sites)
@@ -255,32 +262,37 @@ zoop_table$site_id <- factor(zoop_table$site_id, levels = reverse_spat_sites)
 
 zoop_envr_table <- left_join(spat_envr_data, zoop_table, by="site_id") %>%
   mutate(Region=c("DI", "DI", "NSoG", "QCSt", "JS", "JS"), `# Pink`=10, `# Chum`=10) %>% 
-  select(Region, Site=site_id, Date=survey_date, `# Pink`, `# Chum`, `Temp. (°C)`=temperature, `Salinity (‰)`=salinity,
+  select(Site=site_id, `Date`=survey_date, 
+         #`\\makecell[l]{Sample \\\\ Date}`=survey_date, 
+         `Pink ($\\#$)`=`# Pink`, `Chum ($\\#$)`=`# Chum`, `Temp. (°C)`=temperature, `Salin. (‰)`=salinity,
          `250 $\\mu$m`=`250`, `1000 $\\mu$m`=`1000`, `2000 $\\mu$m`=`2000`, Total) %>%
   arrange(Site, reverse_spat_sites)
 
-zoop_envr_table$`250 $\\mu$m`[which(is.na(zoop_envr_table$`250 $\\mu$m`))] <- "No Data"
-zoop_envr_table$`1000 $\\mu$m`[which(is.na(zoop_envr_table$`1000 $\\mu$m`))] <- "No Data"
-zoop_envr_table$`2000 $\\mu$m`[which(is.na(zoop_envr_table$`2000 $\\mu$m`))] <- "No Data"
-zoop_envr_table$Total[which(is.na(zoop_envr_table$Total))] <- "No Data"
+#zoop_envr_table$`Date\\ (2016)` <- format.Date(zoop_envr_table$`Date\\ (2016)`, "%B %d")
 
-kable(zoop_envr_table, "latex", booktabs=TRUE, linesep="",
-      escape = FALSE, align=c("l", "l", "l", "c", "c", "c", "c", "r", "r", "r", "r")) %>%
-  add_header_above(c(" "=7, "Zooplankton Biomass (mg/m³)"=4)) %>% 
+zoop_envr_table$`250 $\\mu$m`[which(is.na(zoop_envr_table$`250 $\\mu$m`))] <- "-"
+zoop_envr_table$`1000 $\\mu$m`[which(is.na(zoop_envr_table$`1000 $\\mu$m`))] <- "-"
+zoop_envr_table$`2000 $\\mu$m`[which(is.na(zoop_envr_table$`2000 $\\mu$m`))] <- "-"
+zoop_envr_table$Total[which(is.na(zoop_envr_table$Total))] <- "-"
+
+
+kable(zoop_envr_table, "latex", booktabs=TRUE, linesep='\\addlinespace',
+      escape = FALSE, align=c("l", "l", "c", "c", "c", "c", "r", "r", "r", "r")) %>%
+  add_header_above(c(" "=6, "Zooplankton Biomass (mg/m³)"=4)) %>% 
+  kable_styling(latex_options = "hold_position", font_size = 10, full_width = TRUE) %>% 
+  column_spec(2, width_max = "1in") %>% 
   save_kable(here("tables", "spatial_tables", "sampling_table.pdf"))
 
 # Zooplankton abundance:
 
-# FIX THIS UP HERE ALTER >>>>> ********** !!!!!!!!!!! **********
-
-#spat_zoop_intermediate$site_id <- factor(spat_zoop_intermediate$site_id, levels = reverse_spat_sites)
+zoop_rel_abd$site_id <- factor(zoop_rel_abd$site_id, levels = reverse_spat_sites)
 #reorder levels in zoop dataframe for tables
 
 zoop_rel_abd_sum <- zoop_rel_abd %>%
   filter(prey_group_simple!= "Ochrophyta" & prey_group_simple!= "Parasites") %>% 
   arrange(prey_group_simple) %>% 
   group_by(site_id, prey_group_simple) %>%
-  summarise(abd_group=round(sum(total_abd), digits=2))
+  summarise(abd_group=round(sum(total_abd), digits=1))
 
 zoop_rel_abd_sum$abd_group[which(zoop_rel_abd_sum$abd_group==0)] <- "-"
 
@@ -293,16 +305,15 @@ zoop_comp_table <- zoop_rel_abd_sum %>%
   t()
 # if < 1 individual / m3 for each site = group gets filtered out
 
-colnames(zoop_comp_table) <- spat_site_order
+colnames(zoop_comp_table) <- reverse_spat_sites
 
-kable(zoop_comp_table, "latex", booktabs=TRUE, escape = FALSE, linesep="") %>% 
+kable(zoop_comp_table, "latex", booktabs=TRUE, escape = FALSE) %>% 
   pack_rows("Calanoida", 2, 3, latex_gap_space = "0em") %>% 
-  pack_rows("Gelatinous", 6, 7, latex_gap_space = "0em") %>% 
-  pack_rows("Other", 12, nrow(zoop_comp_table), latex_gap_space = "0em") %>% 
-  add_indent(c(2, 3, 6, 7, 12:nrow(zoop_comp_table))) %>% 
+  pack_rows("Gelatinous", 7, 8, latex_gap_space = "0em") %>% 
+  pack_rows("Other", 13, nrow(zoop_comp_table), latex_gap_space = "0em") %>% 
+  add_indent(c(2, 3, 7, 8, 13:nrow(zoop_comp_table))) %>% 
+  kable_styling(latex_options = "hold_position", full_width = FALSE) %>% 
   save_kable(here("tables", "spatial_tables", "zoop_relA_table.pdf"))
-
-colSums(zoop_comp_table)
 
 ##### SALMON DATA - READ IN #####
 
@@ -317,7 +328,7 @@ species_order <- c("Pink", "Chum") #make vector for rearranging species
 spat_diet_raw$fish_species <- factor(spat_diet_raw$fish_species, levels = species_order)
 #reorder species from alphabetical to pink salmon first before chum salmon
 
-spat_diet_raw$site_id <- factor(spat_diet_raw$site_id, levels=spat_site_order)
+spat_diet_raw$site_id <- factor(spat_diet_raw$site_id, levels=reverse_spat_sites)
 #reorder sites (West to East) for the diet dataset
 
 spat_data_combo <- left_join(spat_diet_raw, spat_zoop_envr, by=c("site_id", "survey_id", "survey_date"))
@@ -501,11 +512,13 @@ spat_stomachs <- spatial_diets %>%
 
 ##### SALMON TABLES - PREP #####
 
-spat_gfi_table <- spat_stomachs %>%
+spat_gfi_all_data <- spat_stomachs %>%
   filter(is.na(weight)!=TRUE) %>% 
   select(fish_species, site_id, weight, food_weight_corr, fork_length) %>%
   mutate(weight_corr= weight*1000, # grams to milligrams * FIX IN RAW DATA LATER ! *
-           gfi=food_weight_corr/weight_corr*100) %>% 
+           gfi=food_weight_corr/weight_corr*100)
+
+spat_gfi_table <- spat_gfi_all_data %>% 
   group_by(fish_species, site_id) %>%
   summarise(mean_ww=round(mean(weight), digits=1), se_ww=round(sd(weight)/10, digits=1),
             mean_food=round(mean(food_weight_corr), digits=1), se_food=round(sd(food_weight_corr)/10, digits=1),
@@ -558,13 +571,20 @@ J06sim <- calculate_overlap(proportional_sums, "J06")
 J08sim <- calculate_overlap(proportional_sums, "J08")
 J02sim <- calculate_overlap(proportional_sums, "J02")
 
-per_overlap <- data.frame(site_id=c("J02", "J08", "J06", "D11", "D09", "D07"),
-                          overlap=c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim))
+#per_overlap <- data.frame(site_id=c("J02", "J08", "J06", "D11", "D09", "D07"),
+#                          overlap=c(J02sim, J08sim, J06sim, D11sim, D09sim, D07sim))
+
+per_overlap <- data.frame(site_id=c("D07", "D09", "D11", "J06", "J08", "J02"),
+                          overlap=c(D07sim, D09sim, D11sim, J06sim, J08sim, J02sim))
 
 per_overlap$site_id <- factor(per_overlap$site_id, levels = reverse_spat_sites)
 
 duplicateddata <- data.frame(#site_id=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 2),
                              overlap=c(round(J02sim*100, digits = 1), round(J08sim*100, digits = 1), round(J06sim*100, digits = 1), round(D11sim*100, digits = 1), "33.0", round(D07sim*100, digits = 1), "", "", "", "", "", ""))
+#D09 sim = 33.00698 and rounded = 33.0 but round doesn't include zeros. so code is 33.0
+
+duplicateddata <- data.frame(#site_id=rep(c("J02", "J08", "J06", "D11", "D09", "D07"), 2),
+  overlap=c(round(D07sim*100, digits = 1), "33.0", round(D11sim*100, digits = 1), round(J06sim*100, digits = 1), round(J08sim*100, digits = 1), round(J02sim*100, digits = 1), "", "", "", "", "", ""))
 #D09 sim = 33.00698 and rounded = 33.0 but round doesn't include zeros. so code is 33.0
 
 # merge peroverlap, spat_empty_table (replace NAs), spat_length_table, spat_gfi_table:
@@ -585,17 +605,26 @@ gfi_all_data_table <- gfi_overlap_table %>%
          fishw= paste(mean_ww, se_ww, sep=" ± "),
          food= paste(mean_food, se_food, sep=" ± "),
          GFI= paste(mean_gfi, se_gfi, sep=" ± ")) %>%
-  select(Species=fish_species, Site=site_id, `Fish FL (mm)`=fl, `Fish WW (g)`=fishw,
+  select(Site=site_id, Species=fish_species, #`Salmon FL (mm)`=fl,
+         `\\makecell[l]{Salmon \\\\ FL (mm)}`=fl,
+         `Salmon WW (g)`=fishw,
          #`Food WW (mg)`=food,
-         `GFI (%BW)`=GFI, `# Empty`=n, #`% Empty Stom.`=per_empty,
-         `Overlap`=overlap) %>%
+         #`\\makecell[l]{GFI \\\\ ($\\%$BW)}`
+         #`Gut Fullness (GFI)`=
+         GFI, `Empty ($\\#$)`=n, #`% Empty Stom.`=per_empty,
+         `Diet Overlap`=
+         overlap) %>%
   unique() %>%
   arrange(Site, c("D07", "D07", "D09", "D09", "D11", "D11", "J06", "J06", "J08", "J08", "J02", "J02"))
 
 gfi_all_data_table$Site <- c("D07", " ", "D09", " ", "D11", " ", "J06", " ", "J08", " ", "J02", " ")
 
-kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 4), rep("c", 3)),
-      linesep= c('', '\\addlinespace')) %>% 
+kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 2), rep("c", 5)),
+      linesep= c('', '\\addlinespace'), escape = FALSE) %>% 
+  kable_styling(latex_options = "hold_position", font_size = 10, full_width = TRUE) %>% 
+  column_spec(3:5, width = "0.7in") %>% 
+  column_spec(1, width = "0.25in") %>% 
+  column_spec(7, width="0.5in") %>% 
   save_kable(here("tables", "spatial_tables", "index_table.pdf"))
 
 ##### SALMON TABLES - DIET COMP #####
@@ -605,6 +634,8 @@ group_biomass <- spatial_diets %>%
   group_by(ufn, fish_species, site_id, prey_group) %>%
   summarise(prey_weight_sum=sum(prey_weight_corr))
 #summarize biomass for each fish
+
+group_biomass$site_id <- factor(group_biomass$site_id, levels = reverse_spat_sites)
 
 group_bio_wide <- group_biomass %>%
   ungroup() %>%
@@ -649,14 +680,18 @@ diet_table <- group_bio_dataframe[3:nrow(group_bio_dataframe), ]
 colnames(diet_table) <- rep(c("PI", "CU"), 6)
 
 kable(diet_table, "latex", booktabs=TRUE, linesep="") %>%
-  add_header_above(c(" "=1, "J02"=2, "J08"=2, "J06"=2, "D11"=2, "D09"=2, "D07"=2)) %>%
+  #add_header_above(c(" "=1, "J02"=2, "J08"=2, "J06"=2, "D11"=2, "D09"=2, "D07"=2)) %>%
+  add_header_above(c(" "=1, "D07"=2, "D09"=2, "D11"=2, "J06"=2, "J08"=2, "J02"=2)) %>%
   pack_rows("Amphipoda", 1, 2) %>% 
   pack_rows("Calanioda", 3, 4, latex_gap_space = "0em") %>% 
   pack_rows("Euphausiidae", 5, 6, latex_gap_space = "0em") %>% 
   pack_rows("Insecta/Arachnida", 8, 9, latex_gap_space = "0em") %>% 
   pack_rows("Gelatinous", 11, 12, latex_gap_space = "0em") %>% 
   pack_rows("Other", 15, nrow(diet_table), latex_gap_space = "0em") %>% 
-  add_indent(c(1:6, 8, 9, 11, 12, 15:nrow(diet_table))) %>% 
+  #add_indent(c(1:6, 8, 9, 11, 12, 15:nrow(diet_table))) %>% 
+  kable_styling(latex_options = "hold_position", font_size = 10, full_width = TRUE) %>% 
+  column_spec(1, width="1.05in") %>% 
+  column_spec(2:13, width="0.175in") %>% 
   save_kable(here("tables", "spatial_tables", "diet_comp_table.pdf"))
 
 ##### SALMON GRAPHS - DIET COMP #####
@@ -696,14 +731,38 @@ ggplot(diet_bio_data_detail) +
   theme(panel.grid=element_blank(),
         axis.text.x = element_text(color="black"),
         axis.text.y = element_text(color="black"),
-        strip.text = element_text(size=16),
+        strip.text = element_text(size=14),
         axis.ticks.x = element_blank(),
-        axis.title = element_text(size=14), axis.text = element_text(size=12),
-        legend.text = element_text(size=12), legend.title = element_text(size=14))+
+        axis.title = element_text(size=12), axis.text = element_text(size=10),
+        legend.text = element_text(size=10), legend.title = element_text(size=12))+
   facet_wrap(~fish, dir = "v")+
   labs(fill  = "Prey Group", y="Relative Biomass (%)", x="Site")
 
 ggsave(here("figs", "spatial_figs", "spatial_diet_comp.png"), width = 15, height = 15, units = "cm", dpi=800)
+
+##### SALMON GRAPHS - GFI/OVERLAP #####
+
+gfi_overlap_data <- left_join(spat_gfi_all_data, per_overlap, by="site_id")
+
+gfi_overlap_data %>% 
+  ggplot(aes(site_id, gfi, group=interaction(fish_species, site_id)))+
+  geom_boxplot(aes(fill=fish_species))+
+  labs(title=NULL, y="GFI (% Body Weight)", fill="Species",
+       x="Site")+
+  theme_bw()+
+  geom_line(aes(y=overlap*10, x=site_id, group=NA), color="darkred")+
+  scale_y_continuous(sec.axis = sec_axis(~.*10, name="Diet Overlap (%)"))+
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
+        legend.background = element_rect(color = "dark grey", fill = NA),
+        legend.position = c(0.1, .875),
+        axis.title = element_text(size=14), axis.text.y = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5),
+        axis.title.y.right = element_text(color = "darkred"), axis.text.y.right = element_text(color="darkred"),
+        axis.text.x = element_text(size=12))
+
+ggsave(here("figs", "spatial_figs", "spatial_gfi.png"), width=22, height=15, units = "cm", dpi=800)
 
 ##### SALMON GRAPHS - CLUSTER #####
 
@@ -718,6 +777,8 @@ spat_diet_wide_detail <- spatial_diets %>%
   spread(key=prey_info, value = biomass, fill=0) %>%
   ungroup()
 #calculate wide data set with new prey groups (detailed and general!)
+
+spat_diet_wide_detail$site_id <- factor(spat_diet_wide_detail$site_id, levels=spat_site_order)
 
 spat_diet_wide_detail$region <- factor(spat_diet_wide_detail$region, levels=c("JS", "DI"))
 
@@ -804,7 +865,8 @@ ggplot()+
              fill="white", size=1.3, stroke = 1)+
   geom_hline(yintercept=0.648, linetype="dashed")+
   scale_shape_manual(values=c(21, 19), name="Species")+
-  scale_color_manual(values = c("#053061", "#1F78B4", "lightseagreen", "#F781BF", "#E41A1C", "darkred"), name="Site")+
+  scale_color_manual(values = c("#053061", "#1F78B4", "lightseagreen", "#F781BF", "#E41A1C", "darkred"),
+                     name="Site", guide = guide_legend(reverse = TRUE))+
   guides(fill= guide_legend(override.aes = list(shape=21)),
          shape=guide_legend(#override.aes=list(shape=c(16, 1)), 
                             order = 1))+
@@ -852,6 +914,7 @@ spat_diet_wide_nmds <- spatial_diets %>%
 #calculate wide data set with new prey groups (detailed and general!)
 
 spat_diet_wide_nmds$region <- factor(spat_diet_wide_nmds$region, levels=c("JS", "DI"))
+spat_diet_wide_nmds$site_id <- factor(spat_diet_wide_nmds$site_id, levels=spat_site_order)
 
 site_names_nmds <- spat_diet_wide_nmds$site_id
 species_names_nmds <- spat_diet_wide_nmds$fish_species
@@ -902,7 +965,8 @@ for(g in levels(NMDS.bc$group)){
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   geom_point(stat = "identity", aes(shape=species_names_nmds, color=site_names_nmds), fill="white", size=2, stroke = 1)+
   scale_color_manual(values=c("#053061", "#1F78B4", "lightseagreen", 
-                              "#F781BF", "#e41a1c", "darkred"), name="Site", guide="legend") +
+                              "#F781BF", "#e41a1c", "darkred"), name="Site",
+                     guide = guide_legend(reverse = TRUE)) +
   new_scale_color()+
   geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 19), name="Species")+
@@ -910,21 +974,22 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   #shape=guide_legend(override.aes=list(shape=c(19, 17)))
   )+
   #shape=guide_legend(order = 1))+
-  labs(x="NMDS 1", y="NMDS 2"#, title = "Diet Dissimilarity NMDS"
+  labs(x="NMDS 1", y="NMDS 2"
   )+
-  scale_colour_manual(values=c("#B2182B", "#053061"), name="Region",
-                      guide = guide_legend(reverse = TRUE)) +
+  scale_colour_manual(values=c("darkred", "#053061"), name="Region"
+                      ) +
   theme_bw()+
-  theme(axis.text.x=element_text(size=8),
-        axis.title.x=element_text(size=10),
-        axis.title.y=element_text(angle=90,size=10),
-        axis.text.y=element_text(size=8),
+  theme(axis.text.x=element_text(size=10),
+        axis.title.x=element_text(size=12),
+        axis.title.y=element_text(angle=90,size=12),
+        axis.text.y=element_text(size=10),
         panel.grid.minor=element_blank(),panel.grid.major=element_blank(),
-        axis.ticks = element_blank()) + coord_fixed() +
-  annotate("text",x=1.4,y=-1.7,label="(stress = 0.17)",size=4, hjust = 0)
+        axis.ticks = element_blank()) + coord_fixed()# +
+  #annotate("text",x=1.4,y=-1.7,label="(stress = 0.17)",size=4, hjust = 0)
 #NMDS graph for the different sites!
 
 a
 
 #ggsave(here("figs","spatial_figs","spatial_NMDS.png"), width=15, height=13, units = "cm", dpi=800)
 # nmds comes out slightly differently everytime unlike other graphs. save once then forget it!
+
