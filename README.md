@@ -8,4 +8,4 @@ ___
 
 ## Results
 
-Will soon make RMD files to view figures easier!
+May make RMD files to view figures easier
