@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified july 14, 2020
+#last modified july 30, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -657,6 +657,10 @@ J07simE <- calculate_overlap(proportional_sums, "J07", "2016-06-20")
 J07simF <- calculate_overlap(proportional_sums, "J07", "2016-07-05")
 
 per_overlap <- data.frame(site_id=c(rep("D07", 6), rep("J07", 6)),
+                          survey_date=as.Date(c("2015-05-21", "2015-06-06", "2016-06-13",
+                                        "2016-05-19", "2016-06-03", "2016-06-16",
+                                        "2016-06-02", "2016-06-14", "2016-06-29",
+                                        "2016-06-03", "2016-06-20", "2016-07-05")),
                           date_id=c("May 21", "June 6", "June 13", "May 19", "June 3", "June 16",
                                     "June 2", "June 14", "June 29", "June 3", "June 20", "July 5"),
                           year=c(rep("2015", 3), rep("2016", 3), rep("2015", 3), rep("2016", 3)),
@@ -867,14 +871,20 @@ ggplot(data=temporalk, aes(x=survey_date, y=k, fill=fish_species, group=interact
 
 ggsave(here("figs", "temporal_figs", "temporal_condition.png"))
 
-##### SALMON GRAPH - GFI #####
+##### SALMON GRAPH - GFI/OVERLAP #####
 
-temp_gfi_all_data %>% 
+#per_overlap$date_id <- as.Date(per_overlap$date_id)
+
+temp_overlap_data <- left_join(temp_gfi_all_data, per_overlap, by=c("site_id", "survey_date", "year"))
+
+temp_overlap_data %>% 
   ggplot(aes(survey_date, gfi, group=interaction(fish_species, survey_date)))+
   geom_boxplot(aes(fill=fish_species), width=5)+
   labs(title=NULL, y="GFI (% Body Weight)", fill="Species",
        x=NULL)+
   theme_bw()+
+  geom_line(aes(y=overlap*10, x=survey_date, group=NA), color="darkred")+
+  scale_y_continuous(sec.axis = sec_axis(~.*10, name="Diet Overlap (%)"))+
   scale_x_date(date_breaks = "17 days", date_labels = "%b %d")+
   scale_fill_manual(values=c("#d294af", "#516959"))+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
