@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified july 30, 2020
+#last modified july 31, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -802,8 +802,8 @@ gfi_overlap_data %>%
   labs(title=NULL, y="GFI (% Body Weight)", fill="Species",
        x="Site")+
   theme_bw()+
-  #geom_line(aes(y=overlap*10, x=site_id, group=NA), color="darkred")+
-  #scale_y_continuous(sec.axis = sec_axis(~.*10, name="Diet Overlap (%)"))+
+  geom_line(aes(y=overlap*10, x=site_id, group=NA), color="darkred")+
+  scale_y_continuous(sec.axis = sec_axis(~.*10, name="Diet Overlap (%)"))+
   scale_fill_manual(values=c("#d294af", "#516959"))+
   theme(panel.grid=element_blank(), strip.text = element_text(size=16),
         legend.background = element_rect(color = "dark grey", fill = NA),
@@ -817,6 +817,205 @@ gfi_overlap_data %>%
 ggsave(here("figs", "spatial_figs", "spatial_gfi.png"), width=15, height=15, units = "cm", dpi=800)
 
 ##### SALMON GRAPH - RICHNESS #####
+
+pink_matrix <- spat_diet_wide_detail %>%
+  filter(fish_species=="Pink") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+chum_matrix <- spat_diet_wide_detail %>%
+  filter(fish_species=="Chum") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+pink_curve <- specaccum(pink_matrix)
+chum_curve <- specaccum(chum_matrix)
+
+pink_curve_data <- data.frame(Fish=pink_curve$sites, Richness=pink_curve$richness, SD=pink_curve$sd)
+chum_curve_data <- data.frame(Fish=chum_curve$sites, Richness=chum_curve$richness, SD=chum_curve$sd)
+
+ggplot()+
+  geom_point(aes(x=pink_curve_data$Fish, y=pink_curve_data$Richness), color="#d294af") +
+  geom_line(aes(x=pink_curve_data$Fish, y=pink_curve_data$Richness), color="#d294af") +
+  geom_ribbon(aes(x=pink_curve_data$Fish, ymin=(pink_curve_data$Richness-2*pink_curve_data$SD),ymax=(pink_curve_data$Richness+2*pink_curve_data$SD)),alpha=0.2, fill="#d294af")+
+  geom_point(aes(x=chum_curve_data$Fish, y=chum_curve_data$Richness), color="#516959") +
+  geom_line(aes(x=chum_curve_data$Fish, y=chum_curve_data$Richness), color="#516959") +
+  geom_ribbon(aes(x=chum_curve_data$Fish, ymin=(chum_curve_data$Richness-2*chum_curve_data$SD),ymax=(chum_curve_data$Richness+2*chum_curve_data$SD)),alpha=0.2, fill="#516959")+
+  labs(x="Richness (# of Prey Taxa)", y="Number of salmon stomachs")+
+  theme_bw()+
+  theme(panel.grid=element_blank())
+
+DI_matrix <- spat_diet_wide_detail %>%
+  filter(region=="DI") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+JS_matrix <- spat_diet_wide_detail %>%
+  filter(region=="JS") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+DI_curve <- specaccum(DI_matrix)
+JS_curve <- specaccum(JS_matrix)
+
+DI_curve_data <- data.frame(Fish=DI_curve$sites, Richness=DI_curve$richness, SD=DI_curve$sd)
+JS_curve_data <- data.frame(Fish=JS_curve$sites, Richness=JS_curve$richness, SD=JS_curve$sd)
+
+ggplot()+
+  geom_point(aes(x=DI_curve_data$Fish, y=DI_curve_data$Richness), color="darkred") +
+  geom_line(aes(x=DI_curve_data$Fish, y=DI_curve_data$Richness), color="darkred") +
+  geom_ribbon(aes(x=DI_curve_data$Fish, ymin=(DI_curve_data$Richness-2*DI_curve_data$SD),ymax=(DI_curve_data$Richness+2*DI_curve_data$SD)),alpha=0.2, fill="darkred")+
+  geom_point(aes(x=JS_curve_data$Fish, y=JS_curve_data$Richness), color="#053061") +
+  geom_line(aes(x=JS_curve_data$Fish, y=JS_curve_data$Richness), color="#053061") +
+  geom_ribbon(aes(x=JS_curve_data$Fish, ymin=(JS_curve_data$Richness-2*JS_curve_data$SD),ymax=(JS_curve_data$Richness+2*JS_curve_data$SD)),alpha=0.2, fill="#053061")+
+  labs(x="Richness (# of Prey Taxa)", y="# of Stomachs")+
+  theme_bw()+
+  theme(panel.grid=element_blank())
+
+PI_DI_matrix <- spat_diet_wide_detail %>%
+  filter(region=="DI" & fish_species=="Pink") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_JS_matrix <- spat_diet_wide_detail %>%
+  filter(region=="JS" & fish_species=="Pink") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_DI_matrix <- spat_diet_wide_detail %>%
+  filter(region=="DI" & fish_species=="Chum") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_JS_matrix <- spat_diet_wide_detail %>%
+  filter(region=="JS" & fish_species=="Chum") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_DI_curve <- specaccum(PI_DI_matrix)
+PI_JS_curve <- specaccum(PI_JS_matrix)
+CU_DI_curve <- specaccum(CU_DI_matrix)
+CU_JS_curve <- specaccum(CU_JS_matrix)
+
+PI_DI_curve_data <- data.frame(Fish=PI_DI_curve$sites, Richness=PI_DI_curve$richness, SD=PI_DI_curve$sd, Sp="PI", Site="DI")
+PI_JS_curve_data <- data.frame(Fish=PI_JS_curve$sites, Richness=PI_JS_curve$richness, SD=PI_JS_curve$sd)
+CU_DI_curve_data <- data.frame(Fish=CU_DI_curve$sites, Richness=CU_DI_curve$richness, SD=CU_DI_curve$sd)
+CU_JS_curve_data <- data.frame(Fish=CU_JS_curve$sites, Richness=CU_JS_curve$richness, SD=CU_JS_curve$sd)
+
+ggplot()+
+  geom_point(aes(x=PI_DI_curve_data$Fish, y=PI_DI_curve_data$Richness), color="darkred", shape=1, size=3) +
+  geom_line(aes(x=PI_DI_curve_data$Fish, y=PI_DI_curve_data$Richness), color="darkred") +
+  geom_ribbon(aes(x=PI_DI_curve_data$Fish, ymin=(PI_DI_curve_data$Richness-1*PI_DI_curve_data$SD),ymax=(PI_DI_curve_data$Richness+1*PI_DI_curve_data$SD)),alpha=0.2, fill="darkred")+
+  geom_point(aes(x=PI_JS_curve_data$Fish, y=PI_JS_curve_data$Richness), color="#053061", shape=1, size=3) +
+  geom_line(aes(x=PI_JS_curve_data$Fish, y=PI_JS_curve_data$Richness), color="#053061") +
+  geom_ribbon(aes(x=PI_JS_curve_data$Fish, ymin=(PI_JS_curve_data$Richness-1*PI_JS_curve_data$SD),ymax=(PI_JS_curve_data$Richness+1*PI_JS_curve_data$SD)),alpha=0.2, fill="#053061")+
+  geom_point(aes(x=CU_DI_curve_data$Fish, y=CU_DI_curve_data$Richness), color="darkred", size=3) +
+  geom_line(aes(x=CU_DI_curve_data$Fish, y=CU_DI_curve_data$Richness), color="darkred") +
+  geom_ribbon(aes(x=CU_DI_curve_data$Fish, ymin=(CU_DI_curve_data$Richness-1*CU_DI_curve_data$SD),ymax=(CU_DI_curve_data$Richness+1*CU_DI_curve_data$SD)),alpha=0.2, fill="darkred")+
+  geom_point(aes(x=CU_JS_curve_data$Fish, y=CU_JS_curve_data$Richness), color="#053061", size=3) +
+  geom_line(aes(x=CU_JS_curve_data$Fish, y=CU_JS_curve_data$Richness), color="#053061") +
+  geom_ribbon(aes(x=CU_JS_curve_data$Fish, ymin=(CU_JS_curve_data$Richness-1*CU_JS_curve_data$SD),ymax=(CU_JS_curve_data$Richness+1*CU_JS_curve_data$SD)),alpha=0.2, fill="#053061")+
+  labs(x="Richness (# of Prey Taxa)", y="# of Stomachs")+
+  theme_bw()+
+  theme(panel.grid=element_blank())
+
+PI_D07_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="D07" & fish_species=="Pink") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_D09_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="D09" & fish_species=="Pink") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_D11_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="D11" & fish_species=="Pink") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_J06_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="J06" & fish_species=="Pink") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_J08_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="J08" & fish_species=="Pink") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_J02_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="J02" & fish_species=="Pink") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_D07_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="D07" & fish_species=="Chum") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_D09_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="D09" & fish_species=="Chum") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_D11_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="D11" & fish_species=="Chum") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_J06_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="J06" & fish_species=="Chum") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_J08_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="J08" & fish_species=="Chum") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_J02_matrix <- spat_diet_wide_detail %>%
+  filter(site_id=="J02" & fish_species=="Chum") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_D07_curve <- specaccum(PI_D07_matrix)
+PI_D09_curve <- specaccum(PI_D09_matrix)
+PI_D11_curve <- specaccum(PI_D11_matrix)
+PI_J06_curve <- specaccum(PI_J06_matrix)
+PI_J08_curve <- specaccum(PI_J08_matrix)
+PI_J02_curve <- specaccum(PI_J02_matrix)
+CU_D07_curve <- specaccum(CU_D07_matrix)
+CU_D09_curve <- specaccum(CU_D09_matrix)
+CU_D11_curve <- specaccum(CU_D11_matrix)
+CU_J06_curve <- specaccum(CU_J06_matrix)
+CU_J08_curve <- specaccum(CU_J08_matrix)
+CU_J02_curve <- specaccum(CU_J02_matrix)
+
+PI_D07_curve_data <- data.frame(Fish=PI_D07_curve$sites, Richness=PI_D07_curve$richness, SD=PI_D07_curve$sd, Species="Pink", Site="D07")
+PI_D09_curve_data <- data.frame(Fish=PI_D09_curve$sites, Richness=PI_D09_curve$richness, SD=PI_D09_curve$sd, Species="Pink", Site="D09")
+PI_D11_curve_data <- data.frame(Fish=PI_D11_curve$sites, Richness=PI_D11_curve$richness, SD=PI_D11_curve$sd, Species="Pink", Site="D11")
+PI_J06_curve_data <- data.frame(Fish=PI_J06_curve$sites, Richness=PI_J06_curve$richness, SD=PI_J06_curve$sd, Species="Pink", Site="J06")
+PI_J08_curve_data <- data.frame(Fish=PI_J08_curve$sites, Richness=PI_J08_curve$richness, SD=PI_J08_curve$sd, Species="Pink", Site="J08")
+PI_J02_curve_data <- data.frame(Fish=PI_J02_curve$sites, Richness=PI_J02_curve$richness, SD=PI_J02_curve$sd, Species="Pink", Site="J02")
+CU_D07_curve_data <- data.frame(Fish=CU_D07_curve$sites, Richness=CU_D07_curve$richness, SD=CU_D07_curve$sd, Species="Chum", Site="D07")
+CU_D09_curve_data <- data.frame(Fish=CU_D09_curve$sites, Richness=CU_D09_curve$richness, SD=CU_D09_curve$sd, Species="Chum", Site="D09")
+CU_D11_curve_data <- data.frame(Fish=CU_D11_curve$sites, Richness=CU_D11_curve$richness, SD=CU_D11_curve$sd, Species="Chum", Site="D11")
+CU_J06_curve_data <- data.frame(Fish=CU_J06_curve$sites, Richness=CU_J06_curve$richness, SD=CU_J06_curve$sd, Species="Chum", Site="J06")
+CU_J08_curve_data <- data.frame(Fish=CU_J08_curve$sites, Richness=CU_J08_curve$richness, SD=CU_J08_curve$sd, Species="Chum", Site="J08")
+CU_J02_curve_data <- data.frame(Fish=CU_J02_curve$sites, Richness=CU_J02_curve$richness, SD=CU_J02_curve$sd, Species="Chum", Site="J02")
+
+all_curve_data <- rbind(PI_D07_curve_data, PI_D09_curve_data, PI_D11_curve_data, PI_J06_curve_data, PI_J08_curve_data, PI_J02_curve_data,
+                        CU_D07_curve_data, CU_D09_curve_data, CU_D11_curve_data, CU_J06_curve_data, CU_J08_curve_data, CU_J02_curve_data)
+
+all_curve_data$Site <- factor(all_curve_data$Site, levels=spat_site_order)
+all_curve_data$Species <- factor(all_curve_data$Species, levels=c("Pink", "Chum"))
+
+ggplot(all_curve_data)+
+  geom_line(aes(x=Fish, y=Richness, color=Site, group=interaction(Site, Species))) +
+  geom_point(aes(x=Fish, y=Richness, shape=Species,
+                 color=Site), fill="white", 
+             size=3, stroke=2) +
+  #geom_ribbon(aes(x=all_curve_data$Fish, ymin=(all_curve_data$Richness-1*all_curve_data$SD),ymax=(all_curve_data$Richness+1*all_curve_data$SD), fill=Site, group=interaction(Site, Species)),alpha=0.2)+
+  scale_color_manual(values=c("#053061", "#1F78B4", "lightseagreen", 
+                              "#F781BF", "#e41a1c", "darkred"), name="Site",
+                     guide = guide_legend(reverse = F)) +
+  #scale_fill_manual(values=c("#053061", "#1F78B4", "lightseagreen", 
+  #                            "#F781BF", "#e41a1c", "darkred"), name="Site",
+  #                   guide = guide_legend(reverse = F)) +
+  scale_shape_manual(values=c(21, 16), name="Species")+
+  labs(y="Richness (# of Prey Taxa)", x="# of Stomachs")+
+  theme_bw()+
+  facet_wrap(~Species)+
+  theme(panel.grid=element_blank(),
+        axis.text.x = element_text(color="black"),
+        axis.text.y = element_text(color="black"),
+        strip.text = element_text(size=14),
+        axis.ticks.x = element_blank(),
+        axis.title = element_text(size=12), axis.text = element_text(size=10),
+        legend.text = element_text(size=10), legend.title = element_text(size=12))
+
+ggsave(here("figs", "spatial_figs", "spatial_cum_prey_curves.png"), width=15, height=15, units="cm", dpi=800)
 
 spat_rich_gfi <- left_join(spat_data_taxa_sum, per_overlap, by="site_id")
 
@@ -960,6 +1159,7 @@ ggplot()+
   geom_point(data=label(dendr), aes(x=x, y=y, shape=lab$Sp, color=lab$Site),
              fill="white", size=1.3, stroke = 1)+
   geom_hline(yintercept=0.65, linetype="dashed")+
+  geom_hline(yintercept=0.955)+
   scale_shape_manual(values=c(21, 19), name="Species")+
   scale_color_manual(values = c("#053061", "#1F78B4", "lightseagreen", "#F781BF", "#E41A1C", "darkred"),
                      name="Site", guide = guide_legend(reverse = TRUE))+
