@@ -1253,11 +1253,11 @@ fviz_nbclust(spat_trans_matrix, hcut, method = c("silhouette"), k.max = 25)
 
 ##### SALMON GRAPHS - NMDS #####
 
+# NMDS matrix prep:
+
 spat_diet_wide_nmds <- spatial_diets %>%
   mutate(region=if_else(site_id=="D07" | site_id=="D09" | site_id=="D11", "DI", "JS")) %>% 
-  filter(food_weight_corr!=0 #& prey_info!="Crustacea" & prey_info!="Copepoda" &
-         #prey_info!="Parasites" & prey_info !="Detritus" & prey_info != "Coscinodiscophycidae" &
-         #prey_info!="Object" & prey_info!="Microplastic_chunk_Object"
+  filter(food_weight_corr!=0
           & ufn!="U5285" & ufn!="U5284" & ufn!="5319"
          # ^ = outliers (from cluster, 95% dissimilarity to all others!)
          ) %>% 
@@ -1292,6 +1292,8 @@ class(spat_nmds_matrix)<-"numeric"
 spat_trans_nmds <- asin(sqrt(spat_nmds_matrix))
 #need to rename in between matrices and dataframes better...
 
+# NMDS calculation:
+
 #region, proportion based dissimilarity - bray curtis
 eco.nmds.bc<- metaMDS(spat_trans_nmds,distance="bray",labels=region_names_nmds, trymax = 100, autotransform = FALSE)
 eco.nmds.bc
@@ -1321,17 +1323,12 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   scale_color_manual(values=c("#053061", "#1F78B4", "lightseagreen", 
                               "#F781BF", "#e41a1c", "darkred"), name="Site",
                      guide = guide_legend(reverse = TRUE)) +
-  #new_scale_color()+
-  #geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
+  new_scale_color()+
+  geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 19), name="Species")+
-  guides(fill= guide_legend(override.aes = list(shape=21))#,
-  #shape=guide_legend(override.aes=list(shape=c(19, 17)))
-  )+
-  #shape=guide_legend(order = 1))+
-  labs(x="NMDS 1", y="NMDS 2"
-  )+
-  #scale_colour_manual(values=c("darkred", "#053061"), name="Region"
-  #                    ) +
+  guides(fill= guide_legend(override.aes = list(shape=21)))+
+  labs(x="NMDS 1", y="NMDS 2")+
+  scale_colour_manual(values=c("darkred", "#053061"), name="Region") +
   theme_bw()+
   theme(axis.text.x=element_text(size=10),
         axis.title.x=element_text(size=12),
@@ -1346,5 +1343,3 @@ a
 
 ggsave(here("figs","spatial_figs","spatial_NMDS.png"), width=15, height=13, units = "cm", dpi=800)
 # nmds comes out slightly differently everytime unlike other graphs. save once then forget it!
-
-
