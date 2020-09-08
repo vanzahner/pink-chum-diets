@@ -19,7 +19,7 @@ library(factoextra)
 library(dietr) #still needed?
 #selectivity indices
 library(here)
-#project oriented workflow
+#project oriented workfloww
 library(kableExtra)
 library(knitr)
 library(formattable) #still needed?
