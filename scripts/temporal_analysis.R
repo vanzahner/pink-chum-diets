@@ -24,6 +24,8 @@ library(kableExtra)
 library(knitr)
 library(formattable)
 #for creating nice tables
+library(ggnewscale)
+#multiple color schemes on graphs
 
 ##### ENVR + ZOOP + SALMON DATA - READ IN #####
 
@@ -914,56 +916,58 @@ temp_data_taxa_sum %>%
 
 ggsave(here("figs","temporal_figs","temporal_niche_breadth.png"))
 
+##### SALMON GRAPH - BIO-ENV #####
+
+# community matrix + environmental matrix:
+
+# comm same as nmds one (can be diet or dissim matrix)
+
+#envr needs summarizing
+
+# 
+
 ##### SALMON GRAPHS - NMDS #####
 
-spat_diet_wide_nmds <- spatial_diets %>%
-  mutate(region=if_else(site_id=="D07" | site_id=="D09" | site_id=="D11", "DI", "JS")) %>% 
-  filter(food_weight_corr!=0 #& prey_info!="Crustacea" & prey_info!="Copepoda" &
-         #prey_info!="Parasites" & prey_info !="Detritus" & prey_info != "Coscinodiscophycidae" &
-         #prey_info!="Object" & prey_info!="Microplastic_chunk_Object"
-         & ufn!="U5285" & ufn!="U5284" & ufn!="5319"
-         # ^ = outliers (from cluster, 95% dissimilarity to all others!)
-  ) %>% 
-  group_by(ufn, fish_species, site_id, region, prey_info) %>%
+temp_diet_wide_nmds <- temporal_diets %>%
+  filter(food_weight_corr!=0) %>% 
+  group_by(ufn, fish_species, site_id, survey_date, year, prey_info) %>%
   summarise(biomass=sum(prey_weight_corr)) %>%
   spread(key=prey_info, value = biomass, fill=0) %>%
   ungroup()
 #calculate wide data set with new prey groups (detailed and general!)
 
-spat_diet_wide_nmds$region <- factor(spat_diet_wide_nmds$region, levels=c("JS", "DI"))
-spat_diet_wide_nmds$site_id <- factor(spat_diet_wide_nmds$site_id, levels=spat_site_order)
+temp_diet_wide_nmds$site_id <- factor(temp_diet_wide_nmds$site_id, levels=c("D07", "J07"))
 
-site_names_nmds <- spat_diet_wide_nmds$site_id
-species_names_nmds <- spat_diet_wide_nmds$fish_species
-region_names_nmds <- spat_diet_wide_nmds$region
-ufn_names_nmds <- spat_diet_wide_nmds$ufn
+site_names_nmds <- temp_diet_wide_nmds$site_id
+species_names_nmds <- temp_diet_wide_nmds$fish_species
+ufn_names_nmds <- temp_diet_wide_nmds$ufn
 #create dataframe with UFNs, site and species for reattaching to matrices
 
-spat_diet_matrix_nmds <- spat_diet_wide_nmds %>%
+temp_diet_matrix_nmds <- temp_diet_wide_nmds %>%
   select(Acartia:Tortanus_discaudatus) %>% 
   decostand(method="total")
 #matrix to calculation relative biomass of 25 different prey groups
 
-spat_diet_rel_bio_nmds <- cbind(ufn_names_nmds, spat_diet_matrix_nmds)
+temp_diet_rel_bio_nmds <- cbind(ufn_names_nmds, temp_diet_matrix_nmds)
 #combine ufn/site/species back onto relative biomass of prey groups data
 
 #create a matrix with ufns as row names
-matrixA<-as.matrix(spat_diet_rel_bio_nmds)
+matrixA<-as.matrix(temp_diet_rel_bio_nmds)
 row.names(matrixA) <- matrixA[,1]
-spat_nmds_matrix <- matrixA[,-1]
-class(spat_nmds_matrix)<-"numeric"
-spat_trans_nmds <- asin(sqrt(spat_nmds_matrix))
+temp_nmds_matrix <- matrixA[,-1]
+class(temp_nmds_matrix)<-"numeric"
+temp_trans_nmds <- asin(sqrt(temp_nmds_matrix))
 #need to rename in between matrices and dataframes better...
 
 #region, proportion based dissimilarity - bray curtis
-eco.nmds.bc<- metaMDS(spat_trans_nmds,distance="bray",labels=region_names_nmds, trymax = 100, autotransform = FALSE)
+eco.nmds.bc<- metaMDS(temp_trans_nmds,distance="bray",labels=region_names_nmds, trymax = 100, autotransform = FALSE)
 eco.nmds.bc
 plot(eco.nmds.bc)
 
-NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=region_names_nmds)
+NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=site_names_nmds)
 #plot NMDS, only once (picking Bray because all similar), no presence absence
 
-ord.bc<-ordiellipse(eco.nmds.bc,region_names_nmds,display="sites",kind="sd", conf = 0.95, label=T)
+ord.bc<-ordiellipse(eco.nmds.bc,site_names_nmds,display="sites",kind="sd", conf = 0.95, label=T)
 #Ellipses are standard deviation, no scaling of data (can use standard error, scaling, and confidence limit options)
 
 veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
@@ -981,20 +985,20 @@ for(g in levels(NMDS.bc$group)){
 
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   geom_point(stat = "identity", aes(shape=species_names_nmds, color=site_names_nmds), fill="white", size=2, stroke = 1)+
-  scale_color_manual(values=c("#053061", "#1F78B4", "lightseagreen", 
-                              "#F781BF", "#e41a1c", "darkred"), name="Site",
-                     guide = guide_legend(reverse = TRUE)) +
-  #new_scale_color()+
-  #geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
+  scale_color_manual(values=c("darkred", "#053061"), name="Site",
+                     guide = guide_legend(reverse = F)) +
+  new_scale_color()+
+  geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 19), name="Species")+
-  guides(fill= guide_legend(override.aes = list(shape=21))#,
+  guides(color= guide_legend(override.aes = list(shape=21)),
          #shape=guide_legend(override.aes=list(shape=c(19, 17)))
-  )+
-  #shape=guide_legend(order = 1))+
+  #)+
+  shape=guide_legend(order = 1))+
   labs(x="NMDS 1", y="NMDS 2"
   )+
-  #scale_colour_manual(values=c("darkred", "#053061"), name="Region"
-  #                    ) +
+  scale_colour_manual(values=c("darkred", "#053061"), name="Region"
+                      #guide=NULL
+                      ) +
   theme_bw()+
   theme(axis.text.x=element_text(size=10),
         axis.title.x=element_text(size=12),
@@ -1002,10 +1006,12 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
         axis.text.y=element_text(size=10),
         panel.grid.minor=element_blank(),panel.grid.major=element_blank(),
         axis.ticks = element_blank()) + coord_fixed() +
-  annotate("text",x=1.35,y=-1.6,label="(stress = 0.17)",size=4, hjust = 0)
+  annotate("text",x=1.35,y=-1.6,label="(stress = 0.15)",size=4, hjust = 0)
 #NMDS graph for the different sites!
 
 a
 
-ggsave(here("figs","spatial_figs","spatial_NMDS.png"), width=15, height=13, units = "cm", dpi=800)
+ggsave(here("figs","temporal_figs","temporal_NMDS.png"), width=15, height=13, units = "cm", dpi=800)
 # nmds comes out slightly differently everytime unlike other graphs. save once then forget it!
+
+#try ellipses by species next time

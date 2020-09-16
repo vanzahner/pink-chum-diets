@@ -232,4 +232,3 @@ vp_inset <- grid::viewport(width = 0.22, height = 0.4, x = 0.1, y = 0.1, just = 
 print(spat_area1)
 print(temp_area2, vp = vp_inset)
 dev.off()
-
