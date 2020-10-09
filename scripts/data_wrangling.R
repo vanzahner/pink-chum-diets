@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified june 24, 2020
+#last modified september 27, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -207,3 +207,52 @@ write_csv(temp_fish_data, here("processed", "temporal_data", "temporal_pink_chum
 #write csv files for initial transformation and saving of diet data
 
 # note: salmon data is merged with summarized zoop+envr (but kept detailed zoop & env)
+
+##### CPUE #####
+
+seine_survey_data <- left_join(seine_data, survey_data, by="survey_id")
+
+all_fish_totals <- seine_survey_data %>%
+  select(seine_id, site_id, survey_date, year, yday, so=so_total, pi=pi_total, cu=cu_total, co=co_total, he=he_total, ck=ck_total)
+
+all_fish_calc <- all_fish_totals %>%
+  gather(key="species", value ="cpue", so:ck) %>% 
+  group_by(seine_id, site_id, year, yday, survey_date, species) %>%
+  filter(is.na(cpue)!=TRUE & yday<191
+         & site_id %in% c("D07", "D09", "D11", "J08", "J06", "J02")) %>% # cut it off at july 7th (johnson etal 2019) 
+  summarise(cpue=sum(cpue)) %>%
+  arrange(year, species) %>%
+  mutate(region=str_sub(site_id, start = 1, end=1))
+
+full_migration_fish <- all_fish_calc %>%
+  group_by(year, species#, region
+           ) %>%
+  summarise(peak=sum(cpue)/2, .groups="keep") %>%
+  arrange(year, species#, region
+          )
+# to get 50% "peak outmigration"
+
+median_fish <- all_fish_calc %>%
+  group_by(year, species#, region
+           ) %>%
+  summarise(cum_cpue=cumsum(cpue)) %>%
+  arrange(year, species#, region
+          )
+
+median_fish_dates <- cbind(median_fish, yday=all_fish_calc$yday, survey_date=all_fish_calc$survey_date)
+
+final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species"#, "region"
+                                                                           )) %>%
+  filter(cum_cpue>=peak) %>%
+  group_by(year, species#, region
+           ) %>%
+  summarise(survey_date=first(survey_date))
+
+ave_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species")) %>%
+  filter(cum_cpue>=peak) %>%
+  group_by(species) %>%
+  summarise(yday=first(yday))
+
+# I finally figured out how to calculate the peak outmigration period! Hooray.
+
+# next step: make an actual table (for appendix??) of peak dates + ave for pink/chum

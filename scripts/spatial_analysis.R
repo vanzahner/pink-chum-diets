@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified september 3, 2020
+#last modified september 25, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -1204,18 +1204,20 @@ colnames(labs) <- c("ufn", "x", "y", "cluster")
 lab <- left_join(labs, fishsp, by = "ufn")
 
 ggplot()+
-  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend,
-               colour=factor(cluster)), show.legend = FALSE, size=0.5) + 
-  scale_color_manual(values = c(
-    "#666666", "lightseagreen", "lightseagreen", "darkred", "lightseagreen",
-    "#F781BF", "#1F78B4", "#053061", "#1F78B4", "#F781BF", "lightseagreen",
-    "#F781BF", "#E41A1C", "#E41A1C", "#F781BF", "darkred", "#E41A1C", "darkred"
-  ), guide=F)+
+  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend#,
+               ), #colour="#555555",
+               show.legend = FALSE, 
+               size=0.5) + 
+  #scale_color_manual(values = c(
+  #  "#666666", "lightseagreen", "lightseagreen", "darkred", "lightseagreen",
+  #  "#F781BF", "#1F78B4", "#053061", "#1F78B4", "#F781BF", "lightseagreen",
+  #  "#F781BF", "#E41A1C", "#E41A1C", "#F781BF", "darkred", "#E41A1C", "darkred"
+  #), guide=F)+
   new_scale_color()+
   geom_point(data=label(dendr), aes(x=x, y=y, shape=lab$Sp, color=lab$Site),
              fill="white", size=1.3, stroke = 1)+
-  geom_hline(yintercept=0.65, linetype="dashed")+
-  geom_hline(yintercept=0.955)+
+  #geom_hline(yintercept=0.65, linetype="dashed")+
+  #geom_hline(yintercept=0.955)+
   scale_shape_manual(values=c(21, 19), name="Species")+
   scale_color_manual(values = c("#053061", "#1F78B4", "lightseagreen", "#F781BF", "#E41A1C", "darkred"),
                      name="Site", guide = guide_legend(reverse = TRUE))+
@@ -1343,3 +1345,9 @@ a
 
 ggsave(here("figs","spatial_figs","spatial_NMDS.png"), width=15, height=13, units = "cm", dpi=800)
 # nmds comes out slightly differently everytime unlike other graphs. save once then forget it!
+
+##### SALMON DATA - CPUE #####
+
+number_fish <- spatial_diets %>%
+  select(survey_date, site_id, so_total, pi_total, cu_total, co_total, he_total) %>%
+  unique()

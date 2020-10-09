@@ -77,7 +77,8 @@ study_area1 <- GOAmap1 + coord_map(projection="gilbert") +
               y.min = 51.3, y.max = 51.55, scale = 1.5, symbol = 3) + 
         scalebar(x.min = -125.5, x.max = -123.9, 
                  y.min = 51.4, y.max = 51.5, 
-                 dist = 50, dist_unit="km", dd2km = TRUE, transform = FALSE,
+                 dist = 50, dist_unit="km", dd2km = TRUE,
+                 transform = FALSE,
                  model = "WGS84", height = 0.5, 
                  st.dist = 0.8,
                  box.fill = c("grey30", "white"),
@@ -94,7 +95,7 @@ study_area1 <- GOAmap1 + coord_map(projection="gilbert") +
         annotate("label", x = -122.8, y = 49.3, label = "Fraser\nRiver\nOutflow", color = "dodgerblue4", size = 3.5)
         
 study_area1
-ggsave("study_area_bigscale.png", path = "./Map code/figs/map",
+ggsave("study_area_bigscale.png", path = "./figs/map",
        width = 16, height = 12, units = "cm", dpi = 300)
 
 #inset map of the BC coast
@@ -206,15 +207,15 @@ spat_area1 <- GOAmap1 + coord_map(projection="gilbert") +
         coord_cartesian(xlim = c(-127, -124.5), ylim=c(49.8, 51)) +
         #north(x.min = -124.7, x.max = -124.5, 
         #      y.min = 50.85, y.max = 51, scale = 1.5, symbol = 3) + 
-        #scalebar(x.min = -126.3, x.max = -125.4, 
-        #         y.min = 49.8, y.max = 49.85, 
-        #         dist = 25, dist_unit="km", transform = TRUE,
-        #         model = "WGS84", height = 0.5, 
-        #         st.dist = 0.5,
-        #         box.fill = c("grey30", "white"),
-        #         st.color = "grey30",
-        #         border.size = 0.5,
-        #         st.size = 3.5)+
+        scalebar(x.min = -126.3, x.max = -125.4, 
+                 y.min = 49.8, y.max = 49.85, 
+                 dist = 25, dist_unit="km", transform = TRUE,
+                 model = "WGS84", height = 0.5, 
+                 st.dist = 0.5,
+                 box.fill = c("grey30", "white"),
+                 st.color = "grey30",
+                 border.size = 0.5,
+                 st.size = 3.5)+
         annotate("label", x = -124.8, y = 50.52, label = "Discovery Islands", color = "grey30", size = 5) +
         annotate("label", x = -126.7, y = 50.42, label = "Johnstone Strait", color = "grey30", size = 5) +
         annotate("text", x = -124.85, y = 49.85, label = "Strait of\nGeorgia", color = "dodgerblue4", size = 3.5, fontface = "italic") +

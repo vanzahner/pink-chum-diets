@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified september 3, 2020
+#last modified september 26, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -916,16 +916,6 @@ temp_data_taxa_sum %>%
 
 ggsave(here("figs","temporal_figs","temporal_niche_breadth.png"))
 
-##### SALMON GRAPH - BIO-ENV #####
-
-# community matrix + environmental matrix:
-
-# comm same as nmds one (can be diet or dissim matrix)
-
-#envr needs summarizing
-
-# 
-
 ##### SALMON GRAPHS - NMDS #####
 
 temp_diet_wide_nmds <- temporal_diets %>%
@@ -941,7 +931,31 @@ temp_diet_wide_nmds$site_id <- factor(temp_diet_wide_nmds$site_id, levels=c("D07
 site_names_nmds <- temp_diet_wide_nmds$site_id
 species_names_nmds <- temp_diet_wide_nmds$fish_species
 ufn_names_nmds <- temp_diet_wide_nmds$ufn
+year_names_nmds <- temp_diet_wide_nmds$year
+site_year_names <- paste()
 #create dataframe with UFNs, site and species for reattaching to matrices
+
+# Site + Year
+
+# D07 2015
+# D07 2016
+# J07 2015
+# J07 2016
+
+# D07 - 2015
+# D07 - 2016
+# J07 - 2015
+# J07 - 2016
+
+# D07, 2015
+# D07, 2016
+# J07, 2015
+# J07, 2016
+
+# orange
+# red
+# purple
+# blue
 
 temp_diet_matrix_nmds <- temp_diet_wide_nmds %>%
   select(Acartia:Tortanus_discaudatus) %>% 
@@ -984,7 +998,7 @@ for(g in levels(NMDS.bc$group)){
 }
 
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
-  geom_point(stat = "identity", aes(shape=species_names_nmds, color=site_names_nmds), fill="white", size=2, stroke = 1)+
+  geom_point(stat = "identity", aes(shape=species_names_nmds, color= year_names_nmds), fill="white", size=2, stroke = 1)+
   scale_color_manual(values=c("darkred", "#053061"), name="Site",
                      guide = guide_legend(reverse = F)) +
   new_scale_color()+
@@ -1015,3 +1029,36 @@ ggsave(here("figs","temporal_figs","temporal_NMDS.png"), width=15, height=13, un
 # nmds comes out slightly differently everytime unlike other graphs. save once then forget it!
 
 #try ellipses by species next time
+##### SALMON GRAPH - BIO-ENV #####
+
+# community matrix + environmental matrix:
+
+temp_trans_nmds
+
+# comm same as nmds one (can be diet or dissim matrix)
+
+#envr needs summarizing
+
+# 
+temp_envr_wide <- temporal_diets %>%
+  filter(food_weight_corr!=0) %>%
+  select(ufn, fish_species, site_id, survey_date, yday, year, food_weight_corr, #digestion_state, length_avg,
+         weight, fork_length, seine_id, survey_id, temperature, salinity, zoop_ww, set_time, time_searching, cloud_cover, sea_state, secchi) %>%
+  unique()
+
+#fish taken ... what about sizes? how to incorp that? other stats?
+
+##### SALMON DATA - CPUE #####
+
+number_fish <- temporal_diets %>%
+  select(survey_date, site_id, so_total, pi_total, cu_total, co_total, he_total) %>%
+  unique() %>%
+  mutate(salmon_total=so_total+pi_total+cu_total+co_total+he_total,
+         so_per=so_total/salmon_total*100,
+         pi_per=pi_total/salmon_total*100,
+         cu_per=cu_total/salmon_total*100,
+         co_per=co_total/salmon_total*100,
+         he_per=he_total/salmon_total*100)
+
+# do I need to do this for all 2015 and 2016 and beyond?! CPUE's? Not sure.
+
