@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified september 27, 2020
+#last modified october 10, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -31,7 +31,8 @@ survey_data_raw$survey_date <- as.Date(survey_data_raw$survey_date)
 #change from character to date to calculate yday
 
 survey_data <- mutate(survey_data_raw, year=str_sub(survey_date, end=4),
-                      yday=lubridate::yday(survey_date))
+                      yday=lubridate::yday(survey_date),
+                      week=lubridate::week(survey_date))
 #create more manageable date categories to work with for the temporal analysis
 
 survey_data$survey_date <- as.character(survey_data$survey_date)
@@ -146,13 +147,13 @@ diet_data <- read.csv(here("data","pink_chum_diets_raw_data.csv"), stringsAsFact
 
 fish_lab_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/fish_lab_data.csv"), stringsAsFactors = FALSE)  
 
-fish_field_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/fish_field_data.csv"), stringsAsFactors = FALSE) %>%
-  select(-species) #drop fish species column (it's redundant)
+fish_field_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/fish_field_data.csv"), stringsAsFactors = FALSE) #%>%
+  #select(-species) #drop fish species column (it's redundant)
 #unless column is renamed "fish_species" in Hakai data,
 #then fish_species can be deleted from raw diet dataset
 #since there's a conflicting species column regarding prey
 
-fish_meta_data <- left_join(fish_lab_data, fish_field_data, by="ufn")
+fish_meta_data <- left_join(fish_lab_data, select(fish_field_data, -species), by="ufn")
 #combine fish meta data files (weights, lengths, etc.)
 
 seine_data <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/seine_data.csv"), stringsAsFactors = FALSE)
@@ -221,7 +222,7 @@ all_fish_calc <- all_fish_totals %>%
   filter(is.na(cpue)!=TRUE & yday<191
          & site_id %in% c("D07", "D09", "D11", "J08", "J06", "J02")) %>% # cut it off at july 7th (johnson etal 2019) 
   summarise(cpue=sum(cpue)) %>%
-  arrange(year, species) %>%
+  arrange(year, species, yday) %>%
   mutate(region=str_sub(site_id, start = 1, end=1))
 
 full_migration_fish <- all_fish_calc %>%
@@ -235,6 +236,7 @@ full_migration_fish <- all_fish_calc %>%
 median_fish <- all_fish_calc %>%
   group_by(year, species#, region
            ) %>%
+  arrange(year, species, yday) %>% 
   summarise(cum_cpue=cumsum(cpue)) %>%
   arrange(year, species#, region
           )
@@ -246,13 +248,83 @@ final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year
   filter(cum_cpue>=peak) %>%
   group_by(year, species#, region
            ) %>%
-  summarise(survey_date=first(survey_date))
+  summarise(survey_date=first(survey_date), yday=first(yday))
 
 ave_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species")) %>%
   filter(cum_cpue>=peak) %>%
   group_by(species) %>%
   summarise(yday=first(yday))
 
+ave_fish_dates <- final_fish_dates %>%
+  group_by(species) %>%
+  summarise(yday=mean(yday))
+
 # I finally figured out how to calculate the peak outmigration period! Hooray.
 
 # next step: make an actual table (for appendix??) of peak dates + ave for pink/chum
+
+p <- all_fish_calc %>%
+  #mutate(log_cpue=log(cpue+1)) %>% 
+  filter(species %in% c("pi", "cu")
+         & year %in% c("2015", "2016")
+         ) %>%
+  ggplot(aes(yday, cpue, group=interaction(species, year)))+
+  geom_bar(aes(fill=species), stat="identity", position="dodge")+
+  geom_vline(xintercept = 160, color="#516959", linetype="dashed")+
+  scale_fill_manual(values=c("#516959", "#d294af"))+
+  facet_wrap(~year, nrow=2)
+  
+mean_dates <- data.frame(
+  year=c("2015", "2015", "2015", "2015", "2016", "2016", "2016", "2016"),
+  species=c("pi", "cu", "pi", "cu", "pi", "cu", "pi", "cu"),
+  size_code=c("lil", "lil", "big", "big", "lil", "lil", "big", "big"),
+  yday=c(175, 160, 171, 168, 168, 163, 171, 168),
+  color_vals=c("#d294af", "#516959", "#d294af", "#516959", "#d294af", "#516959", "#d294af", "#516959"),
+  thickness=c(0.5, 0.5, 0.75, 0.75, 0.5, 0.5, 0.75, 0.75))
+
+p + geom_vline(mean_dates, aes(xintercept=yday, group=interaction(species, year),
+                   color=species, size=size_code), stat="identity")
+
+# figure this out later... only 2015 pink late (non-FR) and rest are early in 2015/2016.
+
+#specifically, pi2015 = june 24, pi2016 = june 16, piave= 170.6/june 19,
+# and cu2015 = june 9, cu2016 = june 11, cuave = 168.2/june 17
+
+##### SIZES #####
+
+fish_field_survey_data <- left_join(fish_field_data, seine_survey_data, by="seine_id")
+
+fish_lab_survey_data <- left_join(fish_field_survey_data, fish_lab_data, by="ufn") %>%
+  mutate(region=str_sub(seine_id, start=1, end=1))
+
+fish_lab_survey_data$fork_length <- as.numeric(fish_lab_survey_data$fork_length)
+
+fish_fl_lab <- filter(fish_lab_survey_data, is.na(fork_length)!=TRUE)
+
+fish_fl_field_all <- filter(fish_lab_survey_data, is.na(fork_length_field)!=TRUE) %>%
+  select(-fork_length)
+
+fish_fl_field_relevant <- anti_join(fish_fl_field_all, fish_fl_lab) %>%
+  select(fork_length=fork_length_field, everything())
+
+fish_fl_all <- full_join(fish_fl_field_relevant, fish_fl_lab)
+
+fish_fl_all %>%
+  #mutate(fl=if_else(is.na(fork_length), fork_length_field, fork_length)) %>% 
+  filter(species %in% c("PI", "CU")
+  #       & is.na(fl)!=TRUE
+  ) %>% 
+  ggplot(aes(yday, fork_length, group=interaction(species, region, year)))+
+  geom_bar(aes(fill=species), stat="identity", position="dodge")+
+  scale_fill_manual(values=c("#516959", "#d294af"))+
+  #facet_wrap(region~year, nrow = 2)
+  facet_wrap(year~region, nrow=5)
+
+fish_fl_all %>%
+  filter(species %in% c("PI", "CU") & week<29) %>% 
+  group_by(species, region, week) %>%
+  summarise(ave_fl=mean(fork_length)) %>%
+  ggplot(aes(week, ave_fl), group=interaction(species, region))+
+  geom_bar(aes(fill=species), stat="identity", position="dodge")+
+  scale_fill_manual(values=c("#516959", "#d294af"))+
+  facet_wrap(~region, nrow=1)
