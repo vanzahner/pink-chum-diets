@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified october 13, 2020
+#last modified october 19, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -898,7 +898,14 @@ ggsave(here("figs", "temporal_figs", "temporal_condition.png"))
 
 #per_overlap$date_id <- as.Date(per_overlap$date_id)
 
-temp_overlap_data <- left_join(temp_gfi_all_data, per_overlap, by=c("site_id", "survey_date", "year"))
+#temp_gfi_data_modified <- mutate(temp_gfi_all_data, survey_date=if_else(survey_date==""))
+
+temp_gfi_data_modified <- temp_gfi_all_data
+
+temp_gfi_data_modified$survey_date[which(temp_gfi_data_modified$survey_date=="2015-06-05")] <- "2015-06-06"
+temp_gfi_data_modified$survey_date[which(temp_gfi_data_modified$survey_date=="2015-06-07")] <- "2015-06-06"
+
+temp_overlap_data <- left_join(temp_gfi_data_modified, per_overlap, by=c("site_id", "survey_date", "year"))
 
 temp_overlap_data %>% 
   ggplot(aes(survey_date, gfi, group=interaction(fish_species, survey_date)))+
@@ -910,14 +917,17 @@ temp_overlap_data %>%
   scale_y_continuous(sec.axis = sec_axis(~.*10, name="Diet Overlap (%)"))+
   scale_x_date(date_breaks = "17 days", date_labels = "%b %d")+
   scale_fill_manual(values=c("#d294af", "#516959"))+
-  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
-        axis.title = element_text(size=14), axis.text.y = element_text(size=12),
-        legend.text = element_text(size=12), legend.title = element_text(size=14),
-        title = element_text(size=16), plot.title = element_text(hjust=0.5),
-        axis.text.x = element_text(size=12))+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=14),
+        axis.title = element_text(size=12), axis.text.y = element_text(size=10),
+        legend.text = element_text(size=8), legend.title = element_text(size=10),
+        title = element_text(size=14), plot.title = element_text(hjust=0.5),
+        legend.background = element_rect(color = "dark grey", fill = NA),
+        legend.position = c(0.90, .875),
+        axis.title.y.right = element_text(color = "darkred"), axis.text.y.right = element_text(color="darkred"),
+        axis.text.x = element_text(size=10))+
   facet_grid(site_id~year, scales = "free_x")
 
-ggsave(here("figs", "temporal_figs", "temporal_gfi.png"))
+ggsave(here("figs", "temporal_figs", "temporal_gfi.png"), width=22, height=14, units = "cm", dpi=800)
 
 ##### SALMON GRAPH - Niche Breadth #####
 
@@ -929,11 +939,11 @@ temp_data_taxa_sum %>%
   theme_bw()+
   scale_x_date(date_breaks = "17 days", date_labels = "%b %d")+
   scale_fill_manual(values=c("#d294af", "#516959"))+
-  theme(panel.grid=element_blank(), strip.text = element_text(size=16),
-        axis.title = element_text(size=14), axis.text.y = element_text(size=12),
-        legend.text = element_text(size=12), legend.title = element_text(size=14),
-        title = element_text(size=16), plot.title = element_text(hjust=0.5),
-        axis.text.x = element_text(size=12))+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=14),
+        axis.title = element_text(size=12), axis.text.y = element_text(size=10),
+        legend.text = element_text(size=10), legend.title = element_text(size=12),
+        title = element_text(size=14), plot.title = element_text(hjust=0.5),
+        axis.text.x = element_text(size=10))+
   facet_grid(site_id~year, scales = "free_x")#+
 #  scale_x_discrete(labels=c("DI_Early"="May", "DI_June_Early"="Early June", "DI_June_Mid"="Mid-June",
 #                            "JS_June_Early"="Early June", "JS_June_Mid"="Mid-June", "JS_Late"="July"))
@@ -1031,7 +1041,7 @@ for(g in levels(NMDS.bc$group)){
 #  mutate(prey_group_less=if_else(prey_group=="Decapoda" | prey_group=="Balanomorpha" | prey_group=="Echinodermata",
 #                                 "Meroplankton", prey_group))
 
-temp_diet_overwrite <- temp_diet_biomass %>%
+temp_diet_overwrite <- temp_diet_biomass# %>%
 #  mutate(Meroplankton=Decapoda+Balanomorpha+Echinodermata, Other=Other+Cladocera+`Euphausiidae Eggs`) %>%
 #  mutate(Other=Other+Cladocera+`Euphausiidae Eggs`+Decapoda+Balanomorpha+Echinodermata) %>%
 #  select(-c(Decapoda, Balanomorpha, Echinodermata, Cladocera, `Euphausiidae Eggs`)) #%>%
@@ -1062,6 +1072,8 @@ spp.scores <- cbind(spp.scores, pval = fit$vectors$pvals) #add pvalues to datafr
 sig.spp.scores <- subset(spp.scores, pval<=0.001) #subset data to show species significant at 0.05
 head(sig.spp.scores)
 
+spp.scores$Species <- c("Calanoida", "", "", "", "", "", "Gelatinous", "Appendicularia", "   Chaetognatha", "Other")
+
 # FIGURE OUT HOW TO MAKE SOME OF THEM BLANK LATERRRRR
 
 #add to ggplot
@@ -1070,38 +1082,27 @@ geom_segment(data = spp.scores, aes(x = 0, xend=NMDS1, y=0, yend=NMDS2), arrow =
 ### end of Caroline's code
 
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
-  geom_point(stat = "identity", aes(shape=species_names_nmds, color= site_year_names), fill="white"#, size=2
-             , stroke = 1)+
-  scale_color_manual(values=c("#d94801", "darkred", "#542788", "#053061"), name="Site - Year",
-                     guide = guide_legend(reverse = F)) + # check that the colors work! 
-  new_scale_color()+
-  geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, 
-            linetype=2) +
+  geom_point(stat = "identity", aes(shape=species_names_nmds, color= site_names_nmds), fill="white", stroke = 0.75, alpha=0.9)+
+  scale_color_manual(values=c("darkred", "#053061"), name="Site") + # check that the colors work! 
+  #new_scale_color()+
+  #geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 19), name="Species")+
-  guides(color= guide_legend(override.aes = list(shape=21)),
-         #shape=guide_legend(override.aes=list(shape=c(19, 17)))
-  #)+
+  guides(color= guide_legend(override.aes = list(shape=19)), fill=FALSE,
   shape=guide_legend(order = 1))+
-  labs(x="NMDS 1", y="NMDS 2"
-  )+
-  scale_colour_manual(values=c("darkred", "#053061"), name="Region"
-                      #guide=NULL
-                      ) +
+  labs(x="NMDS 1", y="NMDS 2")+
+  #scale_colour_manual(values=c("darkred", "#053061"), #name="Region", guide=FALSE) +
   theme_bw()+
-  theme(#axis.text=element_text(size=14),
-        #axis.title.x=element_text(size=12),
-        axis.title.y=element_text(angle=90#,size=12
-                                  ),
-        #axis.text.y=element_text(size=10),
+  theme(#axis.text=element_text(size=14), #axis.title.x=element_text(size=12),
+        axis.title.y=element_text(angle=90),
         panel.grid.minor=element_blank(),panel.grid.major=element_blank(),
         axis.ticks = element_blank()) + coord_fixed() +
-  geom_segment(data = sig.spp.scores, aes(x = 0, xend=NMDS1, y=0, yend=NMDS2), arrow = arrow(length = unit(0.5, "cm")), colour = "grey10", lwd=0.3) + 
-  ggrepel::geom_text_repel(data = sig.spp.scores, aes(x=NMDS1, y=NMDS2, label = Species),# cex = 3, 
-                           direction = "both", segment.size = 0.25, 
-                           size = 5#, box.padding = unit(1, "cm")
-                           )+
-  annotate("text",x=3,y=-2,label="(stress = 0.15)",size=4,
-           hjust = 0)
+  geom_segment(data = sig.spp.scores, aes(x = 0, xend=NMDS1, y=0, yend=NMDS2), arrow = arrow(length = unit(0.2, "cm")), colour = "grey10", lwd=0.35) + 
+  ggrepel::geom_text_repel(data = spp.scores, aes(x=NMDS1, y=NMDS2, label = Species),# cex = 3, 
+                           direction = "both", size = 4, fontface="bold", segment.colour = NA,
+                           nudge_y = if_else(spp.scores$Species=="Calanoida", -0.25, 
+                                             if_else(spp.scores$Species=="Gelatinous", -0.1, 0)),
+                           nudge_x=if_else(spp.scores$Species=="Appendicularia", 0.03, 0))+
+  annotate("text",x=2.5,y=-2.3,label="(stress = 0.15)",size=3, hjust = 0)
 #NMDS graph for the different sites!
 
 a
@@ -1124,9 +1125,10 @@ temp_trans_nmds
 temp_envr_wide <- temp_gfi_all_data %>%
   filter(food_weight_corr!=0) %>%
   mutate(fish_total=so_total+pi_total+cu_total+co_total+he_total) %>% 
-  select(ufn, fish_species, survey_date, site_id, yday, year, week, food_weight_corr, #digestion_state, length_avg,
-         weight, fork_length, temperature, salinity, zoop_ww, set_time, time_searching, cloud_cover,
-         sea_state, secchi, k, totals, gfi, pi_total, cu_total, fish_total)
+  select(ufn, fish_species, survey_date, site_id, yday, year, #week, food_weight_corr, #digestion_state, length_avg,
+         weight, fork_length, temperature, salinity, zoop_ww, #set_time, time_searching, cloud_cover,
+         secchi#, sea_state, k, totals, gfi, pi_total, cu_total, fish_total
+         )
 
 temp_envr_all_data <- left_join(temp_envr_wide, percent_overlap, by=c("site_id", "year", "survey_date"))
 
@@ -1140,7 +1142,8 @@ temp_envr_all_data$site_id[which(temp_envr_all_data$site_id=="J07")] <- 2
 temp_envr_all_data$site_id <- as.numeric(temp_envr_all_data$site_id)
 temp_envr_all_data$year <- as.numeric(temp_envr_all_data$year)
 
-temp_envr_matrix <- select(temp_envr_all_data, -c(ufn, survey_date, set_time, date_id)) %>%
+temp_envr_matrix <- select(temp_envr_all_data, -c(ufn, survey_date, site_id, #set_time, 
+                                                  overlap, fish_species, date_id)) %>%
   as.matrix()
 
 #temp_envr_matrix_trans <- scale(temp_envr_matrix)
@@ -1152,7 +1155,7 @@ temp_comm_matrix <- as.matrix(temp_trans_nmds)
 temp_envr_all_data %>%
   group_by(site_id, year, yday) %>%
   unique() %>%
-  ggplot(aes(yday, cloud_cover, group=interaction(year, site_id)))+
+  ggplot(aes(yday, secchi, group=interaction(year, site_id)))+
   geom_line()+
   facet_grid(site_id~year)
 
@@ -1162,7 +1165,7 @@ temp_envr_all_data %>%
 
 #fish taken ... what about sizes? how to incorp that? other stats?
 
-#bioenv(temp_comm_matrix, temp_envr_matrix_trans)
+bioenv(temp_comm_matrix, temp_envr_matrix_trans)
 
 # try this again at the end of the day (takes so long to run code...)
 
@@ -1171,6 +1174,8 @@ temp_envr_all_data %>%
 # OOH! TRY SEPARATING DI AND JS AND RUNNING TWO BIO-ENVS (and 2 nmds'???)
 
 # site id, year, zoop_ww, cloud cover? pi total! with correl. 0.194681
+
+# year, salinity, zoop_ww = 0.2117294 (w less variables)
 
 # exact same when envr data is centered and scaled. same when normalized
 
@@ -1215,21 +1220,27 @@ group_trans_js <- asin(sqrt(select(temp_diet_rel_bio_js, -ufn_names_nmds)))
 
 temp_envr_matrix_di <- temp_envr_all_data %>% 
   filter(site_id==1) %>% 
-  select(-c(ufn, survey_date, set_time, date_id, site_id)) %>%
+  select(-c(ufn, survey_date, #set_time,
+            date_id, site_id)) %>%
   as.matrix()
 
 temp_envr_di_trans <- BBmisc::normalize(temp_envr_matrix_di, method="range", margin=2)
 
 temp_envr_matrix_js <- temp_envr_all_data %>% 
   filter(site_id==2) %>% 
-  select(-c(ufn, survey_date, set_time, date_id, site_id)) %>%
+  select(-c(ufn, survey_date, #set_time,
+            date_id, site_id)) %>%
   as.matrix()
 
 temp_envr_js_trans <- BBmisc::normalize(temp_envr_matrix_js, method="range", margin=2)
 
-#bioenv(group_trans_js, temp_envr_js_trans)
+bioenv(group_trans_js, temp_envr_js_trans)
+# temperature, cloud cover and gfi 0.2960399
+# with less variables: fish_sp, temp, sal=0.1900432... GFI/clouds important?
 
-#bioenv(group_trans_di, temp_envr_di_trans)
+bioenv(group_trans_di, temp_envr_di_trans)
+# fish species, weight, salinity, time searching, cloud cover, secchi 0.2575871
+# fish_sp, year, weight, salinity, secchi = 0.227402
 
 # THEN TRY THIS FOR SPECIES AS WELL????? Or too much messing around?//
 
@@ -1250,8 +1261,8 @@ number_fish <- temporal_diets %>%
 
 ##### ANOSIM / SIMPER #####
 
-anosim_diet <- anosim(x=temp_trans_nmds, grouping=c(site_names_nmds),
-                      strata = year_names_nmds, 
+anosim_diet <- anosim(x=temp_trans_nmds, grouping=interaction(c(site_year_names)),
+                      strata = site_names_nmds, 
                       distance = "bray")
 
 summary(anosim_diet)
@@ -1276,6 +1287,39 @@ summary(simper_yr)
 # this one don't make sense. don't even use it anywaysss (year comparison within sites cool tho)
 #cnid, c marsh, cala, cteno, c pac ; oiko, euph egg, euk hamata, c marsh, barn naup, echi, etc.
 # it seems like simper just spits out most dominant prey... look into all this some more later.
+
+temp_trans_perm <- as.data.frame(temp_trans_nmds)
+
+permanova_data <- adonis(temp_trans_nmds ~ site_names_nmds*year_names_nmds*species_names_nmds)
+
+permanova_data
+
+region_names <- str_sub(site_names_nmds, start = 1, end=1)
+
+temp_matrix_anosim <- data.frame(ufn=ufn_names_nmds, site=as.numeric(site_names_nmds),#year=year_names_nmds,
+                                 fish=as.numeric(species_names_nmds), temp_trans_nmds)
+
+write_csv(temp_matrix_anosim, "temp_data.csv")
+
+# YOOOOO R won't do 2 way anosim so I did it using PAST:
+
+#Permutation N: 9999
+#Factor site
+#R:	0.6145
+#p(same):	0.0001
+#Factor year
+#R:	0.12441
+#p(same):	0.0001
+
+#Permutation N: 9999
+#Factor site
+#R:	0.7064
+#p(same):	0.0001
+#Factor fish
+#R:	0.43452
+#p(same):	0.0001
+
+
 ##### CLUSTER #####
 
 Bray_Curtis_Dissimilarity <- vegdist(temp_trans_nmds, method = "bray")
@@ -1287,6 +1331,10 @@ dendr <- dendro_data(bcclust, type = "rectangle")
 fishsp <- site_year_df %>%
   ungroup() %>%
   select(ufn, Sp=fish_species, Site=site_id, Year=year, Site_Year=site_years)
+
+# FIGURE OUT WHAT IS GOING ON WITH THE LABELS HERE... what is "V1"???
+
+#relabel cluster with Yday to compare in more details
 
 labs <- label(dendr)
 
@@ -1358,6 +1406,10 @@ freq_occur_data <- cbind(site_id=freq_occur_samples$site_id,
 
 # maybe need to change to long data to do some calcs to weed out low freq occur? too much taxa!
 
+freq_occur_long_data <- freq_occur_data %>%
+  gather(key="Taxa", value="Occur", Acartia:Tortanus_discaudatus) %>%
+  group_by(Taxa) %>%
+  arrange(desc(Occur), Taxa, by_group=TRUE)
 
 ##### Size stuff? #####
 
@@ -1385,9 +1437,11 @@ temporal_diets$size_class <- factor(temporal_diets$size_class, levels=c("<1", "1
                                                                         "5 to 10", ">10"))
 
 temporal_diets %>%
-  select(ufn, digestion_state, size_class, length_avg, fork_length, fish_species, site_id) %>%
+  filter(length_avg>0, digestion_state==1#, length_avg<20
+         ) %>% 
+  select(ufn, digestion_state, size_class, length_avg, fork_length, fish_species, site_id, count, prey_weight_corr) %>%
   group_by(ufn, fork_length, fish_species, site_id) %>%
-  summarize(ave_prey_size=mean(length_avg)) %>% 
+  summarize(ave_prey_size=weighted.mean(length_avg, count)) %>% 
 #  filter(digestion_state==1 #& size_class!="<1" & length_avg<20
 #         ) %>%
   ggplot(aes(fork_length, ave_prey_size))+
@@ -1399,8 +1453,17 @@ temporal_diets %>%
          shape=guide_legend(#override.aes=list(shape=c(16, 1)), 
            order = 1))
 
+temporal_diets %>%
+  filter(length_avg>0)
+
 # figure out a better way to do this... I do think it needs to be per stom not per indiv prey...
 
 # averaging by stomach doesn't work either since it depends on how many big/small prey groups...
 
-# FIGURE THIS OUT LATET IT"S QUITING TIME :) It seems like size matters up to a certain point!
+# CALCUL:ATE A BARGRAPH OF REL BIO OF DIETS BY SIZE CLASS
+
+##### INDVAL #####
+
+library(labdsv)
+
+site_indval <- indval(temp_comm_matrix, site_names_nmds)

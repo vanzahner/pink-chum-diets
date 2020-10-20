@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified october 10, 2020
+#last modified october 20, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -11,6 +11,9 @@ library(tidyverse)
 #multiple libraries (reading, manipulating and displaying data)
 library(here)
 #project workflow
+library(vegan)
+library(ggnewscale)
+#make some combo graphs here now
 
 # Create individual dataframes for spatial and temporal chapters/analysis:
 
@@ -328,3 +331,152 @@ fish_fl_all %>%
   geom_bar(aes(fill=species), stat="identity", position="dodge")+
   scale_fill_manual(values=c("#516959", "#d294af"))+
   facet_wrap(~region, nrow=1)
+
+##### ALL DATA #####
+
+all_diet_copy <- all_salmon_data
+
+# Merge rare (< 3 stom.) taxonomic groups to higher prey levels:
+
+all_diet_data <- all_diet_copy %>%
+  filter(prey_info!="Digested_food") %>% 
+  group_by(ufn, fish_species, site_id, taxa_info, prey_info,
+           kingdom, phylum, subphylum, class, subclass, order, suborder, infraorder, family, genus, species, life_stage) %>%
+  summarise(biomass=sum(prey_weight_corr))
+#create dataframe that sums any duplicates of prey groups in each stomach
+
+all_diet_sum <- all_diet_data %>%
+  ungroup() %>%
+  group_by(kingdom, phylum, subphylum, class, subclass, order, suborder, infraorder, family, genus, species, life_stage,
+           taxa_info, prey_info) %>%
+  tally() %>%
+  arrange(n)
+#calculate how many stomachs each prey group appears in
+
+# reassign any less than 3 stomach taxa
+
+all_diet_groups <- all_diet_sum %>%
+  #filter(taxa_info!="Detritus") %>% 
+  mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea", 
+                  if_else(life_stage=="Object" | life_stage=="Detritus", "",
+                  if_else(class=="Insecta" | class=="Arachnida" | class=="Actinopterygii", class,
+                  if_else(genus=="Monstrilla" | order=="Mysida", subclass,
+                  if_else(genus=="Candacia" | genus=="Oithona" | order=="Harpacticoida" | genus=="Primno", order,
+                  if_else(genus=="Eualus" | family=="Paguridae", infraorder,
+                  if_else(family=="Oncaeidae" | family=="Corophiidae" | family=="Pinnotheridae" | genus=="Nematoscelis", family,
+                  if_else(family=="Caligidae", "Parasites",
+                  if_else(species!="", genus,
+                  taxa_info)))))))),
+                  if_else(phylum=="Echinodermata", phylum,
+                  if_else(family=="Calanidae" & life_stage=="Nauplii", order,
+                  if_else(class=="Arachnida", class,
+                  if_else(genus=="Neocalanus", genus,
+                  if_else(phylum=="Nematoda" | class=="Trematoda", "Parasites",
+                  taxa_info)))))),
+         life_stage_new=if_else(str_detect(life_stage, "Zoea") | life_stage=="Megalopa" |
+                                order=="Decapoda" & life_stage=="Juvenile", "Larvae", 
+                        if_else(str_detect(life_stage, "Copepodite"), "Copepodite",
+                        if_else(phylum=="Echinodermata", "Larvae",
+                        if_else(prey_info=="Senticaudata_Juvenile" | prey_info=="Euphausiidae_Juvenile"| prey_info=="Calanoida_Egg" |
+                                life_stage=="Pupae" | family=="Caligidae" | class=="Actinopterygii" & life_stage!="Egg" | order=="Isopoda" | taxa_info=="Eumalacostraca", "",
+                                life_stage)))),
+         prey_new=if_else(life_stage_new=="", taxa_new,
+                  if_else(taxa_new=="", life_stage_new, 
+                          paste(taxa_new, life_stage_new, sep="_")))) %>%
+  ungroup %>% 
+  select(prey_info, prey_new)
+#update any prey groups that occur in less than three fish stomachs!
+
+for (n in all_diet_groups$prey_info) {
+  all_diet_copy$prey_info[which(all_diet_copy$prey_info %in% n)] <- all_diet_groups$prey_new[which(all_diet_groups$prey_info == n)]
+}
+#overwrite old data with new prey groups
+
+all_diet_check <- all_diet_copy %>%
+  group_by(ufn, fish_species, site_id, prey_info) %>%
+  summarise(biomass=sum(prey_weight_corr))
+#create dataframe that sums any duplicates of prey groups in each stomach
+
+all_diet_filtered <- all_diet_check %>%
+  ungroup() %>%
+  group_by(prey_info) %>%
+  tally() %>%
+  arrange(n)
+#calculate how many stomachs each prey group appears in (none <3!)
+#reduced number of taxa from 176 to 112, a lot more manageable now!
+
+# then wide data --> transform --> matrix --> NMDS / etc. (or clustering even... busy tho.)
+
+all_diet_wide <- all_diet_copy %>%
+  filter(food_weight_corr!=0 & !ufn %in% c("U2627", "U5285") & #not sure why that one is so erronous... hmm.
+         !prey_info %in% c("Coscinodiscophycidae", "Digested_food", "Object", "Parasites", "Detritus")) %>% 
+  select(ufn, site_id, survey_date, year, fish_species, prey_info, prey_weight_corr) %>%
+  group_by(ufn, site_id, survey_date, year, fish_species, prey_info) %>%
+  summarise(ww=sum(prey_weight_corr)) %>%
+  spread(key=prey_info, value=ww, fill=0)
+
+all_diet_info <- select(all_diet_wide, ufn:fish_species)
+
+all_diet_matrix <- all_diet_wide %>%
+  ungroup() %>% 
+  select(Acartia:Tortanus_discaudatus) %>%
+  decostand("total")
+
+all_diet_trans <- asin(sqrt(all_diet_matrix))
+
+rownames(all_diet_trans) <- all_diet_info$ufn
+
+# NMDS calculation:
+
+#region, proportion based dissimilarity - bray curtis
+eco.nmds.bc<- metaMDS(all_diet_trans,distance="bray",labels=all_diet_info$site_id, trymax = 100, autotransform = FALSE)
+eco.nmds.bc
+plot(eco.nmds.bc)
+
+NMDS.bc<-data.frame(NMDS1.bc=eco.nmds.bc$points[,1],NMDS2.bc=eco.nmds.bc$points[,2],group=all_diet_info$site_id)
+#plot NMDS, only once (picking Bray because all similar), no presence absence
+
+ord.bc<-ordiellipse(eco.nmds.bc,all_diet_info$site_id,display="sites",kind="sd", conf = 0.95, label=T)
+#Ellipses are standard deviation, no scaling of data (can use standard error, scaling, and confidence limit options)
+
+veganCovEllipse<-function (cov, center = c(0, 0), scale = 1, npoints = 100)
+{
+  theta <- (0:npoints) * 2 * pi/npoints
+  Circle <- cbind(cos(theta), sin(theta))
+  t(center + scale * t(Circle %*% chol(cov)))
+}
+
+df_ell.bc <- data.frame()
+for(g in levels(NMDS.bc$group)){
+  df_ell.bc <- rbind(df_ell.bc, cbind(as.data.frame(with(NMDS.bc[NMDS.bc$group==g,],
+                                                         veganCovEllipse(ord.bc[[g]]$cov,ord.bc[[g]]$center))),group=g))
+}
+
+a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
+  geom_point(stat = "identity", aes(shape=all_diet_info$fish_species, color=all_diet_info$site_id), fill="white", size=2, stroke = 1)+
+  scale_color_manual(values=c("#053061", "#1F78B4", "lightseagreen", 
+                              "#F781BF", "#e41a1c", "darkred", "black"), name="Site",
+                     guide = guide_legend(reverse = TRUE)) +
+  new_scale_color()+
+  #geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
+  scale_shape_manual(values=c(21, 19), name="Species")+
+  guides(fill= guide_legend(override.aes = list(shape=21)))+
+  labs(x="NMDS 1", y="NMDS 2")+
+  scale_colour_manual(values=c("darkred", "#053061"), name="Region") +
+  theme_bw()+
+  theme(axis.text.x=element_text(size=10),
+        axis.title.x=element_text(size=12),
+        axis.title.y=element_text(angle=90,size=12),
+        axis.text.y=element_text(size=10),
+        panel.grid.minor=element_blank(),panel.grid.major=element_blank(),
+        axis.ticks = element_blank()) + coord_fixed() +
+  annotate("text",x=1.35,y=-1.6,label="(stress = 0.17)",size=4, hjust = 0)
+#NMDS graph for the different sites!
+
+a
+
+ggsave("full_data_NMDS.png", width=15, height=13, units = "cm", dpi=800)
+# nmds comes out slightly differently everytime unlike other graphs. save once then forget it!
+
+# next: update color/shape properly (find new color for J07... diff light blue??) then CLUSTER!
+
