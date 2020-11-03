@@ -217,41 +217,61 @@ write_csv(temp_fish_data, here("processed", "temporal_data", "temporal_pink_chum
 seine_survey_data <- left_join(seine_data, survey_data, by="survey_id")
 
 all_fish_totals <- seine_survey_data %>%
-  select(seine_id, site_id, survey_date, year, yday, so=so_total, pi=pi_total, cu=cu_total, co=co_total, he=he_total, ck=ck_total)
+  select(seine_id, site_id, survey_date, year, yday, #so=so_total, pi=pi_total, cu=cu_total, co=co_total, he=he_total, ck=ck_total)
+  so=so_taken, pi=pi_taken, cu=cu_taken, co=co_taken, he=he_taken, ck=ck_taken)
 
 all_fish_calc <- all_fish_totals %>%
+  filter(so!=0) %>% #consistent across years...
   gather(key="species", value ="cpue", so:ck) %>% 
   group_by(seine_id, site_id, year, yday, survey_date, species) %>%
   filter(is.na(cpue)!=TRUE & yday<191
-         & site_id %in% c("D07", "D09", "D11", "J08", "J06", "J02")) %>% # cut it off at july 7th (johnson etal 2019) 
+         #& site_id %in% c("D07", "D09", "D11", "J07", "J08", "J06", "J02")
+         ) %>% # cut it off at july 7th (johnson etal 2019) 
   summarise(cpue=sum(cpue)) %>%
   arrange(year, species, yday) %>%
   mutate(region=str_sub(site_id, start = 1, end=1))
 
 full_migration_fish <- all_fish_calc %>%
-  group_by(year, species#, region
+  group_by(year, species, region
            ) %>%
   summarise(peak=sum(cpue)/2, .groups="keep") %>%
-  arrange(year, species#, region
+  arrange(year, species, region
           )
 # to get 50% "peak outmigration"
 
 median_fish <- all_fish_calc %>%
-  group_by(year, species#, region
+  group_by(year, species, region
            ) %>%
   arrange(year, species, yday) %>% 
   summarise(cum_cpue=cumsum(cpue)) %>%
-  arrange(year, species#, region
+  arrange(year, species, region
           )
 
 median_fish_dates <- cbind(median_fish, yday=all_fish_calc$yday, survey_date=all_fish_calc$survey_date)
 
-final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species"#, "region"
+summarized_cpues <- median_fish_dates %>%
+  group_by(region, species, year) %>%
+  summarise(total_cpue=max(cum_cpue))
+
+joined_cpue_data <- left_join(median_fish_dates, summarized_cpues, by=c("region", "species", "year"))
+
+cum_sum_data <- joined_cpue_data %>%
+  group_by(region, species, year) %>%
+  mutate(rel_cum_cpue=cum_cpue/total_cpue*100)
+
+cum_sum_data %>%
+  filter(species=="pi" | species =="cu") %>% 
+  ggplot()+
+  geom_line(aes(yday, rel_cum_cpue, color=year))+
+  facet_grid(region~species)
+
+final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species", "region"
                                                                            )) %>%
   filter(cum_cpue>=peak) %>%
-  group_by(year, species#, region
+  group_by(year, species, region
            ) %>%
-  summarise(survey_date=first(survey_date), yday=first(yday))
+  summarise(survey_date=first(survey_date), yday=first(yday)) %>%
+  filter(species=="pi" | species=="cu")
 
 ave_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species")) %>%
   filter(cum_cpue>=peak) %>%
