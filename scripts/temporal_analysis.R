@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified november 1, 2020
+#last modified november 4, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -104,24 +104,27 @@ temp_zoop_intermediate <- temp_zoop_data %>%
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Cnidaria_Ctenophora",
                     if_else(family=="Caligidae", "Parasites",
                     if_else(class=="Gastropoda", "Pteropoda",
-                    if_else(prey_info=="Copepoda_nauplius", "Calanoida",
-                    if_else(order=="Calanoida" | order=="Decapoda" | order=="Amphipoda" |
+                    if_else(prey_info=="Copepoda_nauplius", "Small (<2mm)",
+                    if_else(order=="Calanoida" & (size_class=="<1" | size_class=="1 to 2"), "Small (<2mm)",
+                    if_else(order=="Calanoida" & (size_class=="2 to 5" | size_class=="5 to 10"), "Large (>2mm)",
+                    if_else(order=="Decapoda" | order=="Amphipoda" |
                             order=="Harpacticoida" | order=="Cyclopoida", order,
                     if_else(infraorder=="Balanomorpha", infraorder,
                     if_else(family=="Euphausiidae" & life_stage!="egg", "Euphausiidae Larvae",
                     if_else((family=="Euphausiidae" | genus=="Unknown") & life_stage=="egg", "Euphausiidae Eggs",
                     if_else(family=="Podonidae", "Cladocera",
-                            prey_info)))))))))))))
+                            prey_info)))))))))))))))
 #update zooplankton groups for summary and graphs
 
 zoop_group_data <- temp_zoop_intermediate %>%
   mutate(prey_group_simple=if_else(prey_group=="Cnidaria" | prey_group=="Ctenophora", "Gelatinous",
-                                   if_else(prey_group!="Calanoida" & prey_group!="Decapoda" & prey_group!="Echinodermata" &
-                                           prey_group!="Euphausiidae" & # prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
-                                           prey_group!="Appendicularia" & prey_group!="Euphausiidae Eggs" & #prey_group!="Chaetognatha" &
-                                           prey_group!="Balanomorpha" & prey_group!="Cladocera", # & prey_group!="Mollusca" & prey_group!="Cyclopoida", 
-                                           "Other",
-                                           prey_group)))
+                           if_else(prey_group=="Small (<2mm)" | prey_group=="Large (>2mm)", "Calanoida",
+                           if_else(prey_group!="Decapoda" & prey_group!="Echinodermata" &
+                                   prey_group!="Euphausiidae" & # prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
+                                   prey_group!="Appendicularia" & prey_group!="Euphausiidae Eggs" & #prey_group!="Chaetognatha" &
+                                   prey_group!="Balanomorpha" & prey_group!="Cladocera", # & prey_group!="Mollusca" & prey_group!="Cyclopoida", 
+                                   "Other",
+                                   prey_group))))
 # keep prey groups that are substantial, rest = "Other" prey category
 
 zoop_levels <- c("Calanoida", "Decapoda", "Cladocera", "Balanomorpha", "Echinodermata", 
@@ -288,7 +291,7 @@ zoop_comp_rel_abd <- zoop_comp %>%
 
 zoop_comp_percent <- zoop_comp_rel_abd*100
 
-prey_level_details <- c("Calanoida", "Decapoda", "Cladocera", "Balanomorpha", "Echinodermata",
+prey_level_details <- c("Small (<2mm)", "Large (>2mm)", "Decapoda", "Cladocera", "Balanomorpha", "Echinodermata",
                         "Euphausiidae Eggs", "Cnidaria", "Ctenophora", "Appendicularia",
                         "Chaetognatha", "Actinopterygii", "Cyclopoida", "Harpacticoida",
                         "Euphausiidae Larvae", "Euphausiidae", "Amphipoda", "Mysida", "Isopoda",
@@ -297,7 +300,7 @@ prey_level_details <- c("Calanoida", "Decapoda", "Cladocera", "Balanomorpha", "E
 zoop_comp_long_data <- zoop_comp_percent %>% 
   mutate(site_id=zoop_comp$site_id, Date=zoop_comp$survey_date) %>% 
   select(site_id, Date, everything()) %>%
-  gather("prey", "abd", Amphipoda:Pteropoda)
+  gather("prey", "abd", Amphipoda:`Small (<2mm)`)
 
 zoop_comp_long_data$prey <- factor(zoop_comp_long_data$prey, levels=prey_level_details)
 
@@ -317,9 +320,9 @@ for (i in 1:ncol(zoop_comp_intermediate)){
   zoop_comp_intermediate[, i][which(zoop_comp_intermediate[, i]==0)] <- "-"
 }
 
-zoop_comp_intermediate$Calanoida[which(zoop_comp_intermediate$Calanoida==" ")] <- "No Data"
+zoop_comp_intermediate$`Small (<2mm)`[which(zoop_comp_intermediate$`Small (<2mm)`==" ")] <- "No Data"
 
-zoop_comp_table <- select(zoop_comp_intermediate, Calanoida:Bryozoa) %>%
+zoop_comp_table <- select(zoop_comp_intermediate, `Small (<2mm)`:Bryozoa) %>%
   t()
 
 colnames(zoop_comp_table) <- zoop_comp_intermediate$Date
@@ -327,9 +330,10 @@ colnames(zoop_comp_table) <- zoop_comp_intermediate$Date
 kable(zoop_comp_table, "latex", booktabs=TRUE, escape = FALSE, align = c("r"), linesep=rep(c("", "\\addlinespace"))) %>% 
   add_header_above(c(" "=1, "2015"=4, "2016"=3, "2015"=3, "2016"=3)) %>% 
   add_header_above(c(" "=1, "Discovery Islands (D07)"=7, "Johnstone Strait (J07)"=6)) %>%
-  pack_rows("Gelatinous", 7, 7) %>% 
-  pack_rows("Other", 10, nrow(zoop_comp_table)) %>% 
-  add_indent(c(7, 10:nrow(zoop_comp_table))) %>% 
+  pack_rows("Calanoida", 1, 2) %>% 
+  pack_rows("Gelatinous", 8, 8) %>% 
+  pack_rows("Other", 11, nrow(zoop_comp_table)) %>% 
+  add_indent(c(1, 2, 8, 11:nrow(zoop_comp_table))) %>% 
   save_kable(here("tables", "temporal_tables", "zoop_relA_table.pdf"))
 
 ##### SALMON DATA - TAXA REGROUP #####
@@ -404,7 +408,9 @@ temp_diet_intermediate <- temp_diet_copy %>%
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Echinodermata" | #phylum=="Mollusca" |
                             phylum=="Bryozoa" | phylum=="Ochrophyta", phylum,
                     if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" | class=="Bivalvia", class,
-                    if_else(order=="Calanoida" | order=="Decapoda" | order=="Mysida"
+                    if_else(order=="Calanoida" & (size_class=="<1" | size_class=="1 to 2"), "Small (<2mm)",
+                    if_else(order=="Calanoida" & (size_class=="2 to 5" | size_class=="5 to 10"), "Large (>2mm)",
+                    if_else(order=="Decapoda" | order=="Mysida"
                             | order=="Amphipoda" | order=="Isopoda"# | order=="Cumacea"
                             | order=="Harpacticoida" | order=="Cyclopoida" | order=="Pteropoda", order,
                     if_else(suborder=="Balanomorpha", suborder,
@@ -416,7 +422,7 @@ temp_diet_intermediate <- temp_diet_copy %>%
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Cnidaria_Ctenophora",
                     if_else(prey_info=="Copepoda", "Crustacea",
                     if_else(life_stage=="Object", life_stage,
-                            prey_info)))))))))))))
+                            prey_info)))))))))))))))
 #create more general prey groups for any needed tables, graphs, calc, etc.
 
 ##### SALMON DATA - FIG/TABLE PREP ##### 
@@ -434,7 +440,7 @@ temp_diet_info <-temp_diet_wide %>%
 #create dataframe with UFNs, site and species for reattaching to matrices
 
 temp_diet_matrix <- temp_diet_wide %>%
-  select(Actinopterygii:Pteropoda, -c(Detritus, Digested_food_worms, Crustacea, Eumalacostraca, Parasite, Ochrophyta)) %>% 
+  select(Actinopterygii:`Small (<2mm)`, -c(Detritus, Digested_food_worms, Crustacea, Eumalacostraca, Parasite, Ochrophyta)) %>% 
   decostand(method="total")
 #matrix to calculation relative biomass of 25 different prey groups
 
@@ -446,7 +452,7 @@ temp_diet_rel_bio <- cbind(temp_diet_info, temp_matrix_percent)
 # Calculate average relative biomass of prey for each site/date and species:
 
 temp_diet_rel_bio %>%
-  gather(key="prey", value="rel_bio", Actinopterygii:Pteropoda) %>% 
+  gather(key="prey", value="rel_bio", Actinopterygii:`Small (<2mm)`) %>% 
   group_by(fish_species, prey, year, site_id) %>%
   summarise(average=mean(rel_bio)) %>%
   summarise(max=max(average)) %>%
@@ -457,10 +463,11 @@ temp_diet_rel_bio %>%
 
 temp_diet_all <- temp_diet_intermediate %>%
   mutate(prey_group_simple=if_else(prey_group=="Cnidaria" | prey_group=="Ctenophora", "Gelatinous",
-                           if_else(prey_group!="Calanoida" & prey_group!="Decapoda"& prey_group!="Echinodermata" & prey_group!="Cladocera" & #prey_group!="Euphausiidae" & 
+                           if_else(prey_group=="Small (<2mm)" | prey_group=="Large (>2mm)", "Calanoida",
+                           if_else(prey_group!="Decapoda"& prey_group!="Echinodermata" & prey_group!="Cladocera" & #prey_group!="Euphausiidae" & 
                                    prey_group!="Balanomorpha" & prey_group!="Euphausiidae Eggs" & prey_group!="Appendicularia" & prey_group!="Chaetognatha",
                                    "Other",
-                                   prey_group)))
+                                   prey_group))))
 # keep prey groups that are substantial, rest = "Other" prey category
 
 prey_levels <- c("Calanoida", "Decapoda", "Cladocera", "Balanomorpha", "Echinodermata", 
@@ -581,8 +588,8 @@ temp_indices <- left_join(temporalk, temp_data_taxa_sum, by=c("ufn", "fish_speci
 temp_indices$year <- as.character(temp_indices$year)
 
 temp_gfi_all_data <- temp_indices %>%
-  #filter(is.na(weight)!=TRUE) %>% 
-  #select(fish_species, site_id, survey_date, year, weight, food_weight_corr, fork_length, k, totals) %>%
+  filter(is.na(weight)!=TRUE) %>% 
+  select(fish_species, site_id, survey_date, year, weight, food_weight_corr, fork_length, k, totals) %>%
   mutate(weight_corr= weight*1000, # grams to milligrams? * FIX IN RAW DATA LATER ! *
          gfi=food_weight_corr/weight_corr*100)
 
@@ -613,6 +620,12 @@ temp_length_table <- temp_indices %>%
 temp_empty_table <- temp_indices %>%
   filter(food_weight_corr==0) %>%
   group_by(fish_species, site_id, year) %>%
+  count() %>%
+  mutate(per_empty=n*10)
+
+temp_empty_summary <- temp_indices %>%
+  filter(food_weight_corr==0) %>%
+  group_by(fish_species, site_id, survey_date, year) %>%
   count() %>%
   mutate(per_empty=n*10)
 
@@ -745,7 +758,7 @@ kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 7), rep("c", 
 # summary table (ave % ww by year/site/sp) for main chapter:
 
 rel_bio_sum <- temp_diet_rel_bio %>%
-  gather(key="taxa", value="rel_bio", Actinopterygii:Pteropoda) %>% 
+  gather(key="taxa", value="rel_bio", Actinopterygii:`Small (<2mm)`) %>% 
   group_by(site_id, year, fish_species, taxa) %>%
   summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) 
 
@@ -769,15 +782,16 @@ colnames(diet_table) <- rep(c("Pink", "Chum"), 4)
 kable(diet_table, "latex", booktabs=TRUE) %>%
   add_header_above(c(" "=1, "2015"=2, "2016"=2, "2015"=2, "2016"=2)) %>% 
   add_header_above(c(" "=1, "D07"=4, "J07"=4)) %>%
-  pack_rows("Gelatinous", 7, 8, latex_gap_space = "0em") %>% 
-  pack_rows("Other", 11, nrow(diet_table), latex_gap_space = "0em") %>% 
-  add_indent(c(7:8, 11:nrow(diet_table))) %>% 
+  pack_rows("Calanoida", 1, 2) %>% 
+  pack_rows("Gelatinous", 8, 9, latex_gap_space = "0em") %>% 
+  pack_rows("Other", 12, nrow(diet_table), latex_gap_space = "0em") %>% 
+  add_indent(c(1, 2, 8:9, 12:nrow(diet_table))) %>% 
   save_kable(here("tables", "temporal_tables", "diet_comp_table.pdf"))
 
 # more detailed table (ave % ww by date) for appendix:
 
 rel_bio_sum_detail <- temp_diet_rel_bio %>%
-  gather(key="taxa", value="rel_bio", Actinopterygii:Polychaeta) %>% 
+  gather(key="taxa", value="rel_bio", Actinopterygii:`Small (<2mm)`) %>% 
   group_by(site_id, survey_date, year, fish_species, taxa) %>% 
   summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) 
 
@@ -805,9 +819,10 @@ kable(diet_table_detail, "latex", booktabs=TRUE, linesep="") %>%
   add_header_above(c(" "=1, "Discovery Islands (D07)"=6, "Johnstone Strait (J07)"=6,
                      "Discovery Islands (D07)"=6, "Johnstone Strait (J07)"=6), bold=T) %>%
   add_header_above(c(" "=1, "2015"=12, "2016"=12), bold=T, font_size = 12) %>% 
-  pack_rows("Gelatinous", 7, 8, latex_gap_space = "0em") %>% 
-  pack_rows("Other", 11, nrow(diet_table_detail), latex_gap_space = "0em") %>% 
-  add_indent(c(7:8, 11:nrow(diet_table_detail))) %>% 
+  pack_rows("Calanoida", 1, 2) %>% 
+  pack_rows("Gelatinous", 8, 9, latex_gap_space = "0em") %>% 
+  pack_rows("Other", 12, nrow(diet_table_detail), latex_gap_space = "0em") %>% 
+  add_indent(c(1, 2, 8:9, 12:nrow(diet_table_detail))) %>% 
   save_kable(here("tables", "temporal_tables", "diet_comp_table_detailed.pdf"))
 
 ##### SALMON GRAPH - PREY COMP #####
@@ -1659,35 +1674,45 @@ a <- size_season_colors %>%
   scale_x_continuous(limits=c(50, 150))+
   scale_y_continuous(limits=c(0, 15))+
   new_scale_color()+
+  theme_bw()+
+  labs(x="Salmon fork length (mm)", y="Mean prey size (mm)")+
   geom_smooth(method="lm", aes(color=fish_species), show.legend=FALSE)+
   scale_color_manual(values="#516959", name="Species")+
   #guides(color=FALSE)+
   #theme(legend.position = c(0.75, 0.8))
-  theme(legend.position = NULL)
+  theme(legend.position = NULL, panel.grid=element_blank())
+
+#size_season_colors$codes[which(size_season_colors$codes=="JS - Late June/\nEarly July")] <- "JS - Late June / Early July"
 
 b <- size_season_colors %>%
   filter(fish_species=="Pink") %>%
   ggplot(aes(fork_length, length_avg))+
-  geom_jitter(aes(color=codes), size=2, show.legend=FALSE)+
+  geom_jitter(aes(color=codes), size=2, show.legend=FALSE
+              )+
   scale_color_manual(values=c("darkgoldenrod", "#d94801", "darkred", "#016c59", "#542788", "#053061"),
-                     name="Date", guide_legend(order=2))+
+                     name="Date", guide_legend(order=1))+
   #guides(color=FALSE)+
   #guides(fill= guide_legend(override.aes = list(shape=21)))+
   facet_grid(site_id~year)+
   scale_x_continuous(limits=c(50, 150))+
   scale_y_continuous(limits=c(0, 15))+
+  guides(color=NULL)+
   new_scale_color()+
+  theme_bw()+
+  labs(x="Salmon fork length (mm)", y="Mean prey size (mm)")+
   geom_smooth(method="lm", aes(color=fish_species), show.legend=FALSE)+
   scale_color_manual(values="#d294af", name="Species", guide_legend(order=1))+
   #theme(legend.position = c(0.75, 0.8))
-  theme(legend.position = NULL)
-
-
-plot_grid(b, a)
-
-ggsave(here("figs", "temporal_figs", "predator_prey_ratios.png"), width=22, height=13, units = "cm", dpi=400)
+  theme(legend.position = c(0.75, 0.8), 
+        panel.grid=element_blank(),
+        legend.title = element_text(size=6),
+        legend.text=element_text(size=4))
 
 library(cowplot)
+
+plot_grid(a, b, labels = c("A", "B"))
+
+ggsave(here("figs", "temporal_figs", "predator_prey_ratios.png"), width=22, height=13, units = "cm", dpi=400)
 
 ggarrange
   
@@ -1928,3 +1953,14 @@ ggplot(all_curve_data)+
         legend.text = element_text(size=10), legend.title = element_text(size=12))
 
 ggsave(here("figs", "temporal_figs", "temporal_cum_prey_curves.png"), width=15, height=15, units="cm", dpi=800)
+
+##### PLASTICS #####
+
+plastics <- temporal_diets %>%
+  mutate(weight_corr= weight*1000, # grams to milligrams? * FIX IN RAW DATA LATER ! *
+         gfi=food_weight_corr/weight_corr*100) %>% 
+  filter(prey_group=="Object")
+
+#u5240 glass; u5305 macro; u5273 film; U5413 tag
+
+# figure out freq of occurance; relationship to gfi/empties; rel bio; other stuff?
