@@ -500,3 +500,19 @@ ggsave("full_data_NMDS.png", width=15, height=13, units = "cm", dpi=800)
 
 # next: update color/shape properly (find new color for J07... diff light blue??) then CLUSTER!
 
+
+##### SEA LICE #####
+
+lice_field <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/sealice_field.csv"))
+
+lice_lab <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/sealice_lab_mot.csv"))
+  
+sea_lice <- left_join(lice_field, lice_lab, by="ufn")
+
+lice_study <- left_join(all_salmon_data, sea_lice)
+
+lice_temporal <- left_join(temp_fish_data, sea_lice)
+
+sea_lice_dates <- left_join(sea_lice, fish_lab_survey_data, by="ufn")
+
+# NO SEA LICE DATA FOR 2015 or 2016?! :(
