@@ -503,16 +503,18 @@ ggsave("full_data_NMDS.png", width=15, height=13, units = "cm", dpi=800)
 
 ##### SEA LICE #####
 
-lice_field <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/sealice_field.csv"))
+#lice_field <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/sealice_field.csv"))
+lice_field <- read.csv(url("https://raw.githubusercontent.com/colebrookson/Juv-Pacific-Salmon-Sealice/v1.0/Data/sealice_field.csv"))
 
-lice_lab <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/sealice_lab_mot.csv"))
+#lice_lab <- read.csv(url("https://raw.githubusercontent.com/HakaiInstitute/jsp-data/master/data/sealice_lab_mot.csv"))
+lice_lab <- read.csv(url("https://raw.githubusercontent.com/colebrookson/Juv-Pacific-Salmon-Sealice/v1.0/Data/sealice_lab_fs.csv"))
   
 sea_lice <- left_join(lice_field, lice_lab, by="ufn")
 
-lice_study <- left_join(all_salmon_data, sea_lice)
+lice_study <- left_join(all_salmon_data, lice_lab, by="ufn")
 
-lice_temporal <- left_join(temp_fish_data, sea_lice)
+lice_temporal <- left_join(temp_fish_data, lice_lab, by="ufn")
 
-sea_lice_dates <- left_join(sea_lice, fish_lab_survey_data, by="ufn")
+sea_lice_dates <- left_join(lice_lab, fish_lab_survey_data, by="ufn")
 
 # NO SEA LICE DATA FOR 2015 or 2016?! :(
