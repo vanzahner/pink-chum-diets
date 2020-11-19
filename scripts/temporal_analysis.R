@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified november 4, 2020
+#last modified november 18, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -359,7 +359,8 @@ temp_diet_groups <- temp_diet_sum %>%
   mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea" & taxa_info!="Cancer_oregonensis",
                   if_else(life_stage=="Object" | life_stage=="Detritus", "",
                   if_else(class=="Arachnida" | class=="Insecta" | class=="Actinopterygii", class,
-                  if_else(genus=="Monstrilla" | order=="Mysida", subclass,
+                  if_else(genus=="Monstrilla" | order=="Mysida", 
+                          subclass,
                   if_else(genus=="Candacia" | genus=="Paraeuchaeta" | genus=="Eurytemora" | genus=="Microcalanus" |
                           genus=="Epilabidocera" | genus=="Oncaea" | order=="Harpacticoida" | genus=="Primno", order,
                   if_else(suborder=="Senticaudata" & infraorder!= "Corophiida", suborder,
@@ -384,6 +385,8 @@ temp_diet_groups <- temp_diet_sum %>%
   ungroup %>% 
   select(prey_info, prey_new)
 #update any prey groups that occur in less than three fish stomachs!
+# EXCEPT FOR MYSIDS because they're in two stomachs but with > 20% rel bio! (therefore important)
+# ^ nvm, that info is still retained in the group summaries (confusing but whatever I guess...)
 
 for (n in temp_diet_groups$prey_info) {
   temp_diet_copy$prey_info[which(temp_diet_copy$prey_info %in% n)] <- temp_diet_groups$prey_new[which(temp_diet_groups$prey_info == n)]
@@ -1373,6 +1376,52 @@ temp_matrix_anosim <- data.frame(ufn=ufn_names_nmds, site=as.numeric(site_names_
 #Factor fish
 #R:	0.43452
 #p(same):	0.0001
+
+temp_diet_wide_simper <- select(temp_diet_wide_nmds, -c(Detritus, Digested_food_worms, Crustacea, Parasite, Coscinodiscophycidae))
+
+pink_diet_wide <- temp_diet_wide_simper %>%
+  filter(fish_species=="Pink")
+
+site_names_pink <- pink_diet_wide$site_id
+ufn_names_pink <- pink_diet_wide$ufn
+
+temp_diet_matrix_pink <- pink_diet_wide %>%
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method="total")
+
+temp_diet_rel_bio_pink <- cbind(ufn_names_pink, temp_diet_matrix_pink)
+
+matrixP<-as.matrix(temp_diet_rel_bio_pink)
+row.names(matrixP) <- matrixP[,1]
+temp_pink_matrix <- matrixP[,-1]
+class(temp_pink_matrix)<-"numeric"
+temp_trans_pink <- asin(sqrt(temp_pink_matrix))
+
+simper_pink <- simper(temp_trans_pink, site_names_pink)
+pink_simper <- summary(simper_pink)
+pink_simper_df <- pink_simper$D07_J07 * 100
+
+chum_diet_wide <- temp_diet_wide_simper %>%
+  filter(fish_species=="Chum")
+
+site_names_chum <- chum_diet_wide$site_id
+ufn_names_chum <- chum_diet_wide$ufn
+
+temp_diet_matrix_chum <- chum_diet_wide %>%
+  select(Acartia:Tortanus_discaudatus) %>% 
+  decostand(method="total")
+
+temp_diet_rel_bio_chum <- cbind(ufn_names_chum, temp_diet_matrix_chum)
+
+matrixC<-as.matrix(temp_diet_rel_bio_chum)
+row.names(matrixC) <- matrixC[,1]
+temp_chum_matrix <- matrixC[,-1]
+class(temp_chum_matrix)<-"numeric"
+temp_trans_chum <- asin(sqrt(temp_chum_matrix))
+
+simper_chum <- simper(temp_trans_chum, site_names_chum)
+chum_simper <- summary(simper_chum)
+chum_simper_df <- chum_simper$D07_J07 * 100
 
 ##### CLUSTER #####
 

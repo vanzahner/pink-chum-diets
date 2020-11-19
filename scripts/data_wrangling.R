@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified october 20, 2020
+#last modified november 18, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -351,6 +351,57 @@ fish_fl_all %>%
   geom_bar(aes(fill=species), stat="identity", position="dodge")+
   scale_fill_manual(values=c("#516959", "#d294af"))+
   facet_wrap(~region, nrow=1)
+
+##### CONDITION #####
+
+fish_field_lab <- left_join(fish_lab_data, fish_field_data, by="ufn")
+
+fish_bio_data <- left_join(fish_field_lab, seine_survey_data)
+
+all_fish_k <- mutate(fish_bio_data, k=((100000*weight)/(fork_length^3)), region=str_sub(site_id, start=1, end=1))
+
+all_fish_k %>%
+  filter(species=="PI" | species=="CU") %>%
+  #filter(site_id=="D07" | site_id=="J07") %>% 
+  ggplot()+
+  geom_boxplot(aes(species, k, color=year))+
+  facet_wrap(~region)
+
+library(ggpubr)
+library(rstatix)
+
+k_df <- all_fish_k %>%
+  filter(is.na(k)!=TRUE & (species=="PI" | species=="CU") & yday<191)
+
+k_df %>% 
+  group_by(year, region, species) %>%
+  get_summary_stats(k)
+
+outlier_vals <- k_df %>%
+  select(ufn, year, region, species, k) %>% 
+  filter(is.na(k)!=TRUE & (species=="PI" | species=="CU")) %>% 
+  group_by(year, region, species) %>%
+  identify_outliers(k)
+
+no_outliers <- anti_join(k_df, outlier_vals)
+
+model  <- lm(k ~ year*region*species, data = filter(no_outliers, year=="2015" | year=="2016"))
+# Create a QQ plot of residuals
+ggqqplot(residuals(model))
+# Compute Shapiro-Wilk test of normality
+shapiro_test(residuals(model))
+
+k_df %>%
+  group_by(year, region, species) %>%
+  shapiro_test(k) %>%
+  filter(p<0.05)
+
+ggqqplot(k_df, "k", ggtheme = theme_bw()) +
+  facet_grid(year + region ~ species, labeller = "label_both")
+
+k_df %>% levene_test(k ~ year*region*species)
+
+# looks like this data don't meet the assumptions ... don't even bother? look into this tomorrow.
 
 ##### ALL DATA #####
 
