@@ -9,6 +9,8 @@ The code and figures for this project can be found here: https://github.com/vanz
 
 Please contact `vanzahner@gmail.com` for any questions or collaborations regarding the data. Haw'aa!
 
+<img src="https://raw.githubusercontent.com/vanzahner/pink-chum-diets/master/figs/map/full_map.png">
+
 ## Research Abstract
 
 "Strategies for coexisting: Juvenile pink and chum salmon diets and interactions in a challenging section of coastal migration"
