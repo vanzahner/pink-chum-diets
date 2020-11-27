@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified november 18, 2020
+#last modified november 24, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -182,6 +182,7 @@ updated_diet_data <- diet_data %>%
                              paste(taxa_info, life_stage, sep="_"))) %>%
   filter(prey_info!="Goop") #delete stomach goop, it's not a prey item
 #use taxonomic columns to get a final prey column of taxa + life stage
+# I shouldn't have put non-food item info into the genus column I'm now realizing...
 
 # Join together salmon data files:
 
@@ -225,8 +226,19 @@ all_fish_calc <- all_fish_totals %>%
   gather(key="species", value ="cpue", so:ck) %>% 
   group_by(seine_id, site_id, year, yday, survey_date, species) %>%
   filter(is.na(cpue)!=TRUE & yday<191
-         #& site_id %in% c("D07", "D09", "D11", "J07", "J08", "J06", "J02")
-         ) %>% # cut it off at july 7th (johnson etal 2019) 
+         & site_id %in% c("D07",
+                          "D09",
+                          "D22",
+                          "D27",
+                          "D10",
+                          "D08",
+                          "D34",
+                          "D20",
+                          "J03",
+                          "J02",
+                          "J09",
+                          "J11")
+         ) %>% # cut it off at july 7th (johnson etal 2019) and use comparable site!s
   summarise(cpue=sum(cpue)) %>%
   arrange(year, species, yday) %>%
   mutate(region=str_sub(site_id, start = 1, end=1))
@@ -265,6 +277,7 @@ cum_sum_data %>%
   geom_line(aes(yday, rel_cum_cpue, color=year))+
   facet_grid(region~species)
 
+# table we're working with for mean dates (DI and JS separate. overall=mid-way poitn?):
 final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species", "region"
                                                                            )) %>%
   filter(cum_cpue>=peak) %>%
@@ -277,6 +290,7 @@ ave_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year",
   filter(cum_cpue>=peak) %>%
   group_by(species) %>%
   summarise(yday=first(yday))
+#need to make more readable to be a table in thesis. but this is good now.
 
 ave_fish_dates <- final_fish_dates %>%
   group_by(species) %>%
@@ -312,6 +326,8 @@ p + geom_vline(mean_dates, aes(xintercept=yday, group=interaction(species, year)
 
 #specifically, pi2015 = june 24, pi2016 = june 16, piave= 170.6/june 19,
 # and cu2015 = june 9, cu2016 = june 11, cuave = 168.2/june 17
+
+
 
 ##### SIZES #####
 
@@ -399,18 +415,35 @@ k_df %>%
 ggqqplot(k_df, "k", ggtheme = theme_bw()) +
   facet_grid(year + region ~ species, labeller = "label_both")
 
-k_df %>% levene_test(k ~ year*region*species)
+k_trans <- k_df %>%
+  mutate(reck=1/k)
+
+k_trans %>% levene_test(reck ~ year*region*species)
 
 # looks like this data don't meet the assumptions ... don't even bother? look into this tomorrow.
+
+res.aov <- k_df %>% anova_test(k ~ year*region*species)
+res.aov # significant interaction between year and sp? (no three way with yr*sp*site)
+
+model  <- lm(k ~ year*region*species, data = k_df)
+k_df %>%
+  filter(year=="2015" | year=="2016") %>% 
+  group_by(species) %>%
+  anova_test(k ~ year*region, error = model)
+# region is NOT sig. for chum only. but region*year=sig for both sp. (all years)
+# 2015+2016 only: year=sig both sp! region is sig only for pi. NO sig year*reg interaction.
+#if ignore sp then year and year*reg = sig. but region alone is not sig.
+
+#check for only my fish now
 
 ##### ALL DATA #####
 
 all_diet_copy <- all_salmon_data
-
-# Merge rare (< 3 stom.) taxonomic groups to higher prey levels:
+# make a copy before reassigning rare (<3) taxa
 
 all_diet_data <- all_diet_copy %>%
-  filter(prey_info!="Digested_food") %>% 
+  filter(prey_info!="Digested_food" & prey_info!="Digested_food_worms" & prey_info!="Detritus" & prey_info!="Pellet_Detritus"
+  ) %>% 
   group_by(ufn, fish_species, site_id, taxa_info, prey_info,
            kingdom, phylum, subphylum, class, subclass, order, suborder, infraorder, family, genus, species, life_stage) %>%
   summarise(biomass=sum(prey_weight_corr))
@@ -424,26 +457,47 @@ all_diet_sum <- all_diet_data %>%
   arrange(n)
 #calculate how many stomachs each prey group appears in
 
-# reassign any less than 3 stomach taxa
+all_diet_taxa <- all_salmon_data
+# make a copy for full taxa details (with fonts and spp. etc.)
+
+full_taxa_details <- all_diet_data %>%
+  mutate(taxa_new=if_else(species=="" & (genus=="Oithona" | genus=="Pinnixa" | genus=="Zaus" | genus=="Cancer" |
+                          genus=="Pugettia" | genus=="Pinnotheres" | genus=="Hemigrapsus"),
+                          paste("\\emph{", genus, "_}", "sp.", sep = ""), # taxa where occurence = 1
+                  if_else(genus!="" & life_stage!="Object" & species=="", paste("\\emph{", genus, "_}", "spp.", sep = ""),
+                  if_else(species=="bellus_bellus", "Lophopanopeus_bellus",
+                  if_else(species!="", paste("\\emph{", genus, "_", species, "}", sep = ""),
+                          taxa_info)))),
+         life_stage_new=if_else(life_stage=="Object", "", life_stage),
+         Taxa=if_else(life_stage_new=="", taxa_new,
+                  if_else(taxa_new=="", life_stage_new, 
+                          paste(taxa_new, life_stage_new, sep="_"))))
+# assign font for italisizing genus/species and add appropriate sp. or spp. and etc. etc.
+
+# Merge rare (< 3 stom.) taxonomic groups to higher prey levels:
 
 all_diet_groups <- all_diet_sum %>%
   #filter(taxa_info!="Detritus") %>% 
-  mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea", 
+  mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea" & genus!="Epilabidocera" & genus!="Alienacanthomysis", 
                   if_else(life_stage=="Object" | life_stage=="Detritus", "",
                   if_else(class=="Insecta" | class=="Arachnida" | class=="Actinopterygii", class,
-                  if_else(genus=="Monstrilla" | order=="Mysida", subclass,
+                  #if_else(genus=="Monstrilla" | order=="Mysida", subclass,
                   if_else(genus=="Candacia" | genus=="Oithona" | order=="Harpacticoida" | genus=="Primno", order,
                   if_else(genus=="Eualus" | family=="Paguridae", infraorder,
                   if_else(family=="Oncaeidae" | family=="Corophiidae" | family=="Pinnotheridae" | genus=="Nematoscelis", family,
                   if_else(family=="Caligidae", "Parasites",
-                  if_else(species!="", genus,
+                  if_else(genus=="Lophopanopeus", "Lophopanopeus_bellus",
+                  if_else(species!="", paste("\\emph{", genus, "_", "}", "spp.", sep=""),
                   taxa_info)))))))),
                   if_else(phylum=="Echinodermata", phylum,
                   if_else(family=="Calanidae" & life_stage=="Nauplii", order,
                   if_else(class=="Arachnida", class,
-                  if_else(genus=="Neocalanus", genus,
+                  if_else(genus=="Neocalanus", paste("\\emph{", genus, "_", "}", "spp.", sep=""),
                   if_else(phylum=="Nematoda" | class=="Trematoda", "Parasites",
-                  taxa_info)))))),
+                  if_else(species=="" & genus!="" & life_stage!="Object", paste("\\emph{", genus, "_", "}", "spp.", sep=""),
+                  if_else(genus=="Neotrypaea" | genus=="Epilabidocera" | genus=="Alienacanthomysis", paste("\\emph{", genus,"_", species, "}", sep=""),
+                  if_else(species!="" & genus!="", paste("\\emph{", genus,"_", species, "}", sep=""),
+                  taxa_info))))))))) ,
          life_stage_new=if_else(str_detect(life_stage, "Zoea") | life_stage=="Megalopa" |
                                 order=="Decapoda" & life_stage=="Juvenile", "Larvae", 
                         if_else(str_detect(life_stage, "Copepodite"), "Copepodite",
@@ -476,9 +530,35 @@ all_diet_filtered <- all_diet_check %>%
 #calculate how many stomachs each prey group appears in (none <3!)
 #reduced number of taxa from 176 to 112, a lot more manageable now!
 
+#all_diet_intermediate <- all_diet_copy %>%
+all_diet_intermediate <- full_taxa_details %>%
+  #filter(order!="Cumacea" & class!="Ostracoda") %>% #filter out <0.1% rel. biomass prey groups
+  mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Echinodermata" | #phylum=="Mollusca" |
+                            phylum=="Bryozoa" | phylum=="Ochrophyta", phylum,
+                    if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" |
+                              class=="Bivalvia" | class=="Ostracoda", class,
+                    if_else(order=="Decapoda" | order=="Mysida" | order=="Amphipoda" | order=="Cumacea"|
+                            order=="Isopoda" | order=="Harpacticoida" | order=="Cyclopoida" |
+                              order=="Pteropoda" | order=="Calanoida", order,
+                    if_else(suborder=="Balanomorpha", suborder,
+                    if_else(family=="Euphausiidae" & life_stage=="", family,
+                    if_else(family=="Euphausiidae" & life_stage=="Egg", "Euphausiidae Eggs",
+                    if_else(family=="Euphausiidae" & (life_stage=="Furcilia" | life_stage=="Calyptopis" | life_stage=="Nauplii"), "Euphausiidae Larvae",
+                    if_else(family=="Podonidae", "Cladocera",
+                    if_else(genus=="Monstrilla", "Montrilloida",
+                    if_else(class=="Insecta" | class=="Arachnida", class, #"Insecta_Arachnida",
+                    if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Cnidaria_Ctenophora",
+                    if_else(prey_info=="Copepoda", "Crustacea",
+                    if_else(life_stage=="Object", life_stage,
+                            prey_info))))))))))))))
+
+taxa_group_data <- unique(select(all_diet_intermediate, prey_group, Taxa))
+
+full_taxa_groups <- left_join(full_taxa_details, taxa_group_data)
+
 # then wide data --> transform --> matrix --> NMDS / etc. (or clustering even... busy tho.)
 
-all_diet_wide <- all_diet_copy %>%
+all_diet_wide <- all_diet_intermediate %>%
   filter(food_weight_corr!=0 & !ufn %in% c("U2627", "U5285") & #not sure why that one is so erronous... hmm.
          !prey_info %in% c("Coscinodiscophycidae", "Digested_food", "Object", "Parasites", "Detritus")) %>% 
   select(ufn, site_id, survey_date, year, fish_species, prey_info, prey_weight_corr) %>%
@@ -490,7 +570,7 @@ all_diet_info <- select(all_diet_wide, ufn:fish_species)
 
 all_diet_matrix <- all_diet_wide %>%
   ungroup() %>% 
-  select(Acartia:Tortanus_discaudatus) %>%
+  select(`\\emph{Acartia_}spp.`:`Spionidae_Nectochaete`) %>%
   decostand("total")
 
 all_diet_trans <- asin(sqrt(all_diet_matrix))
@@ -546,11 +626,56 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
 
 a
 
-ggsave("full_data_NMDS.png", width=15, height=13, units = "cm", dpi=800)
+#ggsave("full_data_NMDS.png", width=15, height=13, units = "cm", dpi=800)
 # nmds comes out slightly differently everytime unlike other graphs. save once then forget it!
 
 # next: update color/shape properly (find new color for J07... diff light blue??) then CLUSTER!
 
+# freq of occur (to list taxa in appendix):
+
+pa_diet_data <- all_diet_wide %>%
+  ungroup() %>% 
+  select(`\\emph{Acartia_}spp.`:`Spionidae_Nectochaete`) %>%
+  decostand("pa") %>%
+  mutate(fish_species=all_diet_info$fish_species)
+
+freq_occur_all_samples <- pa_diet_data %>% 
+  group_by(fish_species) %>%
+  mutate(n=n()) %>%
+  group_by(fish_species, n) %>%
+  summarise_at(vars(`\\emph{Acartia_}spp.`:`Spionidae_Nectochaete`), sum)
+
+freq_occur_matrix_all <- freq_occur_all_samples %>%
+  ungroup() %>%
+  select(-c(fish_species))
+
+#freq_occur_samples$n <- as.numeric(freq_occur_samples$n)
+
+freq_occur_nums_all <- freq_occur_matrix_all/freq_occur_matrix_all$n*100
+#expressed as a percent rather than decimals
+#freq occur for all taxa, sites and species (temporal)
+
+freq_occur_data_all <- cbind(fish_species=freq_occur_all_samples$fish_species,
+                             freq_occur_nums_all)
+
+freq_occur_long_data_all <- freq_occur_data_all %>%
+  gather(key="Taxa", value="Occur", `\\emph{Acartia_}spp.`:`Spionidae_Nectochaete`) %>%
+  group_by(Taxa) %>%
+  arrange(desc(Occur), Taxa, by_group=TRUE) %>%
+  select(-n) %>%
+  spread(key=fish_species, value=Occur)
+
+freq_occur_full <- left_join(freq_occur_long_data_all, taxa_group_data)
+
+freq_occur_full$Taxa <- gsub("_", " ", freq_occur_full$Taxa)
+
+list_of_taxa_table <- freq_occur_full %>%
+  filter(!Taxa %in% c("\\emph{Detritus }spp.", "\\emph{Digested food worms }spp."))
+
+list_of_taxa_table$Taxa[which(list_of_taxa_table$Taxa=="Microplastic fiber Object")] <- "Microplastic fiber"
+list_of_taxa_table$Taxa[which(list_of_taxa_table$Taxa=="Microplastic chunk Object")] <- "Microplastic chunk"
+
+# 
 
 ##### SEA LICE #####
 
