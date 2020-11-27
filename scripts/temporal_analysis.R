@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified november 18, 2020
+#last modified november 24, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -26,6 +26,8 @@ library(formattable)
 #for creating nice tables
 library(ggnewscale)
 #multiple color schemes on graphs
+library(ggridges)
+#density plots for FL
 
 ##### ENVR + ZOOP + SALMON DATA - READ IN #####
 
@@ -332,6 +334,7 @@ kable(zoop_comp_table, "latex", booktabs=TRUE, escape = FALSE, align = c("r"), l
   add_header_above(c(" "=1, "Discovery Islands (D07)"=7, "Johnstone Strait (J07)"=6)) %>%
   pack_rows("Calanoida", 1, 2) %>% 
   pack_rows("Gelatinous", 8, 8) %>% 
+  cell_spec(2, color="red") %>% 
   pack_rows("Other", 11, nrow(zoop_comp_table)) %>% 
   add_indent(c(1, 2, 8, 11:nrow(zoop_comp_table))) %>% 
   save_kable(here("tables", "temporal_tables", "zoop_relA_table.pdf"))
@@ -356,10 +359,10 @@ temp_diet_sum <- temp_diet_data %>%
 #calculate how many stomachs each prey group appears in
 
 temp_diet_groups <- temp_diet_sum %>%
-  mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea" & taxa_info!="Cancer_oregonensis",
+  mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea" & taxa_info!="Cancer_oregonensis" & genus!="Alienacanthomysis" & genus=="Ammodytes",
                   if_else(life_stage=="Object" | life_stage=="Detritus", "",
                   if_else(class=="Arachnida" | class=="Insecta" | class=="Actinopterygii", class,
-                  if_else(genus=="Monstrilla" | order=="Mysida", 
+                  if_else(genus=="Monstrilla", # | order=="Mysida", 
                           subclass,
                   if_else(genus=="Candacia" | genus=="Paraeuchaeta" | genus=="Eurytemora" | genus=="Microcalanus" |
                           genus=="Epilabidocera" | genus=="Oncaea" | order=="Harpacticoida" | genus=="Primno", order,
@@ -377,7 +380,8 @@ temp_diet_groups <- temp_diet_sum %>%
                         if_else(str_detect(life_stage, "Copepodite"), "Copepodite",
                         if_else(phylum=="Echinodermata", "Larvae",
                         if_else(prey_info=="Senticaudata_Juvenile" | prey_info=="Calanoida_Egg" |
-                                class=="Actinopterygii" & life_stage!="Egg" | order=="Isopoda" | taxa_info=="Eumalacostraca", "",
+                                class=="Actinopterygii" & life_stage!="Egg" | order=="Isopoda", #| taxa_info=="Eumalacostraca",
+                                "",
                                 life_stage)))),
          prey_new=if_else(life_stage_new=="", taxa_new,
                   if_else(taxa_new=="", life_stage_new, 
@@ -443,7 +447,8 @@ temp_diet_info <-temp_diet_wide %>%
 #create dataframe with UFNs, site and species for reattaching to matrices
 
 temp_diet_matrix <- temp_diet_wide %>%
-  select(Actinopterygii:`Small (<2mm)`, -c(Detritus, Digested_food_worms, Crustacea, Eumalacostraca, Parasite, Ochrophyta)) %>% 
+  select(Actinopterygii:`Small (<2mm)`, -c(Detritus, Digested_food_worms, Crustacea,
+                                           Eumalacostraca, Parasite, Ochrophyta)) %>% 
   decostand(method="total")
 #matrix to calculation relative biomass of 25 different prey groups
 
@@ -897,6 +902,80 @@ temp_stomachs %>%
 
 # maybe later: divide into small and large halfs according to each sample event and species
 ##### SALMON GRAPH - CONDITION #####
+
+temporalk
+
+library(ggpubr)
+library(rstatix)
+
+k_df <- temporalk %>%
+  filter(is.na(k)!=TRUE)
+
+k_df %>% 
+  group_by(year, site_id, fish_species) %>%
+  get_summary_stats(k)
+
+outlier_vals <- k_df %>%
+  select(ufn, year, site_id, fish_species, k) %>% 
+  group_by(year, site_id, fish_species) %>%
+  identify_outliers(k)
+
+no_outliers <- anti_join(k_df, outlier_vals)
+
+model  <- lm(k ~ year*site_id*fish_species, data = filter(no_outliers, year=="2015" | year=="2016"))
+# Create a QQ plot of residuals
+ggqqplot(residuals(model))
+# Compute Shapiro-Wilk test of normality
+shapiro_test(residuals(model))
+
+k_df %>%
+  group_by(year, site_id, fish_species) %>%
+  shapiro_test(k) 
+#pink d07 2016 sig = non normal (but rest are good!)
+
+ggqqplot(k_df, "k", ggtheme = theme_bw()) +
+  facet_grid(year + site_id ~ fish_species, labeller = "label_both")
+
+k_df$year <- as.character(k_df$year)
+
+k_trans <- k_df %>%
+  mutate(logk=log(k))
+
+k_trans <- k_df %>%
+  mutate(reck=1/k)
+
+k_trans %>% levene_test(reck ~ year*site_id*fish_species)
+
+#k_df %>% levene_test(k ~ year*site_id)
+
+# do NOT have homogeneity of variance... hmm. does this mean I can't do it?
+# try log transforming the data?? then check assumptions then do the ANOVA.
+# log transforming doesn't help (still sig), but getting rid of sp. helps!
+# reciprocal worked tho!
+
+res.aov <- k_trans %>% anova_test(reck ~ year*site_id*fish_species)
+res.aov # year is sig; sp is sig; year AND sp is sig. region is not sig in any regard!
+# update = year is sig, site is not and interaction is not
+summary(res.aov)
+
+model  <- lm(reck ~ year*site_id*fish_species, data = k_trans)
+k_trans %>%
+  group_by(year) %>%
+  anova_test(reck ~ fish_species*site_id, error = model)
+# only year is sig (when separating species or ignoring sp all together), site ain't sig
+# note: when grouping by year, species is only significant in 2016 (pink seems way lower)
+
+model  <- lm(reck ~ year*site_id*fish_species, data = k_trans)
+k_trans %>%
+  group_by(fish_species) %>%
+  anova_test(reck ~ year*site_id, error = model)
+# do i have a sig two way interaction?
+
+bxp <- ggboxplot(
+  k_df, x = "site_id", y = "k", 
+  color = "year", palette = "jco", facet.by = "fish_species"
+)
+bxp
 
 temporalk$survey_date[which(temporalk$survey_date=="2015-06-07")] <- "2015-06-04"
 #change for better plotting (so pink comes before chum)
@@ -1377,6 +1456,8 @@ temp_matrix_anosim <- data.frame(ufn=ufn_names_nmds, site=as.numeric(site_names_
 #R:	0.43452
 #p(same):	0.0001
 
+# PINK SIMPER CALC / TABLE
+
 temp_diet_wide_simper <- select(temp_diet_wide_nmds, -c(Detritus, Digested_food_worms, Crustacea, Parasite, Coscinodiscophycidae))
 
 pink_diet_wide <- temp_diet_wide_simper %>%
@@ -1401,6 +1482,40 @@ simper_pink <- simper(temp_trans_pink, site_names_pink)
 pink_simper <- summary(simper_pink)
 pink_simper_df <- pink_simper$D07_J07 * 100
 
+rel_bio_percent_pink <- cbind(ufn=ufn_names_pink, site_id=site_names_pink, temp_diet_matrix_pink*100)
+
+ave_bio_region_pink <- rel_bio_percent_pink %>%
+  gather(key="Taxa", value="Bio", Acartia:Tortanus_discaudatus) %>%
+  group_by(site_id, Taxa) %>%
+  summarise(mean_rel_bio=round(mean(Bio), digits=2)) %>%
+  spread(key=site_id, value=mean_rel_bio, fill=0)
+
+simper_pink_summary <- round(pink_simper_df, digits=2) %>%
+  mutate(Taxa=rownames(pink_simper_df)) %>%
+  select(Taxa, Average=average, Sum=cumsum) %>%
+  filter(Sum<71)
+
+simper_table_pink <- left_join(simper_pink_summary, ave_bio_region_pink)
+
+simper_table_pink$Taxa <- c("\\emph{Calanus marshallae}", "\\emph{Oikopleura} spp.", "Calanoida",              
+                                 "\\emph{Calanus pacificus}", "Nauplii", "Eggs",        
+                                 "\\emph{Aetideus divergens}", "Brachyura Larvae", "Larvae",     
+                                 "\\emph{Calanus} spp.", "\\emph{Pseudocalanus} spp.", "Podonidae",
+                            "\\emph{Balanus crenatus} Cyprid", "\\emph{Epilabidocera longipedata}", "\\emph{Balanus glandula} Cyprid",  
+                                 "Furcilia", "\\emph{Pseudevadne tergestina}", "Sagittoidea")
+
+simper_table_pink_full <- simper_table_pink %>%
+  mutate(Groups=c("Calanoida","Appendicularia","Calanoida","Calanoida","Balanomorpha",
+                  "Euphausiidae","Calanoida","Decapoda","Echinodermata","Calanoida",
+                  "Calanoida","Cladocera","Balanomorpha","Calanoida","Balanomorpha",
+                  "Euphausiidae","Cladocera","Chaetognatha")) %>% 
+  select(Groups, Taxa, DI=D07, JS=J07, Average, Sum)
+
+kable(simper_table_pink_full, "latex", booktabs=TRUE, linesep="", escape = FALSE) %>%
+  save_kable(here("tables", "temporal_tables", "simper_pink.pdf"))
+
+# CHUM SIMPER CALC / TABLE
+
 chum_diet_wide <- temp_diet_wide_simper %>%
   filter(fish_species=="Chum")
 
@@ -1423,19 +1538,45 @@ simper_chum <- simper(temp_trans_chum, site_names_chum)
 chum_simper <- summary(simper_chum)
 chum_simper_df <- chum_simper$D07_J07 * 100
 
+rel_bio_percent_chum <- cbind(ufn=ufn_names_chum, site_id=site_names_chum, temp_diet_matrix_chum*100)
+
+ave_bio_region_chum <- rel_bio_percent_chum %>%
+  gather(key="Taxa", value="Bio", Acartia:Tortanus_discaudatus) %>%
+  group_by(site_id, Taxa) %>%
+  summarise(mean_rel_bio=round(mean(Bio), digits=2)) %>%
+  spread(key=site_id, value=mean_rel_bio, fill=0)
+
+simper_chum_summary <- round(chum_simper_df, digits=2) %>%
+  mutate(Taxa=rownames(chum_simper_df)) %>%
+  select(Taxa, Average=average, Sum=cumsum) %>%
+  filter(Sum<73)
+
+simper_table_chum <- left_join(simper_chum_summary, ave_bio_region_chum)
+
+simper_table_chum$Taxa <- c("Cnidaria", "\\emph{Oikopleura} spp.", "\\emph{Calanus marshallae}",
+                            "Ctenophora", "Eggs", "\\emph{Eukrohnia hamata}")
+
+simper_table_chum_full <- simper_table_chum %>%
+  mutate(Groups=c("Gelatinous","Appendicularia","Calanoida","Gelatinous",
+                  "Euphausiidae", "Chaetognatha")) %>% 
+  select(Groups, Taxa, DI=D07, JS=J07, Average, Sum)
+
+kable(simper_table_chum_full, "latex", booktabs=TRUE, linesep="", escape = FALSE) %>%
+  save_kable(here("tables", "temporal_tables", "simper_chum.pdf"))
+
 ##### CLUSTER #####
 
 Bray_Curtis_Dissimilarity <- vegdist(temp_trans_nmds, method = "bray")
 bcclust <- hclust(Bray_Curtis_Dissimilarity, method = "average")
 #make dendrogram data (heirarchical clustering by average linkages method)
 
-num_clust <- simprof(temp_trans_nmds, method.cluster = "average", method.distance = "actual-braycurtis", num.expected = 100, num.simulated = 99)
+#num_clust <- simprof(temp_trans_nmds, method.cluster = "average", method.distance = "actual-braycurtis", num.expected = 100, num.simulated = 99)
 
-simprof.plot(num_clust)
+#simprof.plot(num_clust)
 
-summary(num_clust)
+#summary(num_clust)
 
-#clust <- cutree(bcclust, k = 5)               # find 'cut' clusters
+clust <- cutree(bcclust, k = 5)               # find 'cut' clusters
 #clust.df <- data.frame(label = names(clust), cluster = clust)
 #colnames(clust.df) <- c("ufn", "cluster")
 
@@ -1662,6 +1803,53 @@ freq_occur_long_data <- freq_occur_data %>%
   group_by(Taxa) %>%
   arrange(desc(Occur), Taxa, by_group=TRUE)
 
+# do for all samples (as a way to list taxa. if appendix - add spatial...?)
+
+freq_occur_all_samples <- pa_diet_data %>% 
+  group_by(fish_species, site_id) %>%
+  mutate(n=n()) %>%
+  group_by(fish_species, site_id, n) %>%
+  summarise_at(vars(Acartia:Tortanus_discaudatus), sum)
+
+freq_occur_matrix_all <- freq_occur_all_samples %>%
+  ungroup() %>%
+  select(-c(fish_species, site_id))
+
+freq_occur_info <- select(freq_occur_all_samples, site_id, fish_species)
+
+#freq_occur_samples$n <- as.numeric(freq_occur_samples$n)
+
+freq_occur_nums_all <- freq_occur_matrix_all/freq_occur_matrix_all$n*100
+#expressed as a percent rather than decimals
+#freq occur for all taxa, sites and species (temporal)
+
+freq_occur_data_all <- cbind(freq_occur_info,
+                             freq_occur_nums_all)
+
+freq_occur_long_data_all <- freq_occur_data_all %>%
+  gather(key="Taxa", value="Occur", Acartia:Tortanus_discaudatus) %>%
+  group_by(Taxa) %>%
+  arrange(desc(Occur), Taxa, by_group=TRUE) %>%
+  mutate(fish_site=paste(fish_species, site_id, sep="_")) %>% 
+  select(-c(n, fish_species, site_id)) %>%
+  spread(key=fish_site, value=Occur, fill=0)
+
+prey_taxa <- unique(select(temp_diet_intermediate, genus, species, prey_group, Taxa=prey_info))
+
+freq_taxa <- left_join(freq_occur_long_data_all, prey_taxa)
+
+freq_taxa$prey_group[which(freq_taxa$prey_group=="Small (<2mm)")] <- "Calanoids"
+freq_taxa$prey_group[which(freq_taxa$prey_group=="Large (>2mm)")] <- "Calanoids"
+
+no_duplicates <- unique(freq_taxa)
+
+freq_taxa_table <- no_duplicates %>%
+  filter(!prey_group %in% c("Crustacea", "Digested_food_worms", "Detritus", "Empty", "Ochrophyta",
+                      "Parasite", "Eumalacostraca_Larvae")) %>% 
+  select(Group=prey_group, Taxa, Pink_D07, Pink_J07, Chum_D07, Chum_J07)
+  
+freq_taxa_table$Taxa <- gsub("_", " ", freq_taxa_table$Taxa)
+
 ##### SIZE #####
 
 # want to look at fish size versus average (DS1) prey size
@@ -1689,7 +1877,7 @@ size_levels=c("<1", "1 to 2", "2 to 5", "5 to 10", ">10")
 temporal_diets$size_class <- factor(temporal_diets$size_class, levels=size_levels)
 
 size_data <- temporal_diets %>%
-  filter(length_avg>0, digestion_state==1, length_avg<20
+  filter(length_avg>0, digestion_state==1#, length_avg<20
          #fish_species=="Chum"
          #site_id=="J07"
          ) %>% 
@@ -1787,9 +1975,12 @@ size_percent <- size_matrix*100
 
 #size_info <- select(size_comp_long, ufn, site_id, survey_date, fish_species, year)
 
-diet_size_biomass_ave <- size_percent %>%
+diet_size_biomass <- size_percent %>%
   mutate(Species=size_comp_wide$fish_species, Site=size_comp_wide$site_id,
-         Date=size_comp_wide$survey_date, Year=size_comp_wide$year) %>%
+         Date=size_comp_wide$survey_date, Year=size_comp_wide$year,
+         ufn=size_comp_wide$ufn)
+
+diet_size_biomass_ave <- diet_size_biomass %>%
   group_by(Species, Site, Date, Year, .drop = FALSE) %>% 
   gather("Size", "Biomass", `<1`:`>10`) %>%
   group_by(Species, Site, Date, Year, Size) %>% 
@@ -1837,6 +2028,57 @@ ggsave(here("figs", "temporal_figs", "temporal_size_comp.png"))
 # averaging by stomach doesn't work either since it depends on how many big/small prey groups...
 
 # CALCUL:ATE A BARGRAPH OF REL BIO OF DIETS BY SIZE CLASS
+
+length_histo_picu <- read_csv(here("processed", "all_years_lengths.csv"))
+
+length_study_fish <- temp_stomachs %>% 
+  filter(is.na(fork_length)!=TRUE) %>% 
+  ungroup() %>% 
+  select(species=fish_species, fork_length, year) %>%
+  mutate(code="B")
+
+length_study_fish$species <- as.character(length_study_fish$species)
+length_study_fish$species[which(length_study_fish$species=="Pink")] <- "PI"
+length_study_fish$species[which(length_study_fish$species=="Chum")] <- "CU"
+length_study_fish$species <- length_study_fish$species %>% 
+  fct_relevel("PI", "CU")
+
+length_histo_picu$species <- length_histo_picu$species %>% 
+  fct_relevel("PI", "CU")
+
+length_all_fish <- length_histo_picu %>%
+  select(species, fork_length, year) %>% 
+  mutate(code="A")
+
+combined_fl_data <- rbind(length_all_fish, length_study_fish)
+
+ggplot(combined_fl_data, aes(fork_length, y = (factor(year))), fill = "grey") +
+  geom_density_ridges(color='black', scale = 3, alpha = 0.5,
+                      aes(x=fork_length, y=factor(year), fill=species))+
+  xlab("Fork Length (mm)") +
+  facet_grid(species ~ code#, labeller = labeller(region = spp_labels, species = spp_labels)
+             ) +
+  ylab("Year") +
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  #  scale_fill_hakai() +
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 2.8))) +
+  coord_cartesian(xlim = c(60, 160)) +
+  guides(fill = FALSE) +
+  ggtitle("Fork Length Frequency Distributions")
+ggsave(here("figs", "lengths.png"), width = 8, height = 6)
+
+ggplot(temp_stomachs, aes(fork_length, y=(factor(year)), fill=fish_species))+
+  geom_density_ridges(color="black", scale=3, alpha=1)+
+  xlab("Fork Length (mm)") +
+  facet_grid(fish_species ~ .#, labeller = labeller(region = spp_labels, species = spp_labels)
+             ) +
+  ylab("Year") +
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  #  scale_fill_hakai() +
+  scale_y_discrete(expand = expand_scale(add = c(0.2, 2.8))) +
+  coord_cartesian(xlim = c(60, 160)) +
+  guides(fill = FALSE) +
+  ggtitle("Fork Length Frequency Distributions")
 
 ##### INDVAL #####
 
