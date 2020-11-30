@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified november 24, 2020
+#last modified november 29, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -278,13 +278,32 @@ cum_sum_data %>%
   facet_grid(region~species)
 
 # table we're working with for mean dates (DI and JS separate. overall=mid-way poitn?):
-final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species", "region"
+final_fish_dates_regions <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species", "region"
                                                                            )) %>%
   filter(cum_cpue>=peak) %>%
   group_by(year, species, region
            ) %>%
   summarise(survey_date=first(survey_date), yday=first(yday)) %>%
   filter(species=="pi" | species=="cu")
+
+# table we're working with for mean dates (DI and JS separate. overall=mid-way poitn?):
+final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species", "region"
+)) %>%
+  filter(cum_cpue>=peak) %>%
+  group_by(year, species#, region
+  ) %>%
+  summarise(survey_date=first(survey_date), yday=first(yday)) %>%
+  filter(species=="pi" | species=="cu")
+
+final_fish_dates_regions %>%
+  group_by(species, year) %>% 
+  summarise(yday=mean(yday))
+
+final_fish_dates_regions %>%
+  group_by(species) %>% 
+  summarise(yday=mean(yday))
+#june 3 cu and june 6 pi (when ignoring region)
+# juen 14 cu and june 17 pi (when averaging by year AND region!)
 
 ave_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species")) %>%
   filter(cum_cpue>=peak) %>%
@@ -297,6 +316,8 @@ ave_fish_dates <- final_fish_dates %>%
   summarise(yday=mean(yday))
 
 # I finally figured out how to calculate the peak outmigration period! Hooray.
+
+# 165+168 june 14 and june 17 ! (cu and pi respectively) --> both regions amalgamated.
 
 # next step: make an actual table (for appendix??) of peak dates + ave for pink/chum
 

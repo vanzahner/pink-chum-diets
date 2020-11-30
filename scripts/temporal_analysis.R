@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified november 24, 2020
+#last modified november 29, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -953,17 +953,30 @@ k_trans %>% levene_test(reck ~ year*site_id*fish_species)
 # log transforming doesn't help (still sig), but getting rid of sp. helps!
 # reciprocal worked tho!
 
+res.aov <- k_trans %>%
+  group_by(fish_species) %>%
+  anova_test(reck ~ year*site_id)
+res.aov # year is sig; sp is sig; year AND sp is sig. region is not sig in any regard!
+summary(res.aov)
+# reread brian's comment. he said two way anova for EACH SP... ONLY YEAR = SIG (BOTH SP.)
+
+# i understand 3 way better now tho:
 res.aov <- k_trans %>% anova_test(reck ~ year*site_id*fish_species)
 res.aov # year is sig; sp is sig; year AND sp is sig. region is not sig in any regard!
-# update = year is sig, site is not and interaction is not
 summary(res.aov)
 
 model  <- lm(reck ~ year*site_id*fish_species, data = k_trans)
 k_trans %>%
   group_by(year) %>%
-  anova_test(reck ~ fish_species*site_id, error = model)
-# only year is sig (when separating species or ignoring sp all together), site ain't sig
-# note: when grouping by year, species is only significant in 2016 (pink seems way lower)
+  anova_test(reck ~ fish_species, error = model)
+# when grouping by year, species is significant in 2016 only!
+# when grouping by species, year is significant for both sp.
+# which do I use then?? does it matter?? depends on my question??
+# use both with bonferroni correction? pvalue cut off is now 0.025?
+# if that's the case, then all the significances are the same???
+# if it's by each table n=2, not each calculation... I need advice
+# these analyses are saying 2015>2016 for both species and ...
+# chum is significantly higher than pink (in 2016 only) ! cool.
 
 model  <- lm(reck ~ year*site_id*fish_species, data = k_trans)
 k_trans %>%
@@ -972,8 +985,8 @@ k_trans %>%
 # do i have a sig two way interaction?
 
 bxp <- ggboxplot(
-  k_df, x = "site_id", y = "k", 
-  color = "year", palette = "jco", facet.by = "fish_species"
+  k_df, x = "fish_species", y = "k", 
+  color = "year", palette = "jco"#, facet.by = "fish_species"
 )
 bxp
 
