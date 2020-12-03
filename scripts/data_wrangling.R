@@ -1,6 +1,6 @@
 #updated data wrangling code:
 
-#last modified november 29, 2020
+#last modified dec 1, 2020
 
 #purpose is: transform raw data into spatial and temporal data for analysis
 
@@ -14,6 +14,8 @@ library(here)
 library(vegan)
 library(ggnewscale)
 #make some combo graphs here now
+library(kableExtra)
+#making migration table here now
 
 # Create individual dataframes for spatial and temporal chapters/analysis:
 
@@ -286,7 +288,7 @@ final_fish_dates_regions <- left_join(median_fish_dates, full_migration_fish, by
   summarise(survey_date=first(survey_date), yday=first(yday)) %>%
   filter(species=="pi" | species=="cu")
 
-# table we're working with for mean dates (DI and JS separate. overall=mid-way poitn?):
+# table we're working with for mean dates (. overall=mid-way poitn?):
 final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species", "region"
 )) %>%
   filter(cum_cpue>=peak) %>%
@@ -297,13 +299,36 @@ final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year
 
 final_fish_dates_regions %>%
   group_by(species, year) %>% 
-  summarise(yday=mean(yday))
+  summarise(yday=mean(yday)) %>%
+  summarise(yday=mean(yday)) %>%
+  mutate(date=format.Date(as.Date(yday, origin="2014-01-01"), format="%B %d"))
 
-final_fish_dates_regions %>%
-  group_by(species) %>% 
-  summarise(yday=mean(yday))
+timing_table <- final_fish_dates_regions %>%
+  group_by(species, year) %>% 
+  summarise(yday=mean(yday)) %>%
+  mutate(date=format.Date(as.Date(yday, origin=paste(year, "01-01", sep="-")), format="%B %d")) %>%
+  select(-yday, yr=year) %>%
+  mutate(year=yr)
 #june 3 cu and june 6 pi (when ignoring region)
 # juen 14 cu and june 17 pi (when averaging by year AND region!)
+
+timing_table$species[which(timing_table$species=="pi")] <- "Pink"
+timing_table$species[which(timing_table$species=="cu")] <- "Chum"
+timing_table$year[which(timing_table$species=="Chum")] <- " "
+
+timing_ave_df <- data.frame(species=c("Pink", "Chum"), year=c("Average", ""), date=c("June 17", "June 14"))
+
+timing_table_full <- rbind(timing_table, timing_ave_df)
+
+timing_table_full$species <- factor(timing_table_full$species, levels=c("Pink", "Chum"))
+  
+timing_table_full %>% 
+  arrange(species) %>%
+  arrange(yr) %>% 
+  select(Species=species, Year=year, `Peak migration`=date) %>% 
+kable(booktabs=TRUE, format="latex", linesep='\\addlinespace',
+      escape = FALSE, align=c("l", "l", "c")) %>%
+  save_kable(here("tables", "temporal_tables", "migration_timing.pdf"))
 
 ave_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species")) %>%
   filter(cum_cpue>=peak) %>%
@@ -387,6 +412,8 @@ fish_fl_all %>%
   ggplot(aes(week, ave_fl), group=interaction(species, region))+
   geom_bar(aes(fill=species), stat="identity", position="dodge")+
   scale_fill_manual(values=c("#516959", "#d294af"))+
+  theme_bw()+
+  theme()+ # update font, size, grid background, etc. see other graphs
   facet_wrap(~region, nrow=1)
 
 ##### CONDITION #####
