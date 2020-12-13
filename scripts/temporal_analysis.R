@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified dec 2, 2020
+#last modified dec 9, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -28,6 +28,10 @@ library(ggnewscale)
 #multiple color schemes on graphs
 library(ggridges)
 #density plots for FL
+library(cowplot)
+#for putting two figs together
+library(ggpubr)
+#for putting two figs together
 
 ##### ENVR + ZOOP + SALMON DATA - READ IN #####
 
@@ -123,7 +127,7 @@ temp_zoop_intermediate <- temp_zoop_data %>%
                             order=="Harpacticoida" | order=="Cyclopoida", order,
                     if_else(infraorder=="Balanomorpha", infraorder,
                     if_else(family=="Euphausiidae" & life_stage!="egg", "Euphausiidae Larvae",
-                    if_else((family=="Euphausiidae" | genus=="Unknown") & life_stage=="egg", "Euphausiidae Eggs",
+                    if_else((family=="Euphausiidae" | genus=="Unknown") & life_stage=="egg", "Zooplankton Eggs",
                     if_else(family=="Podonidae", "Cladocera",
                             prey_info)))))))))))))))
 #update zooplankton groups for summary and graphs
@@ -133,14 +137,14 @@ zoop_group_data <- temp_zoop_intermediate %>%
                            if_else(prey_group=="Small (<2mm)" | prey_group=="Large (>2mm)", "Calanoida",
                            if_else(prey_group!="Decapoda" & prey_group!="Echinodermata" &
                                    prey_group!="Euphausiidae" & # prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
-                                   prey_group!="Appendicularia" & prey_group!="Euphausiidae Eggs" & #prey_group!="Chaetognatha" &
+                                   prey_group!="Appendicularia" & prey_group!="Zooplankton Eggs" & #prey_group!="Chaetognatha" &
                                    prey_group!="Balanomorpha" & prey_group!="Cladocera", # & prey_group!="Mollusca" & prey_group!="Cyclopoida", 
                                    "Other",
                                    prey_group))))
 # keep prey groups that are substantial, rest = "Other" prey category
 
 zoop_levels <- c("Calanoida", "Decapoda", "Cladocera", "Balanomorpha", "Echinodermata", 
-                 "Euphausiidae Eggs", "Gelatinous", "Appendicularia", "Other")
+                 "Zooplankton Eggs", "Gelatinous", "Appendicularia", "Other")
 #put the taxa groups in an order that somewhat matches the diet comp later on
 
 zoop_colors <- c("#E41A1C", "#FF7F00", "goldenrod1", "#A65628", "#999999",
@@ -294,6 +298,13 @@ select(zoop_envr_table, -site_id) %>%
   save_kable(here("tables", "temporal_tables", "sampling_table.pdf"))
 # 95 pink + 117 chum = 212 salmon
 
+zoop_envr_table %>%
+  mutate(year=c(rep("2015", 4), rep("2016", 3), rep("2015", 3), rep("2016", 3))) %>% 
+  filter(Total!="No Data") %>%
+  group_by(year) %>%
+  summarise(avebio=mean(as.numeric(Total)),
+            sdbio=sd(as.numeric(Total)))
+
 # Zooplankton abundance:
 
 zoop_comp <- temp_zoop_intermediate %>%
@@ -309,7 +320,8 @@ zoop_comp_rel_abd <- zoop_comp %>%
 zoop_comp_percent <- zoop_comp_rel_abd*100
 
 prey_level_details <- c("Actinopterygii", "Small (<2mm)", "Large (>2mm)", "Cladocera", "Decapoda", 
-                        "Balanomorpha", "Echinodermata", "Euphausiidae Eggs",  "Eggs", "Larvae", "Adults", "Cnidaria", 
+                        "Balanomorpha", "Balanomorpha_Nauplii", "Nauplii", "Balanomorpha_Cyprid", "Cyprids", "Adults/Molts", "Balanomorpha_Juvenile", "Balanomorpha_", "Balanomorpha_Molt", 
+                        "Echinodermata", "Zooplankton Eggs",  "Eggs", "Larvae", "Adults", "Cnidaria", 
                         "Ctenophora", "Appendicularia", "Chaetognatha", "Cyclopoida", "Harpacticoida",
                         "Euphausiidae", "Amphipoda", "Mysida", "Isopoda",
                         "Insecta", "Arachnida", "Pteropoda", "Bivalvia", "Polychaeta", "Bryozoa", "Object")
@@ -318,7 +330,7 @@ zoop_comp_long_data <- zoop_comp_percent %>%
   mutate(site_id=zoop_comp$site_id, Date=zoop_comp$survey_date) %>% 
   select(site_id, Date, everything()) %>%
   rename(Euphausiidae=`Euphausiidae Larvae`) %>% 
-  gather("prey", "abd", Amphipoda:`Small (<2mm)`)
+  gather("prey", "abd", Amphipoda:`Zooplankton Eggs`)
 
 zoop_comp_long_data$prey <- factor(zoop_comp_long_data$prey, levels=prey_level_details)
 
@@ -451,7 +463,7 @@ temp_diet_intermediate <- temp_diet_copy %>%
                     if_else(order=="Decapoda" | order=="Mysida"
                             | order=="Amphipoda" | order=="Isopoda"# | order=="Cumacea"
                             | order=="Harpacticoida" | order=="Cyclopoida" | order=="Pteropoda", order,
-                    if_else(suborder=="Balanomorpha", suborder,
+                    if_else(suborder=="Balanomorpha", paste(suborder, life_stage, sep="_"),
                     if_else(family=="Euphausiidae" & life_stage=="", "Adults",
                     if_else(family=="Euphausiidae" & life_stage=="Egg", "Eggs",
                     if_else(family=="Euphausiidae" & (life_stage=="Furcilia" | life_stage=="Calyptopis" | life_stage=="Nauplii"), "Larvae",
@@ -505,11 +517,13 @@ temp_diet_all <- temp_diet_intermediate %>%
   mutate(prey_group_simple=if_else(prey_group=="Cnidaria" | prey_group=="Ctenophora", "Gelatinous",
                            if_else(prey_group=="Small (<2mm)" | prey_group=="Large (>2mm)", "Calanoida",
                            if_else(prey_group=="Eggs" | prey_group=="Larvae" | prey_group=="Adults", "Euphausiidae",
+                           if_else(prey_group=="Balanomorpha_Cyprid" | prey_group=="Balanomorpha_Nauplii" | prey_group=="Balanomorpha_"| prey_group=="Balanomorpha_Molt" | prey_group=="Balanomorpha_Juvenile", "Balanomorpha",
                            if_else(prey_group!="Decapoda"& prey_group!="Echinodermata" & prey_group!="Cladocera" &
-                                   prey_group!="Balanomorpha" & prey_group!="Appendicularia" &
+                                   #prey_group!="Balanomorpha" & 
+                                   prey_group!="Appendicularia" &
                                    prey_group!="Chaetognatha" & prey_group!="Actinopterygii",
                                    "Other",
-                                   prey_group)))))
+                                   prey_group))))))
 # keep prey groups that are substantial, rest = "Other" prey category
 
 prey_levels <- c("Actinopterygii", "Calanoida", "Cladocera", "Decapoda", "Balanomorpha", 
@@ -817,13 +831,17 @@ kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 7), rep("c", 
 # summary table (ave % ww by year/site/sp) for main chapter:
 
 rel_bio_sum <- temp_diet_rel_bio %>%
-  gather(key="taxa", value="rel_bio", Actinopterygii:`Small (<2mm)`) %>% 
+  mutate(`Adults/Molts`=Balanomorpha_+Balanomorpha_Molt+Balanomorpha_Juvenile) %>% 
+  select(-c(Balanomorpha_, Balanomorpha_Juvenile, Balanomorpha_Molt)) %>% 
+  rename(Nauplii=Balanomorpha_Nauplii, Cyprids=Balanomorpha_Cyprid) %>% 
+  gather(key="taxa", value="rel_bio", Actinopterygii:`Adults/Molts`) %>% 
   group_by(site_id, year, fish_species, taxa) %>%
   summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) 
 
 rel_bio_sum$ave_rel_bio[which(rel_bio_sum$ave_rel_bio==0)] <- "-"
 
 rel_bio_sum$taxa <- factor(rel_bio_sum$taxa, levels=prey_level_details)
+# THIS IS WHERE I USUALLY ENCOUNTER PROBLEMS WHEN UPDATING TAXA * 
 
 rel_bio_chr <- rel_bio_sum %>%
   arrange(taxa) %>% 
@@ -843,17 +861,21 @@ kable(diet_table, "latex", booktabs=TRUE) %>%
   column_spec(1, "1in") %>% 
   add_header_above(c(" "=1, "2015"=2, "2016"=2, "2015"=2, "2016"=2)) %>% 
   add_header_above(c(" "=1, "D07"=4, "J07"=4)) %>%
-  pack_rows("Calanoida", 2, 3) %>% 
-  pack_rows("Euphausiidae", 8, 10, latex_gap_space = "0em") %>% 
-  pack_rows("Gelatinous", 11, 12, latex_gap_space = "0em") %>% 
-  pack_rows("Other", 15, nrow(diet_table), latex_gap_space = "0em") %>% 
-  add_indent(c(2:3, 8:12, 15:nrow(diet_table))) %>% 
+  pack_rows("Calanoida", 2, 3) %>%
+  pack_rows("Balanomorpha", 6, 8, latex_gap_space = "0em") %>% 
+  pack_rows("Euphausiidae", 10, 12, latex_gap_space = "0em") %>% 
+  pack_rows("Gelatinous", 13, 14, latex_gap_space = "0em") %>% 
+  pack_rows("Other", 17, nrow(diet_table), latex_gap_space = "0em") %>% 
+  add_indent(c(2:3, 6:8, 10:14, 17:nrow(diet_table))) %>% 
   save_kable(here("tables", "temporal_tables", "diet_comp_table.pdf"))
 
 # more detailed table (ave % ww by date) for appendix:
 
 rel_bio_sum_detail <- temp_diet_rel_bio %>%
-  gather(key="taxa", value="rel_bio", Actinopterygii:`Small (<2mm)`) %>% 
+  mutate(`Adults/Molts`=Balanomorpha_+Balanomorpha_Molt+Balanomorpha_Juvenile) %>% 
+  select(-c(Balanomorpha_, Balanomorpha_Juvenile, Balanomorpha_Molt)) %>% 
+  rename(Nauplii=Balanomorpha_Nauplii, Cyprids=Balanomorpha_Cyprid) %>% 
+  gather(key="taxa", value="rel_bio", Actinopterygii:`Adults/Molts`) %>% 
   group_by(site_id, survey_date, year, fish_species, taxa) %>% 
   summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) 
 
@@ -882,10 +904,11 @@ kable(diet_table_detail, "latex", booktabs=TRUE, linesep="") %>%
                      "Discovery Islands (D07)"=6, "Johnstone Strait (J07)"=6), bold=T) %>%
   add_header_above(c(" "=1, "2015"=12, "2016"=12), bold=T, font_size = 12) %>% 
   pack_rows("Calanoida", 2, 3) %>% 
-  pack_rows("Euphausiidae", 8, 10, latex_gap_space = "0em") %>% 
-  pack_rows("Gelatinous", 11, 12, latex_gap_space = "0em") %>% 
-  pack_rows("Other", 15, nrow(diet_table), latex_gap_space = "0em") %>% 
-  add_indent(c(2:3, 8:12, 15:nrow(diet_table_detail))) %>% 
+  pack_rows("Balanomorpha", 6, 8, latex_gap_space = "0em") %>% 
+  pack_rows("Euphausiidae", 10, 12, latex_gap_space = "0em") %>% 
+  pack_rows("Gelatinous", 13, 14, latex_gap_space = "0em") %>% 
+  pack_rows("Other", 17, nrow(diet_table_detail), latex_gap_space = "0em") %>% 
+  add_indent(c(2:3, 6:8, 10:14, 17:nrow(diet_table_detail))) %>% 
   save_kable(here("tables", "temporal_tables", "diet_comp_table_detailed.pdf"))
 
 ##### SALMON GRAPH - PREY COMP #####
@@ -916,6 +939,23 @@ ggplot() +
   labs(fill  = "Prey Group", y="Relative Biomass (%)")
 
 ggsave(here("figs", "temporal_figs", "temporal_diet_comp.png"))#, width=22, height=14, units = "cm", dpi=800)
+
+diet_groups_wide <- cbind(select(temp_diet_biomass, ufn, fish_species, survey_date), diet_group_biomass_percent)
+
+diet_graph_detail <- diet_groups_wide %>%
+  filter(survey_date=="2015-06-13")  %>%
+  gather("Prey_Group", "Ave_Rel_Bio", Actinopterygii:Other) %>%
+  group_by(fish_species) %>%
+  arrange(Prey_Group) %>%
+  mutate(pos = cumsum(Ave_Rel_Bio) - Ave_Rel_Bio / 2)
+
+diet_graph_detail %>% 
+  ggplot() + 
+  geom_bar(mapping = aes(x = ufn, y = Ave_Rel_Bio, fill = factor(Prey_Group, levels = prey_levels)), 
+           stat="identity", position='stack', width = barwidth) + 
+  scale_fill_manual(values=color_temp)+
+  facet_grid(fish_species~year, scales="free")+
+  labs(fill  = "Prey Group", y="Relative Biomass (%)")
 
 ##### SALMON GRAPH - SIZE BINS #####
 
@@ -1244,7 +1284,7 @@ spp.scores <- cbind(spp.scores, pval = fit$vectors$pvals) #add pvalues to datafr
 sig.spp.scores <- subset(spp.scores, pval<=0.002) #subset data to show species significant at 0.05
 head(sig.spp.scores)
 
-spp.scores$Species <- c("Calanoida", "", "", "", "", "", "Gelatinous", "Appendicularia", "   Chaetognatha", "Other")
+spp.scores$Species <- c("", "Calanoida", "", "", "", "", "", "Gelatinous", "Appendicularia", "   Chaetognatha", "Other")
 
 # FIGURE OUT HOW TO MAKE SOME OF THEM BLANK LATERRRRR
 
@@ -1272,9 +1312,9 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
   ggrepel::geom_text_repel(data = spp.scores, aes(x=NMDS1, y=NMDS2, label = Species),# cex = 3, 
                            direction = "both", size = 4, fontface="bold", segment.colour = NA,
                            nudge_y = if_else(spp.scores$Species=="Calanoida", -0.25, 
-                                             if_else(spp.scores$Species=="Gelatinous", -0.1, 0)),
-                           nudge_x=if_else(spp.scores$Species=="Chaetognatha", 0.5,
-                                           if_else(spp.scores$Species=="Other", -0.3, 0)))+
+                                             if_else(spp.scores$Species=="Gelatinous", -0.1,
+                                             if_else(spp.scores$Species=="Chaetognatha", 0.5, 0))),
+                           nudge_x=if_else(spp.scores$Species=="Other", -0.3, 0))+
   annotate("text",x=2.5,y=-2.3,label="(stress = 0.15)",size=3, hjust = 0)
 #NMDS graph for the different sites!
 
@@ -1730,27 +1770,59 @@ lab_js <- left_join(labs_js, fishsp, by = "ufn")
 
 #clust_JS <- filter(lab_clusts, cluster==2)
 
+library(ggdendro)
+library(zoo)
+#cluster dendrograms
+
+cut <- 5# Number of clusters
+#hc <- hclust(dist(df), "ave")       # bcclust        # hierarchical clustering
+dendr <- dendro_data(bcclust, type = "rectangle") 
+clust <- cutree(bcclust, k = cut)               # find 'cut' clusters
+clust.df <- data.frame(label = names(clust), cluster = clust)
+# Split dendrogram into upper grey section and lower coloured section
+height <- unique(dendr$segments$y)[order(unique(dendr$segments$y), decreasing = TRUE)]
+cut.height <- mean(c(height[cut], height[cut-1]))
+dendr$segments$line <- ifelse(dendr$segments$y == dendr$segments$yend &
+                                dendr$segments$y > cut.height, 1, 2)
+dendr$segments$line <- ifelse(dendr$segments$yend  > cut.height, 1, dendr$segments$line)
+# Number the clusters
+dendr$segments$cluster <- c(-1, diff(dendr$segments$line))
+change <- which(dendr$segments$cluster == 1)
+for (i in 1:cut) dendr$segments$cluster[change[i]] = i + 1
+dendr$segments$cluster <-  ifelse(dendr$segments$line == 1, 1, 
+                                  ifelse(dendr$segments$cluster == 0, NA, dendr$segments$cluster))
+dendr$segments$cluster <- na.locf(dendr$segments$cluster)
+
+# Consistent numbering between segment$cluster and label$cluster
+#clust.df$label <- factor(clust.df$label, levels = dendr$labels$label)
+#clust.df <- arrange(clust.df, label)
+#clust.df$cluster <- factor((clust.df$cluster), levels = unique(clust.df$cluster), labels = (1:cut) + 1)
+#dendr[["labels"]] <- merge(dendr[["labels"]], clust.df, by = "label")
+
+# Positions for cluster labels
+#n.rle <- rle(dendr$segments$cluster)
+#N <- cumsum(n.rle$lengths)
+#N <- N[seq(1, length(N), 2)] + 1
+#N.df <- dendr$segments[N, ]
+#N.df$cluster <- N.df$cluster - 1
+
+color_df <- data.frame(cluster=c(1, 2, 3, 4), values=c("grey", "grey", "red", "blue"))
+
+clust_colors <- c("grey", "grey", "red", "blue")
+
 ggplot()+
-  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend
-  ), color="#666666",
-  show.legend = FALSE, 
-  size=0.5) +
-  #geom_hline(yintercept = 0.93, linetype="dashed")+
-  #geom_hline(yintercept = 0.733, linetype="dashed")+
+  geom_segment(data = segment(dendr), aes(x=x, y=y, xend=xend, yend=yend, color=as.factor(dendr$segments$cluster)), show.legend = FALSE, size=0.5) +
+  scale_color_manual(values=c("darkgrey", "darkgrey", "darkgrey","darkred", "darkgrey", "#053061"))+
   scale_x_continuous(expand=c(0.01, 0.01))+
   scale_y_continuous(expand=c(0.01, 0.01))+
+  new_scale_color()+
   geom_point(data=label(dendr), aes(x=x, y=y, shape=lab$Sp, color=lab$Site),
              fill="white", size=1, stroke = 1)+
   scale_shape_manual(values=c(21, 19), name="Species")+
   scale_color_manual(values=c("darkred", "#053061"), name="Site")+
   guides(color= guide_legend(override.aes = list(shape=21)),
-         shape=guide_legend(#override.aes=list(shape=c(16, 1)), 
-           order = 1))+
+         shape=guide_legend(order = 1))+
   new_scale_color()+
-  #geom_text(data=label(dendr), aes(x=x, y=y, label=lab$Date, hjust=1.1, color=lab$codes
-  #), size=2.5, angle=90, fontface="bold") +
-  #scale_color_manual(values=c("darkgoldenrod", "#d94801", "darkred",
-  #                            "#016c59", "#542788", "#053061"), name="Date", guide_legend(order=3))+
   theme_bw()+
   theme(axis.line.x=element_blank(),
         axis.ticks.x=element_blank(),
@@ -1764,7 +1836,7 @@ ggplot()+
         panel.grid=element_blank(), legend.position = c(0.89, .9),
         legend.box = "horizontal")+
   labs(y="Dissimilarity")
-#plot the dendrogram data for the different fish ID's
+  #plot the dendrogram data for the different fish ID's (middle outlier clust = 94% dissim.)
 
 ggsave(here("figs", "temporal_figs", "temporal_cluster_all.png"), width=22, height = 14.5, units = "cm", dpi=800)
 
@@ -1847,6 +1919,19 @@ ggplot()+
 ggsave(here("figs", "temporal_figs", "temporal_subcluster_JS.png"), width=22.5, height = 14.25, units = "cm", dpi=800)
 
 # 7 DI subclusts? 5 JS subclusts? Then do simper between them>??? or ind val. to quantify important prey. 
+
+df <- data.frame(temp_trans_nmds)
+
+res<- simprof((df), method.distance = "braycurtis", alpha=0.01)#,
+                          #num.expected = 10, num.simulated = 10)
+
+simprof.plot(res)
+
+mydf <- as.data.frame(res$significantclusters)
+
+# see if this works then run simper on significant clusters (as a quantitative way to say that
+# middle cluster is because of the presence of euphausiids without just looking at data...)
+# same with when I divide up DI and JS subclusters, it's obvious what diet comp is but need quant.
 
 ##### FREQ OCCUR ######
 
@@ -1978,12 +2063,15 @@ summary(pink_size_lm)
 summary(chum_size_lm)
 
 # ~ 0.5 R2 for pink and ~0.7 for chum (DI 2015; rest ~ 0 or hella low from looking at graph)
-a <- size_season_colors %>%
+
+a1 <- size_season_colors %>%
   filter(fish_species=="Chum") %>%
   ggplot(aes(fork_length, length_avg))+
-  geom_jitter(aes(color=codes), size=2, show.legend=FALSE)+
+  geom_jitter(aes(color=codes), size=2#, show.legend=FALSE
+  )+
   scale_color_manual(values=c("darkgoldenrod", "#d94801", "darkred", "#016c59", "#542788", "#053061"),
-                     name="Date", guide_legend(order=NULL))+
+                     name="Site & Date"#, guide_legend(order=NULL)
+  )+
   #guides(fill= guide_legend(override.aes = list(shape=21)))+
   #guides(color=FALSE)+
   facet_grid(site_id~year)+
@@ -1992,12 +2080,46 @@ a <- size_season_colors %>%
   new_scale_color()+
   theme_bw()+
   labs(x="Salmon fork length (mm)", y="Mean prey size (mm)")+
-  geom_smooth(method="lm", aes(color=fish_species), show.legend=FALSE)+
-  scale_color_manual(values="#516959", name="Species")+
+  geom_smooth(method="lm", aes(color=fish_species), show.legend=FALSE
+  )+
+  scale_color_manual(values="#516959", name="Species", guide_legend(order=1))+
   #guides(color=FALSE)+
-  #theme(legend.position = c(0.75, 0.8))
-  theme(legend.position = NULL, panel.grid=element_blank())
+  theme(legend.position = c(0.75, 0.8), panel.grid=element_blank(),
+        strip.text = element_text(size=12),
+        axis.title = element_text(size=10), axis.text = element_text(size=8),
+        legend.text = element_text(size=8), legend.title = element_text(size=10))
+#theme(legend.position = NULL, panel.grid=element_blank())
+a1
+#size_season_colors$codes[which(size_season_colors$codes=="JS - Late June/\nEarly July")] <- "JS - Late June / Early July"
 
+a2 <- size_season_colors %>%
+  filter(fish_species=="Chum") %>%
+  ggplot(aes(fork_length, length_avg))+
+  geom_jitter(aes(color=codes), size=2, show.legend=FALSE
+  )+
+  scale_color_manual(values=c("darkgoldenrod", "#d94801", "darkred", "#016c59", "#542788", "#053061"),
+                     name="Site & Date", guide_legend(order=NULL)
+  )+
+  #guides(fill= guide_legend(override.aes = list(shape=21)))+
+  #guides(color=FALSE)+
+  facet_grid(site_id~year)+
+  scale_x_continuous(limits=c(50, 150))+
+  scale_y_continuous(expand=c(0, 0), limits=c(-0.1, 13.5))+
+  new_scale_color()+
+  theme_bw()+
+  labs(x="Salmon fork length (mm)", y="Mean prey size (mm)")+
+  geom_smooth(method="lm", aes(color=fish_species)#, show.legend=TRUE
+  )+
+  scale_color_manual(values="#516959", name="Species", guide_legend(order=1))+
+  #guides(color=FALSE)+
+  theme(legend.position = c(0.85, 0.93), panel.grid=element_blank(),
+        axis.text.x = element_text(color="black"),
+        axis.text.y = element_text(color="black"),
+        strip.text = element_text(size=12),
+        axis.title = element_text(size=10), axis.text = element_text(size=8),
+        legend.text = element_text(size=8), legend.title = element_blank())
+#theme(legend.position = NULL, panel.grid=element_blank())
+a2
 #size_season_colors$codes[which(size_season_colors$codes=="JS - Late June/\nEarly July")] <- "JS - Late June / Early July"
 
 b <- size_season_colors %>%
@@ -2006,32 +2128,40 @@ b <- size_season_colors %>%
   geom_jitter(aes(color=codes), size=2, show.legend=FALSE
               )+
   scale_color_manual(values=c("darkgoldenrod", "#d94801", "darkred", "#016c59", "#542788", "#053061"),
-                     name="Date", guide_legend(order=1))+
+                     name="Site & Date", guide_legend(order=2))+
   #guides(color=FALSE)+
   #guides(fill= guide_legend(override.aes = list(shape=21)))+
   facet_grid(site_id~year)+
   scale_x_continuous(limits=c(50, 150))+
-  scale_y_continuous(limits=c(0, 15))+
+  scale_y_continuous(expand=c(0, 0), limits=c(-0.1, 13.5))+
   guides(color=NULL)+
   new_scale_color()+
   theme_bw()+
   labs(x="Salmon fork length (mm)", y="Mean prey size (mm)")+
-  geom_smooth(method="lm", aes(color=fish_species), show.legend=FALSE)+
+  geom_smooth(method="lm", aes(color=fish_species)#, show.legend=FALSE
+              )+
   scale_color_manual(values="#d294af", name="Species", guide_legend(order=1))+
-  #theme(legend.position = c(0.75, 0.8))
-  theme(legend.position = c(0.75, 0.8), 
+  theme(legend.position = c(0.85, 0.93), 
         panel.grid=element_blank(),
-        legend.title = element_text(size=6),
-        legend.text=element_text(size=4))
+        legend.title = element_blank(),
+        #legend.text=element_text(size=4),
+        axis.text.x = element_text(color="black"),
+        axis.text.y = element_text(color="black"),
+        strip.text = element_text(size=12),
+        axis.title = element_text(size=10), axis.text = element_text(size=8),
+        legend.text = element_text(size=8)#, legend.title = element_text(size=12)
+        )
+b
 
-library(cowplot)
+#ggarrange(a, b, common.legend = TRUE)
 
-plot_grid(a, b, labels = c("A", "B"))
+legend_a1 <- ggpubr::get_legend(a1 + theme(legend.position="right", legend.box.margin = margin(0, 0, 0, 0)))
+#legend_b <- ggpubr::get_legend(b + theme(legend.position="right"))
+
+plot_grid(a2, b, labels = c("A)", "B)"), legend_a1, ncol = 3, rel_widths = c(1, 1, 0.3))
 
 ggsave(here("figs", "temporal_figs", "predator_prey_ratios.png"), width=22, height=13, units = "cm", dpi=400)
 
-ggarrange
-  
 temporal_diets %>%
   filter(length_avg>0)
 
@@ -2114,25 +2244,26 @@ length_study_fish <- temp_stomachs %>%
   filter(is.na(fork_length)!=TRUE) %>% 
   ungroup() %>% 
   select(species=fish_species, fork_length, year) %>%
-  mutate(code="B")
+  mutate(code="B) Study salmon")
 
-length_study_fish$species <- as.character(length_study_fish$species)
-length_study_fish$species[which(length_study_fish$species=="Pink")] <- "PI"
-length_study_fish$species[which(length_study_fish$species=="Chum")] <- "CU"
+length_histo_picu$species <- as.character(length_histo_picu$species)
+length_histo_picu$species[which(length_histo_picu$species=="PI")] <- "Pink"
+length_histo_picu$species[which(length_histo_picu$species=="CU")] <- "Chum"
+
 length_study_fish$species <- length_study_fish$species %>% 
-  fct_relevel("PI", "CU")
+  fct_relevel("Pink", "Chum")
 
 length_histo_picu$species <- length_histo_picu$species %>% 
-  fct_relevel("PI", "CU")
+  fct_relevel("Pink", "Chum")
 
 length_all_fish <- length_histo_picu %>%
   select(species, fork_length, year) %>% 
-  mutate(code="A")
+  mutate(code="A) All salmon")
 
 combined_fl_data <- rbind(length_all_fish, length_study_fish)
 
 ggplot(combined_fl_data, aes(fork_length, y = (factor(year))), fill = "grey") +
-  geom_density_ridges(color='black', scale = 3, alpha = 0.5,
+  geom_density_ridges(color='black', scale = 3, alpha = 0.75,
                       aes(x=fork_length, y=factor(year), fill=species))+
   xlab("Fork Length (mm)") +
   facet_grid(species ~ code#, labeller = labeller(region = spp_labels, species = spp_labels)
@@ -2143,8 +2274,16 @@ ggplot(combined_fl_data, aes(fork_length, y = (factor(year))), fill = "grey") +
   scale_y_discrete(expand = expand_scale(add = c(0.2, 2.8))) +
   coord_cartesian(xlim = c(60, 160)) +
   guides(fill = FALSE) +
-  ggtitle("Fork Length Frequency Distributions")
-ggsave(here("figs", "lengths.png"), width = 8, height = 6)
+  theme_bw()+
+  theme(panel.grid=element_blank(),
+        axis.text.x = element_text(color="black"),
+        axis.text.y = element_text(color="black"),
+        strip.text = element_text(size=14),
+        axis.ticks.x = element_blank(),
+        axis.title = element_text(size=12), axis.text = element_text(size=10),
+        legend.text = element_text(size=10), legend.title = element_text(size=12))
+  #ggtitle("Fork Length Frequency Distributions")
+ggsave(here("figs", "temporal_figs", "lengths.png"), width=15, height=15, units="cm", dpi=800)
 
 ggplot(temp_stomachs, aes(fork_length, y=(factor(year)), fill=fish_species))+
   geom_density_ridges(color="black", scale=3, alpha=1)+
