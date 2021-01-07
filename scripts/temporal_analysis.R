@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified dec 9, 2020
+#last modified dec 17, 2020
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -31,7 +31,9 @@ library(ggridges)
 library(cowplot)
 #for putting two figs together
 library(ggpubr)
-#for putting two figs together
+#for putting *** values on figs
+library(ggtext)
+#for italicizing in figures
 
 ##### ENVR + ZOOP + SALMON DATA - READ IN #####
 
@@ -114,7 +116,8 @@ temp_diet_copy <- filter(temp_data_combo, !prey_info %in% c("Digested_food", "Di
 temp_zoop_intermediate <- temp_zoop_data %>%
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Echinodermata" | phylum=="Ochrophyta" | 
                               phylum=="Bryozoa", phylum,
-                    if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" |
+                    if_else(#genus=="Oikopleura" | 
+                              class=="Actinopterygii" | class=="Polychaeta" |
                             class=="Insecta"| class=="Bivalvia", class,
                     if_else(life_stage=="trochophore", "Polychaeta",
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Cnidaria_Ctenophora",
@@ -129,22 +132,25 @@ temp_zoop_intermediate <- temp_zoop_data %>%
                     if_else(family=="Euphausiidae" & life_stage!="egg", "Euphausiidae Larvae",
                     if_else((family=="Euphausiidae" | genus=="Unknown") & life_stage=="egg", "Zooplankton Eggs",
                     if_else(family=="Podonidae", "Cladocera",
-                            prey_info)))))))))))))))
+                    if_else(genus=="Oikopleura", "\\emph{Oikopleura} spp.", 
+                            prey_info))))))))))))))))
 #update zooplankton groups for summary and graphs
 
 zoop_group_data <- temp_zoop_intermediate %>%
   mutate(prey_group_simple=if_else(prey_group=="Cnidaria" | prey_group=="Ctenophora", "Gelatinous",
                            if_else(prey_group=="Small (<2mm)" | prey_group=="Large (>2mm)", "Calanoida",
+                           if_else(prey_group=="\\emph{Oikopleura} spp.", "*Oikopleura*",
                            if_else(prey_group!="Decapoda" & prey_group!="Echinodermata" &
                                    prey_group!="Euphausiidae" & # prey_group!="Amphipoda" & prey_group!="Harpacticoida" & 
-                                   prey_group!="Appendicularia" & prey_group!="Zooplankton Eggs" & #prey_group!="Chaetognatha" &
+                                   #prey_group!="\\emph{Oikopleura} spp." & 
+                                   prey_group!="Zooplankton Eggs" & #prey_group!="Chaetognatha" &
                                    prey_group!="Balanomorpha" & prey_group!="Cladocera", # & prey_group!="Mollusca" & prey_group!="Cyclopoida", 
                                    "Other",
-                                   prey_group))))
+                                   prey_group)))))
 # keep prey groups that are substantial, rest = "Other" prey category
 
 zoop_levels <- c("Calanoida", "Decapoda", "Cladocera", "Balanomorpha", "Echinodermata", 
-                 "Zooplankton Eggs", "Gelatinous", "Appendicularia", "Other")
+                 "Zooplankton Eggs", "Gelatinous", "*Oikopleura*", "Other")
 #put the taxa groups in an order that somewhat matches the diet comp later on
 
 zoop_colors <- c("#E41A1C", "#FF7F00", "goldenrod1", "#A65628", "#999999",
@@ -217,7 +223,10 @@ temp_zoop_ww %>%
         axis.ticks.x = element_blank(), axis.text.x = element_text(color="black"),
         axis.text.y=element_text(color="black"),
         axis.title = element_text(size=10), axis.text = element_text(size=8),
-        legend.text = element_text(size=8), legend.title = element_text(size=10))+
+        legend.text = element_text(size=8),
+        legend.title = element_text(size=10)#,
+        #legend.text = element_markdown(size=8)
+        )+
   labs(x=NULL, y="Biomass (mg/m³)", fill="Size Fraction (μm)")
 #graph of zooplankton biomass (total and by size fraction)
 
@@ -243,7 +252,9 @@ zoop_group_rel_abd %>%
         axis.ticks.x = element_blank(), axis.text.x = element_text(color="black"),
         axis.text.y=element_text(color="black"),
         axis.title = element_text(size=10), axis.text = element_text(size=8),
-        legend.text = element_text(size=8), legend.title = element_text(size=10))+
+        #legend.text = element_text(size=8),
+        legend.text = element_markdown(size=8),
+        legend.title = element_text(size=10))+
   labs(x=NULL, y="Relative Abundance (%)", fill="Zooplankton Group")
 #zoop comp graph 
 
@@ -322,15 +333,15 @@ zoop_comp_percent <- zoop_comp_rel_abd*100
 prey_level_details <- c("Actinopterygii", "Small (<2mm)", "Large (>2mm)", "Cladocera", "Decapoda", 
                         "Balanomorpha", "Balanomorpha_Nauplii", "Nauplii", "Balanomorpha_Cyprid", "Cyprids", "Adults/Molts", "Balanomorpha_Juvenile", "Balanomorpha_", "Balanomorpha_Molt", 
                         "Echinodermata", "Zooplankton Eggs",  "Eggs", "Larvae", "Adults", "Cnidaria", 
-                        "Ctenophora", "Appendicularia", "Chaetognatha", "Cyclopoida", "Harpacticoida",
-                        "Euphausiidae", "Amphipoda", "Mysida", "Isopoda",
+                        "Ctenophora", "Appendicularia", "\\emph{Oikopleura} spp.", "\\emph{Oikopleura}", "*Oikopleura*",
+                        "Chaetognatha", "Cyclopoida", "Harpacticoida", "Euphausiidae", "Amphipoda", "Mysida", "Isopoda",
                         "Insecta", "Arachnida", "Pteropoda", "Bivalvia", "Polychaeta", "Bryozoa", "Object")
 
 zoop_comp_long_data <- zoop_comp_percent %>% 
   mutate(site_id=zoop_comp$site_id, Date=zoop_comp$survey_date) %>% 
   select(site_id, Date, everything()) %>%
   rename(Euphausiidae=`Euphausiidae Larvae`) %>% 
-  gather("prey", "abd", Amphipoda:`Zooplankton Eggs`)
+  gather("prey", "abd", `\\emph{Oikopleura} spp.`:`Zooplankton Eggs`)
 
 zoop_comp_long_data$prey <- factor(zoop_comp_long_data$prey, levels=prey_level_details)
 
@@ -457,7 +468,8 @@ temp_diet_intermediate <- temp_diet_copy %>%
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Echinodermata" | #phylum=="Mollusca" |
                             phylum=="Bryozoa", # | phylum=="Ochrophyta", 
                             phylum,
-                    if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" | class=="Bivalvia", class,
+                    if_else(#genus=="Oikopleura" |
+                              class=="Actinopterygii" | class=="Polychaeta" | class=="Bivalvia", class,
                     if_else(order=="Calanoida" & (size_class=="<1" | size_class=="1 to 2"), "Small (<2mm)",
                     if_else(order=="Calanoida" & (size_class=="2 to 5" | size_class=="5 to 10"), "Large (>2mm)",
                     if_else(order=="Decapoda" | order=="Mysida"
@@ -472,7 +484,8 @@ temp_diet_intermediate <- temp_diet_copy %>%
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, #"Cnidaria_Ctenophora",
                     if_else(prey_info=="Copepoda", "Crustacea",
                     if_else(life_stage=="Object", life_stage,
-                            prey_info)))))))))))))))
+                    if_else(genus=="Oikopleura", "\\emph{Oikopleura} spp.",
+                            prey_info))))))))))))))))
 #create more general prey groups for any needed tables, graphs, calc, etc.
 
 ##### SALMON DATA - FIG/TABLE PREP ##### 
@@ -490,7 +503,8 @@ temp_diet_info <-temp_diet_wide %>%
 #create dataframe with UFNs, site and species for reattaching to matrices
 
 temp_diet_matrix <- temp_diet_wide %>%
-  select(Actinopterygii:`Small (<2mm)`#, -c(Detritus, Digested_food_worms, Crustacea,
+  select(`\\emph{Oikopleura} spp.`:`Small (<2mm)`
+  #select(Actinopterygii:`Small (<2mm)`#, -c(Detritus, Digested_food_worms, Crustacea,
                                        #    Eumalacostraca_Larvae, Parasite, Ochrophyta)
          ) %>% 
   decostand(method="total")
@@ -504,7 +518,7 @@ temp_diet_rel_bio <- cbind(temp_diet_info, temp_matrix_percent)
 # Calculate average relative biomass of prey for each site/date and species:
 
 temp_diet_rel_bio %>%
-  gather(key="prey", value="rel_bio", Actinopterygii:`Small (<2mm)`) %>% 
+  gather(key="prey", value="rel_bio", `\\emph{Oikopleura} spp.`:`Small (<2mm)`) %>% 
   group_by(fish_species, prey, year, site_id) %>%
   summarise(average=mean(rel_bio)) %>%
   summarise(max=max(average)) %>%
@@ -517,17 +531,19 @@ temp_diet_all <- temp_diet_intermediate %>%
   mutate(prey_group_simple=if_else(prey_group=="Cnidaria" | prey_group=="Ctenophora", "Gelatinous",
                            if_else(prey_group=="Small (<2mm)" | prey_group=="Large (>2mm)", "Calanoida",
                            if_else(prey_group=="Eggs" | prey_group=="Larvae" | prey_group=="Adults", "Euphausiidae",
+                           if_else(prey_group=="\\emph{Oikopleura} spp.", "*Oikopleura*",
                            if_else(prey_group=="Balanomorpha_Cyprid" | prey_group=="Balanomorpha_Nauplii" | prey_group=="Balanomorpha_"| prey_group=="Balanomorpha_Molt" | prey_group=="Balanomorpha_Juvenile", "Balanomorpha",
                            if_else(prey_group!="Decapoda"& prey_group!="Echinodermata" & prey_group!="Cladocera" &
                                    #prey_group!="Balanomorpha" & 
-                                   prey_group!="Appendicularia" &
+                                   #prey_group!="Appendicularia" &
+                                   #prey_group!="\\emph{Oikopleura} spp." &
                                    prey_group!="Chaetognatha" & prey_group!="Actinopterygii",
                                    "Other",
-                                   prey_group))))))
+                                   prey_group)))))))
 # keep prey groups that are substantial, rest = "Other" prey category
 
 prey_levels <- c("Actinopterygii", "Calanoida", "Cladocera", "Decapoda", "Balanomorpha", 
-                 "Echinodermata", "Euphausiidae", "Gelatinous", "Appendicularia", "Chaetognatha", "Other")
+                 "Echinodermata", "Euphausiidae", "Gelatinous", "*Oikopleura*", "Chaetognatha", "Other")
 #vector to reorder prey groups into what makes sense for diet comp bargraph
 
 color_temp <- c("#333333", "#E41A1C", "goldenrod1", "#FF7F00", #"#b35806", "#7f3b08",
@@ -593,8 +609,8 @@ diet_group_wide <- diet_group_biomass_ave %>%
 diet_group_bio_graph <- diet_group_wide %>%
   transmute(Other=Other,
             Chaetognatha=Other+Chaetognatha,
-            Appendicularia=Chaetognatha+Appendicularia,
-            Gelatinous=Appendicularia+Gelatinous,
+            `*Oikopleura*`=Chaetognatha+`*Oikopleura*`,
+            Gelatinous=`*Oikopleura*`+Gelatinous,
             Euphausiidae=Gelatinous+Euphausiidae,
             Echinodermata=Euphausiidae+Echinodermata,
             Balanomorpha=Echinodermata+Balanomorpha,
@@ -834,7 +850,7 @@ rel_bio_sum <- temp_diet_rel_bio %>%
   mutate(`Adults/Molts`=Balanomorpha_+Balanomorpha_Molt+Balanomorpha_Juvenile) %>% 
   select(-c(Balanomorpha_, Balanomorpha_Juvenile, Balanomorpha_Molt)) %>% 
   rename(Nauplii=Balanomorpha_Nauplii, Cyprids=Balanomorpha_Cyprid) %>% 
-  gather(key="taxa", value="rel_bio", Actinopterygii:`Adults/Molts`) %>% 
+  gather(key="taxa", value="rel_bio", `\\emph{Oikopleura} spp.`:`Adults/Molts`) %>% 
   group_by(site_id, year, fish_species, taxa) %>%
   summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) 
 
@@ -856,7 +872,7 @@ diet_table <- group_bio_dataframe[4:nrow(group_bio_dataframe), ]
 
 colnames(diet_table) <- rep(c("Pink", "Chum"), 4)
 
-kable(diet_table, "latex", booktabs=TRUE) %>%
+kable(diet_table, "latex", booktabs=TRUE, escape = F) %>%
   kable_styling(latex_options = "hold_position", font_size = 8, full_width = TRUE) %>% 
   column_spec(1, "1in") %>% 
   add_header_above(c(" "=1, "2015"=2, "2016"=2, "2015"=2, "2016"=2)) %>% 
@@ -875,7 +891,7 @@ rel_bio_sum_detail <- temp_diet_rel_bio %>%
   mutate(`Adults/Molts`=Balanomorpha_+Balanomorpha_Molt+Balanomorpha_Juvenile) %>% 
   select(-c(Balanomorpha_, Balanomorpha_Juvenile, Balanomorpha_Molt)) %>% 
   rename(Nauplii=Balanomorpha_Nauplii, Cyprids=Balanomorpha_Cyprid) %>% 
-  gather(key="taxa", value="rel_bio", Actinopterygii:`Adults/Molts`) %>% 
+  gather(key="taxa", value="rel_bio", `\\emph{Oikopleura} spp.`:`Adults/Molts`) %>% 
   group_by(site_id, survey_date, year, fish_species, taxa) %>% 
   summarise(ave_rel_bio=round(mean(rel_bio), digits=1)) 
 
@@ -897,7 +913,7 @@ diet_table_detail <- group_bio_detail_df[5:nrow(group_bio_detail_df), ]
 
 colnames(diet_table_detail) <- rep(c("PI", "CU"), 12)
 
-kable(diet_table_detail, "latex", booktabs=TRUE, linesep="") %>%
+kable(diet_table_detail, "latex", booktabs=TRUE, linesep="", escape = F) %>%
   add_header_above(c(" "=1, "May 21"=2, "June 05"=1, "June 07"=1, "June 13"=2, "June 02"=2, "June 14"=2, "June 29"=2, 
                      "May 19"=2, "June 03"=2, "June 16"=2, "June 03"=2, "June 20"=2, "July 05"=2)) %>% 
   add_header_above(c(" "=1, "Discovery Islands (D07)"=6, "Johnstone Strait (J07)"=6,
@@ -934,7 +950,9 @@ ggplot() +
         strip.text = element_text(size=16),
         axis.ticks.x = element_blank(),
         axis.title = element_text(size=14), axis.text = element_text(size=12),
-        legend.text = element_text(size=12), legend.title = element_text(size=14))+
+  #      legend.text = element_text(size=12),
+        legend.text = element_markdown(size=12),
+        legend.title = element_text(size=14))+
   facet_grid(Site~Year, scales="free")+
   labs(fill  = "Prey Group", y="Relative Biomass (%)")
 
@@ -1076,7 +1094,7 @@ k_trans %>%
 model  <- lm(reck ~ year*site_id*fish_species, data = k_trans)
 k_trans %>%
   group_by(fish_species) %>%
-  anova_test(reck ~ year*site_id, error = model)
+  anova_test(reck ~ year, error = model)
 # do i have a sig two way interaction?
 
 bxp <- ggboxplot(
@@ -1103,6 +1121,47 @@ ggplot(data=temporalk, aes(x=survey_date, y=k, fill=fish_species, group=interact
 #K for temporal
 
 ggsave(here("figs", "temporal_figs", "temporal_condition.png"))
+
+#temporalk$year <- as.character(temporalk$year)
+
+temporalksig <- mutate(temporalk, 
+                       sigs=
+                         if_else(year==2015, "a", 
+                                 if_else(fish_species=="Pink", "b", "c")),
+                       reg_labels=if_else(
+                         year==2015 & fish_species=="Pink", "A",
+                        if_else(year==2015 & fish_species=="Chum", "C",
+                                if_else(fish_species=="Pink", "B", "D")
+                                )))
+
+temporalksig$reg_labels <- factor(temporalksig$reg_labels)
+
+my_comparisons <- list(c("A", "B"), c("C", "D"), c("B", "D"))
+
+ggplot(data=temporalksig, aes(x=reg_labels, y=k, fill=fish_species, group=interaction(fish_species, year)))+
+  geom_boxplot(data=temporalksig, aes(x=reg_labels, y=k, fill=fish_species)#, width=5
+               )+
+  labs(title=NULL, y="Fulton's K", x = NULL, fill="Fish Species")+
+  theme_bw()+
+  geom_hline(aes(yintercept=1), color="darkred", linetype="dashed")+
+  scale_x_discrete(labels=c("2015", "2016", "2015", "2016"))+
+  #scale_x_continuous(labels=NULL)+
+      #breaks=c(2015, 2016), 
+                     #limits=c(2014.5, 2016.5), expand=c(0, 0),
+  #                   labels=c(2015, 2016))+
+  #geom_text(aes(label=sigs))+
+  #scale_x_date(date_breaks = "1 year", date_labels = "%y")+
+  #facet_grid(site_id~year, scales="free")+
+  scale_fill_manual(values=c("#d294af", "#516959"))+
+  stat_compare_means(comparison=my_comparisons, label = "p.signif"
+                     )+
+  theme(panel.grid=element_blank(), strip.text = element_text(size=16), axis.ticks.x = element_blank(),
+        axis.title = element_text(size=14), axis.text = element_text(size=12),
+        legend.text = element_text(size=12), legend.title = element_text(size=14),
+        title = element_text(size=16), plot.title = element_text(hjust=0.5))
+#K for temporal
+
+ggsave(here("figs", "temporal_figs", "temporal_condition_sig.png"))
 
 ##### SALMON GRAPH - GFI/OVERLAP #####
 
@@ -1284,13 +1343,14 @@ spp.scores <- cbind(spp.scores, pval = fit$vectors$pvals) #add pvalues to datafr
 sig.spp.scores <- subset(spp.scores, pval<=0.002) #subset data to show species significant at 0.05
 head(sig.spp.scores)
 
-spp.scores$Species <- c("", "Calanoida", "", "", "", "", "", "Gelatinous", "Appendicularia", "   Chaetognatha", "Other")
+spp.scores$Species <- c(NA, "atop(bold(Calanoida))", NA, NA, NA, NA, NA, "atop(bold(Gelatinous))",
+                        "atop(bolditalic(Oikopleura))", "atop(bold(Chaetognatha))", "atop(bold(Other))")
 
 # FIGURE OUT HOW TO MAKE SOME OF THEM BLANK LATERRRRR
 
 #add to ggplot
-geom_segment(data = spp.scores, aes(x = 0, xend=NMDS1, y=0, yend=NMDS2), arrow = arrow(length = unit(0.25, "cm")), colour = "grey10", lwd=0.3) + 
-  ggrepel::geom_text_repel(data = spp.scores, aes(x=NMDS1, y=NMDS2, label = Species), cex = 3, direction = "both", segment.size = 0.25, size = 14)
+#geom_segment(data = spp.scores, aes(x = 0, xend=NMDS1, y=0, yend=NMDS2), arrow = arrow(length = unit(0.25, "cm")), colour = "grey10", lwd=0.3) + 
+#  ggrepel::geom_text_repel(data = spp.scores, aes(x=NMDS1, y=NMDS2, label = Species), cex = 3, direction = "both", segment.size = 0.25, size = 14)
 ### end of Caroline's code
 
 a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
@@ -1310,11 +1370,13 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
         axis.ticks = element_blank()) + coord_fixed() +
   geom_segment(data = sig.spp.scores, aes(x = 0, xend=NMDS1, y=0, yend=NMDS2), arrow = arrow(length = unit(0.2, "cm")), colour = "grey10", lwd=0.35) + 
   ggrepel::geom_text_repel(data = spp.scores, aes(x=NMDS1, y=NMDS2, label = Species),# cex = 3, 
-                           direction = "both", size = 4, fontface="bold", segment.colour = NA,
-                           nudge_y = if_else(spp.scores$Species=="Calanoida", -0.25, 
-                                             if_else(spp.scores$Species=="Gelatinous", -0.1,
-                                             if_else(spp.scores$Species=="Chaetognatha", 0.5, 0))),
-                           nudge_x=if_else(spp.scores$Species=="Other", -0.3, 0))+
+                           direction = "both",
+                           size = 4, fontface="bold", parse=T, segment.colour = NA,
+                           nudge_y=-0.3)+
+                           #nudge_y = if_else(spp.scores$Species=="Calanoida", -0.25, 
+                          #                   if_else(spp.scores$Species=="Gelatinous", -0.1,
+                          #                   if_else(spp.scores$Species=="Chaetognatha", 0.5, 0))),
+                          # nudge_x=if_else(spp.scores$Species=="Other", -0.3, 0))+
   annotate("text",x=2.5,y=-2.3,label="(stress = 0.15)",size=3, hjust = 0)
 #NMDS graph for the different sites!
 
@@ -1490,7 +1552,7 @@ reg_simper_df <- reg_simper$D07_J07 * 100 #%>%
   #filter(Sum<71)
 
 reg_simper_groups <- reg_simper_df %>%
-  mutate(Taxa=rownames(reg_simper_df), Group=c("Appendicularians", "Gelatinous", "Calanoida", "Calanoida", "Euphausiidae Eggs",
+  mutate(Taxa=rownames(reg_simper_df), Group=c("\\emph{Oikopleura}", "Gelatinous", "Calanoida", "Calanoida", "Euphausiidae Eggs",
                                   "Calanoida", "Gelatinous", "Balanomorpha", "Chaetognatha", "Decapoda", "Calanoida",
                                   "Echinodermata", "Calanoida", "Cladocera", "Calanoida"))
 
@@ -1567,7 +1629,8 @@ temp_matrix_anosim <- data.frame(ufn=ufn_names_nmds, site=as.numeric(site_names_
 
 # PINK SIMPER CALC / TABLE
 
-temp_diet_wide_simper <- select(temp_diet_wide_nmds, -c(Detritus, Digested_food_worms, Crustacea, Parasite, Coscinodiscophycidae))
+temp_diet_wide_simper <- temp_diet_wide_nmds #select(temp_diet_wide_nmds, -c(Detritus, Digested_food_worms, Crustacea, Parasite, Coscinodiscophycidae))
+#make a copy (don't need to filter anymore)
 
 pink_diet_wide <- temp_diet_wide_simper %>%
   filter(fish_species=="Pink")
@@ -1602,7 +1665,7 @@ ave_bio_region_pink <- rel_bio_percent_pink %>%
 simper_pink_summary <- round(pink_simper_df, digits=2) %>%
   mutate(Taxa=rownames(pink_simper_df)) %>%
   select(Taxa, Average=average, Sum=cumsum) %>%
-  filter(Sum<71)
+  filter(Sum<72)
 
 simper_table_pink <- left_join(simper_pink_summary, ave_bio_region_pink)
 
@@ -1614,7 +1677,7 @@ simper_table_pink$Taxa <- c("\\emph{Calanus marshallae}", "\\emph{Oikopleura} sp
                                  "Furcilia", "\\emph{Pseudevadne tergestina}", "Sagittoidea")
 
 simper_table_pink_full <- simper_table_pink %>%
-  mutate(Groups=c("Calanoida","Appendicularia","Calanoida","Calanoida","Balanomorpha",
+  mutate(Groups=c("Calanoida","\\emph{Oikopleura}","Calanoida","Calanoida","Balanomorpha",
                   "Euphausiidae","Calanoida","Decapoda","Echinodermata","Calanoida",
                   "Calanoida","Cladocera","Balanomorpha","Calanoida","Balanomorpha",
                   "Euphausiidae","Cladocera","Chaetognatha")) %>% 
@@ -1670,7 +1733,7 @@ simper_table_chum$Taxa <- c("Cnidaria", "\\emph{Oikopleura} spp.", "\\emph{Calan
                             "Ctenophora", "Eggs", "\\emph{Eukrohnia hamata}")
 
 simper_table_chum_full <- simper_table_chum %>%
-  mutate(Groups=c("Gelatinous","Appendicularia","Calanoida","Gelatinous",
+  mutate(Groups=c("Gelatinous","\\emph{Oikopleura}","Calanoida","Gelatinous",
                   "Euphausiidae", "Chaetognatha")) %>% 
   select(Groups, Taxa, DI=D07, JS=J07, Average, Sum)
 
@@ -1922,13 +1985,20 @@ ggsave(here("figs", "temporal_figs", "temporal_subcluster_JS.png"), width=22.5, 
 
 df <- data.frame(temp_trans_nmds)
 
-res<- simprof((df), method.distance = "braycurtis", alpha=0.01)#,
-                          #num.expected = 10, num.simulated = 10)
+#res<- simprof((df), method.distance = "braycurtis", alpha=0.05)#,
+#                          #num.expected = 10, num.simulated = 10)
+
+#res<- simprof((df), method.distance = "actual-braycurtis", alpha=0.05)
 
 simprof.plot(res)
 
-mydf <- as.data.frame(res$significantclusters)
+mydf <- as.data.frame(unlist(res$significantclusters))
 
+clustdf <- mutate(mydf, clusts=c(1, 2, 3, rep(4, 7), 5, 6, rep(7, 5), rep(8, 10), rep(9, 2), rep(10, 7), rep(11, 8), 12, 13,
+                                 rep(14, 2), rep(15, 2), 16, rep(17, 2), 18, 19, 20, rep(21, 6), 22, rep(23, 12), rep(24, 2), rep(25, 6), rep(26, 2), rep(27, 5), 28, rep(29, 3), 30, 31,
+                                 rep(32, 3), rep(33, 3), rep(34, 6), rep(35, 3), rep(36, 2), rep(37, 15), rep(38, 5), rep(39, 3), rep(40, 3), rep(41, 2), rep(42, 6), rep(43, 7), rep(44, 4), rep(45, 7), rep(46, 4), 47,
+                                 rep(48, 7), rep(49, 9), 50, 51, rep(52, 12), rep(53, 4)))
+# 7 9 1 1 12 4
 # see if this works then run simper on significant clusters (as a quantitative way to say that
 # middle cluster is because of the presence of euphausiids without just looking at data...)
 # same with when I divide up DI and JS subclusters, it's obvious what diet comp is but need quant.
@@ -2038,7 +2108,11 @@ unique(no_duplicates$Taxa)
 
 size_levels=c("<1", "1 to 2", "2 to 5", "5 to 10", ">10")
 
+size_levels_desc=c(">10", "5 to 10", "2 to 5", "1 to 2", "<1")
+
 temporal_diets$size_class <- factor(temporal_diets$size_class, levels=size_levels)
+
+#temporal_diets$size_class <- factor(temporal_diets$size_class, levels=size_levels_desc)
 
 size_data <- temporal_diets %>%
   filter(length_avg>0, digestion_state==1#, length_avg<20
@@ -2053,8 +2127,8 @@ size_data <- temporal_diets %>%
 
 size_season_colors <- left_join(size_data, date_colors, by=c("survey_date", "site_id"))
 
-pink_size_data <- filter(size_data, site_id=="D07" & year=="2015" & fish_species=="Pink")
-chum_size_data <- filter(size_data, site_id=="D07" & year=="2015" & fish_species=="Chum")
+pink_size_data <- filter(size_data, site_id=="J07" & year=="2016" & fish_species=="Pink")
+chum_size_data <- filter(size_data, site_id=="J07" & year=="2016" & fish_species=="Chum" & length_avg<20)
 
 pink_size_lm <- lm(length_avg~fork_length, pink_size_data)
 chum_size_lm <- lm(length_avg~fork_length, chum_size_data)
@@ -2062,10 +2136,52 @@ chum_size_lm <- lm(length_avg~fork_length, chum_size_data)
 summary(pink_size_lm)
 summary(chum_size_lm)
 
+# CU DI 2015: 0.7107 (adj R2) p < 0.001 *
+# Y=-16.2+0.21X
+# PI DI 2015: 0.5466 p = 0.001 *
+# Y=-12.4+0.16X
+
+# CU DI 2016: 0.4615 p < 0.001 * 
+#-2.5+0.05X
+# PI DI 2016: -0.03181 p = 0.636 
+#0.6+0.01X
+
+# CU JS 2015: -0.01614 p = 0.469
+#-3.2+0.05x
+# PI JS 2015: -0.01477 p = 0.402
+#y=2.0+0.01x
+
+# CU JS 2016: 0.02504 p = 0.201
+# 4.9-0.01x
+# PI JS 2016: 0.3365 p = 0.001 *
+# -2.8+0.05x
+
+linear_results <- data.frame(site_id=c(rep("D07", 4), rep("J07", 4)),
+                             year=c(rep(2015, 2), rep(2016, 2), rep(2015, 2), rep(2016, 2)),
+                             fish_species=c(rep(c("Chum", "Pink"), 4)),
+                             vals=c(#"\\b{R^2*`=0.71,\np<0.001*`}",
+                                    "R^2*`=0.71,\np<0.001*`",
+                                    #"\\b{Rsup{2}=0.71,\np<0.001*}",
+                                    #as.expression(bquote(~ R^2 ~ "=0.71,\np<0.001*")),
+                                    "R^2*`=0.55,\np=0.001*`",
+                                    "R^2*`=0.46,\np<0.001*`", "R^2*`=-0.03,\np=0.64`",
+                                    "R^2*`=-0.02,\np=0.47`", "R^2*`=-0.01,\np=0.40`",
+                                    "R^2*`=0.03,\np=0.20`", "R^2*`=0.34,\np=0.001*`"),
+                             eqn=c("y=-16.2+0.21x", "y=-12.4+0.16x", "y=-2.5+0.05x", "y=0.6+0.01x",
+                                   "y=-3.2+0.05x", "y=2.0+0.01x", "y=4.9-0.01x", "y=-2.8+0.05x"),
+                             rs=c("R^2*`=0.71`", "R^2*`=0.55`", "R^2*`=0.46`", "R^2*`=-0.03`",
+                                  "R^2*`=-0.02`", "R^2*`=-0.01`", "R^2*`=0.03`", "R^2*`=0.34`"),
+                             ps=c("p<0.001*", "p=0.001*", "p<0.001*",
+                                  "p=0.64", "p=0.47", "p=0.40", "p=0.20",
+                                  "p=0.001*"),
+                             sig=c(rep("Y", 3), rep("N", 4), "Y"))
+
+size_season_colors_text <- left_join(size_season_colors, linear_results)
+
 # ~ 0.5 R2 for pink and ~0.7 for chum (DI 2015; rest ~ 0 or hella low from looking at graph)
 
 a1 <- size_season_colors %>%
-  filter(fish_species=="Chum") %>%
+  filter(fish_species=="Chum" & length_avg<20) %>%
   ggplot(aes(fork_length, length_avg))+
   geom_jitter(aes(color=codes), size=2#, show.legend=FALSE
   )+
@@ -2074,7 +2190,7 @@ a1 <- size_season_colors %>%
   )+
   #guides(fill= guide_legend(override.aes = list(shape=21)))+
   #guides(color=FALSE)+
-  facet_grid(site_id~year)+
+  facet_grid(site_id~year, scales = "free")+
   scale_x_continuous(limits=c(50, 150))+
   scale_y_continuous(limits=c(0, 15))+
   new_scale_color()+
@@ -2083,17 +2199,18 @@ a1 <- size_season_colors %>%
   geom_smooth(method="lm", aes(color=fish_species), show.legend=FALSE
   )+
   scale_color_manual(values="#516959", name="Species", guide_legend(order=1))+
+  geom_text(linear_results, mapping=aes(x=75, y=10, label=vals))+
   #guides(color=FALSE)+
   theme(legend.position = c(0.75, 0.8), panel.grid=element_blank(),
         strip.text = element_text(size=12),
         axis.title = element_text(size=10), axis.text = element_text(size=8),
         legend.text = element_text(size=8), legend.title = element_text(size=10))
 #theme(legend.position = NULL, panel.grid=element_blank())
-a1
+#a1
 #size_season_colors$codes[which(size_season_colors$codes=="JS - Late June/\nEarly July")] <- "JS - Late June / Early July"
 
 a2 <- size_season_colors %>%
-  filter(fish_species=="Chum") %>%
+  filter(fish_species=="Chum" & length_avg<20) %>% # rid of MAJOR outlier
   ggplot(aes(fork_length, length_avg))+
   geom_jitter(aes(color=codes), size=2, show.legend=FALSE
   )+
@@ -2102,16 +2219,25 @@ a2 <- size_season_colors %>%
   )+
   #guides(fill= guide_legend(override.aes = list(shape=21)))+
   #guides(color=FALSE)+
-  facet_grid(site_id~year)+
+  facet_grid(site_id~year, scales="free")+
   scale_x_continuous(limits=c(50, 150))+
   scale_y_continuous(expand=c(0, 0), limits=c(-0.1, 13.5))+
   new_scale_color()+
   theme_bw()+
   labs(x="Salmon fork length (mm)", y="Mean prey size (mm)")+
-  geom_smooth(method="lm", aes(color=fish_species)#, show.legend=TRUE
+  geom_smooth(method="lm", aes(color=fish_species), show.legend=FALSE
   )+
   scale_color_manual(values="#516959", name="Species", guide_legend(order=1))+
-  #guides(color=FALSE)+
+  #guides(color=FALSE)+ 
+  geom_text(filter(linear_results, fish_species=="Chum" & site_id=="D07"), mapping=aes(x=85, y=12.5, label=eqn), size=3, fontface=2)+
+  geom_text(filter(linear_results, fish_species=="Chum" & site_id=="D07" & year=="2015"), mapping=aes(x=85, y=11.5),
+            label=expression(bold("R"^"2"*"=0.71")), color="black", size=3, parse = TRUE )+
+  geom_text(filter(linear_results, fish_species=="Chum" & site_id=="D07" & year=="2016"), mapping=aes(x=85, y=11.5),
+            label=expression(bold("R"^"2"*"=0.46")), color="black", size=3, parse = TRUE)+
+  geom_text(filter(linear_results, fish_species=="Chum" & site_id=="D07"), mapping=aes(x=85, y=10.5, label=ps), size=3, fontface=2)+
+  geom_text(filter(linear_results, fish_species=="Chum" & site_id=="J07"), mapping=aes(x=85, y=12.5, label=eqn), size=3)+
+  geom_text(filter(linear_results, fish_species=="Chum" & site_id=="J07"), mapping=aes(x=85, y=11.5, label=rs), size=3, parse = TRUE)+
+  geom_text(filter(linear_results, fish_species=="Chum" & site_id=="J07"), mapping=aes(x=85, y=10.5, label=ps), size=3)+
   theme(legend.position = c(0.85, 0.93), panel.grid=element_blank(),
         axis.text.x = element_text(color="black"),
         axis.text.y = element_text(color="black"),
@@ -2138,8 +2264,17 @@ b <- size_season_colors %>%
   new_scale_color()+
   theme_bw()+
   labs(x="Salmon fork length (mm)", y="Mean prey size (mm)")+
-  geom_smooth(method="lm", aes(color=fish_species)#, show.legend=FALSE
+  geom_smooth(method="lm", aes(color=fish_species), show.legend=FALSE
               )+
+  geom_text(filter(linear_results, fish_species=="Pink" & sig=="Y"), mapping=aes(x=85, y=12.5, label=eqn), size=3, fontface=2)+
+  geom_text(filter(linear_results, fish_species=="Pink" & site_id=="D07" & year=="2015"), mapping=aes(x=85, y=11.5),
+            label=expression(bold("R"^"2"*"=0.55")), color="black", size=3, parse = TRUE )+
+  geom_text(filter(linear_results, fish_species=="Pink" & site_id=="J07" & year=="2016"), mapping=aes(x=85, y=11.5),
+            label=expression(bold("R"^"2"*"=0.34")), color="black", size=3, parse = TRUE)+
+  geom_text(filter(linear_results, fish_species=="Pink" & sig=="Y"), mapping=aes(x=85, y=10.5, label=ps), size=3, fontface=2)+
+  geom_text(filter(linear_results, fish_species=="Pink" & sig=="N"), mapping=aes(x=85, y=12.5, label=eqn), size=3)+
+  geom_text(filter(linear_results, fish_species=="Pink" & sig=="N"), mapping=aes(x=85, y=11.5, label=rs), size=3, parse = TRUE)+
+  geom_text(filter(linear_results, fish_species=="Pink" & sig=="N"), mapping=aes(x=85, y=10.5, label=ps), size=3)+
   scale_color_manual(values="#d294af", name="Species", guide_legend(order=1))+
   theme(legend.position = c(0.85, 0.93), 
         panel.grid=element_blank(),
@@ -2205,13 +2340,15 @@ diet_size_biomass_ave$Date[which(diet_size_biomass_ave$Date=="2015-06-07")] <- "
 
 my_palette <- brewer.pal(name="Greys",n=9)[c(4:7, 9)]
 
+my_palette_rev <- c("#000000", "#525252", "#737373", "#969696", "#BDBDBD")
+
 diet_size_biomass_ave %>%
   ggplot(aes(Date, Ave_Rel_Bio))+
   geom_bar(data = filter(diet_size_biomass_ave, Species=="Pink"), 
-           mapping = aes(x = Date, y = Ave_Rel_Bio, fill = factor(Size, levels = size_levels)), 
+           mapping = aes(x = Date, y = Ave_Rel_Bio, fill = factor(Size, levels = size_levels_desc)), 
            stat="identity", position='stack', width = barwidth) + 
   geom_bar(data = filter(diet_size_biomass_ave, Species=="Chum"), 
-           mapping = aes(x = Date + barwidth + 0.5, y = Ave_Rel_Bio, fill = factor(Size, levels = size_levels)), 
+           mapping = aes(x = Date + barwidth + 0.5, y = Ave_Rel_Bio, fill = factor(Size, levels = size_levels_desc)), 
            stat="identity", position='stack', width = barwidth)+
   scale_x_date(date_breaks = "17 days", date_labels = "%b %d", limits = c(NULL, NULL))+ 
   facet_grid(Site~Year, scales="free")+
@@ -2223,7 +2360,8 @@ diet_size_biomass_ave %>%
   geom_text(data = diet_chum_graph, aes(x = Date + barwidth + 1.2, y = 105), label = "CU", color="#516959")+
   #geom_vline(aes(xintercept=Date+1.25), linetype="dashed")+
   labs(y="Relative Biomass (%)", fill="Size Class")+
-  scale_fill_manual(values=my_palette)+
+  scale_fill_manual(values=my_palette_rev)+
+  guides(fill=guide_legend(reverse = TRUE))+
   theme(panel.grid=element_blank(), axis.text.x = element_text(color="black"),
         axis.text.y = element_text(color="black"), strip.text = element_text(size=16),
         axis.ticks.x = element_blank(), axis.title = element_text(size=14),
@@ -2462,6 +2600,221 @@ ggplot(all_curve_data)+
         legend.text = element_text(size=10), legend.title = element_text(size=12))
 
 ggsave(here("figs", "temporal_figs", "temporal_cum_prey_curves.png"), width=15, height=15, units="cm", dpi=800)
+
+#separated by each date (might not work with sample sizes tho...?)
+
+PI_D07_15_matrix_A <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Pink" & year=="2015" & survey_date=="2015-05-21") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_D07_15_matrix_B <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Pink" & year=="2015" & survey_date=="2015-06-07") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_D07_15_matrix_C <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Pink" & year=="2015" & survey_date=="2015-06-13") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_D07_16_matrix_A <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Pink" & year=="2016" & survey_date=="2016-05-19") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_D07_16_matrix_B <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Pink" & year=="2016" & survey_date=="2016-06-03") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_D07_16_matrix_C <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Pink" & year=="2016" & survey_date=="2016-06-16") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_J07_15_matrix_A <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Pink" & year=="2015" & survey_date=="2015-06-02") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_J07_15_matrix_B <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Pink" & year=="2015" & survey_date=="2015-06-14") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_J07_15_matrix_C <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Pink" & year=="2015" & survey_date=="2015-06-29") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_J07_16_matrix_A <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Pink" & year=="2016" & survey_date=="2016-06-03") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_J07_16_matrix_B <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Pink" & year=="2016" & survey_date=="2016-06-20") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_J07_16_matrix_C <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Pink" & year=="2016" & survey_date=="2016-07-05") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_D07_15_matrix_A <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Chum" & year=="2015" & survey_date=="2015-05-21") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_D07_15_matrix_B <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Chum" & year=="2015" & survey_date=="2015-06-05") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_D07_15_matrix_C <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Chum" & year=="2015" & survey_date=="2015-06-13") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_D07_16_matrix_A <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Chum" & year=="2016" & survey_date=="2016-05-19") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_D07_16_matrix_B <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Chum" & year=="2016" & survey_date=="2016-06-03") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_D07_16_matrix_C <- temp_diet_wide_nmds %>%
+  filter(site_id=="D07" & fish_species=="Chum" & year=="2016" & survey_date=="2016-06-16") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_J07_15_matrix_A <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Chum" & year=="2015" & survey_date=="2015-06-02") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_J07_15_matrix_B <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Chum" & year=="2015" & survey_date=="2015-06-14") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_J07_15_matrix_C <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Chum" & year=="2015" & survey_date=="2015-06-29") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_J07_16_matrix_A <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Chum" & year=="2016" & survey_date=="2016-06-03") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_J07_16_matrix_B <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Chum" & year=="2016" & survey_date=="2016-06-20") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+CU_J07_16_matrix_C <- temp_diet_wide_nmds %>%
+  filter(site_id=="J07" & fish_species=="Chum" & year=="2016" & survey_date=="2016-07-05") %>% 
+  select(Acartia:Tortanus_discaudatus)
+
+PI_D07_15_curve_A <- specaccum(PI_D07_15_matrix_A)
+PI_D07_16_curve_A <- specaccum(PI_D07_16_matrix_A)
+PI_J07_15_curve_A <- specaccum(PI_J07_15_matrix_A)
+PI_J07_16_curve_A <- specaccum(PI_J07_16_matrix_A)
+CU_D07_15_curve_A <- specaccum(CU_D07_15_matrix_A)
+CU_D07_16_curve_A <- specaccum(CU_D07_16_matrix_A)
+CU_J07_15_curve_A <- specaccum(CU_J07_15_matrix_A)
+CU_J07_16_curve_A <- specaccum(CU_J07_16_matrix_A)
+
+PI_D07_15_curve_B <- specaccum(PI_D07_15_matrix_B)
+PI_D07_16_curve_B <- specaccum(PI_D07_16_matrix_B)
+PI_J07_15_curve_B <- specaccum(PI_J07_15_matrix_B)
+PI_J07_16_curve_B <- specaccum(PI_J07_16_matrix_B)
+CU_D07_15_curve_B <- specaccum(CU_D07_15_matrix_B)
+CU_D07_16_curve_B <- specaccum(CU_D07_16_matrix_B)
+CU_J07_15_curve_B <- specaccum(CU_J07_15_matrix_B)
+CU_J07_16_curve_B <- specaccum(CU_J07_16_matrix_B)
+
+PI_D07_15_curve_C <- specaccum(PI_D07_15_matrix_C)
+PI_D07_16_curve_C <- specaccum(PI_D07_16_matrix_C)
+PI_J07_15_curve_C <- specaccum(PI_J07_15_matrix_C)
+PI_J07_16_curve_C <- specaccum(PI_J07_16_matrix_C)
+CU_D07_15_curve_C <- specaccum(CU_D07_15_matrix_C)
+CU_D07_16_curve_C <- specaccum(CU_D07_16_matrix_C)
+CU_J07_15_curve_C <- specaccum(CU_J07_15_matrix_C)
+CU_J07_16_curve_C <- specaccum(CU_J07_16_matrix_C)
+
+PI_D07_15_curve_data_A <- data.frame(Fish=PI_D07_15_curve_A$sites, Richness=PI_D07_15_curve_A$richness, #SD=PI_D07_15_curve_A$sd,
+                                     Species="Pink", Site="D07", Year="2015", code="A")
+PI_D07_16_curve_data_A <- data.frame(Fish=PI_D07_16_curve_A$sites, Richness=PI_D07_16_curve_A$richness, #SD=PI_D07_16_curve_A$sd,
+                                     Species="Pink", Site="D07", Year="2016", code="A")
+PI_J07_15_curve_data_A <- data.frame(Fish=PI_J07_15_curve_A$sites, Richness=PI_J07_15_curve_A$richness,# SD=PI_J07_15_curve_A$sd,
+                                     Species="Pink", Site="J07", Year="2015", code="D")
+PI_J07_16_curve_data_A <- data.frame(Fish=PI_J07_16_curve_A$sites, Richness=PI_J07_16_curve_A$richness,# SD=PI_J07_16_curve_A$sd,
+                                     Species="Pink", Site="J07", Year="2016", code="D")
+CU_D07_15_curve_data_A <- data.frame(Fish=CU_D07_15_curve_A$sites, Richness=CU_D07_15_curve_A$richness,# SD=CU_D07_15_curve_A$sd,
+                                     Species="Chum", Site="D07", Year="2015", code="A")
+CU_D07_16_curve_data_A <- data.frame(Fish=CU_D07_16_curve_A$sites, Richness=CU_D07_16_curve_A$richness,# SD=CU_D07_16_curve_A$sd,
+                                     Species="Chum", Site="D07", Year="2016", code="A")
+CU_J07_15_curve_data_A <- data.frame(Fish=CU_J07_15_curve_A$sites, Richness=CU_J07_15_curve_A$richness,# SD=CU_J07_15_curve_A$sd,
+                                     Species="Chum", Site="J07", Year="2015", code="D")
+CU_J07_16_curve_data_A <- data.frame(Fish=CU_J07_16_curve_A$sites, Richness=CU_J07_16_curve_A$richness,# SD=CU_J07_16_curve_A$sd,
+                                     Species="Chum", Site="J07", Year="2016", code="D")
+
+PI_D07_15_curve_data_B <- data.frame(Fish=PI_D07_15_curve_B$sites, Richness=PI_D07_15_curve_B$richness,# SD=PI_D07_15_curve_B$sd,
+                                     Species="Pink", Site="D07", Year="2015", code="B")
+PI_D07_16_curve_data_B <- data.frame(Fish=PI_D07_16_curve_B$sites, Richness=PI_D07_16_curve_B$richness,# SD=PI_D07_16_curve_B$sd,
+                                     Species="Pink", Site="D07", Year="2016", code="B")
+PI_J07_15_curve_data_B <- data.frame(Fish=PI_J07_15_curve_B$sites, Richness=PI_J07_15_curve_B$richness,# SD=PI_J07_15_curve_B$sd,
+                                     Species="Pink", Site="J07", Year="2015", code="E")
+PI_J07_16_curve_data_B <- data.frame(Fish=PI_J07_16_curve_B$sites, Richness=PI_J07_16_curve_B$richness,# SD=PI_J07_16_curve_B$sd,
+                                     Species="Pink", Site="J07", Year="2016", code="E")
+CU_D07_15_curve_data_B <- data.frame(Fish=CU_D07_15_curve_B$sites, Richness=CU_D07_15_curve_B$richness,# SD=CU_D07_15_curve_B$sd,
+                                     Species="Chum", Site="D07", Year="2015", code="B")
+CU_D07_16_curve_data_B <- data.frame(Fish=CU_D07_16_curve_B$sites, Richness=CU_D07_16_curve_B$richness,# SD=CU_D07_16_curve_B$sd,
+                                     Species="Chum", Site="D07", Year="2016", code="B")
+CU_J07_15_curve_data_B <- data.frame(Fish=CU_J07_15_curve_B$sites, Richness=CU_J07_15_curve_B$richness,# SD=CU_J07_15_curve_B$sd,
+                                     Species="Chum", Site="J07", Year="2015", code="E")
+CU_J07_16_curve_data_B <- data.frame(Fish=CU_J07_16_curve_B$sites, Richness=CU_J07_16_curve_B$richness,# SD=CU_J07_16_curve_B$sd,
+                                     Species="Chum", Site="J07", Year="2016", code="E")
+
+PI_D07_15_curve_data_C <- data.frame(Fish=PI_D07_15_curve_C$sites, Richness=PI_D07_15_curve_C$richness,# SD=PI_D07_15_curve_C$sd,
+                                     Species="Pink", Site="D07", Year="2015", code="C")
+PI_D07_16_curve_data_C <- data.frame(Fish=PI_D07_16_curve_C$sites, Richness=PI_D07_16_curve_C$richness,# SD=PI_D07_16_curve_C$sd,
+                                     Species="Pink", Site="D07", Year="2016", code="C")
+PI_J07_15_curve_data_C <- data.frame(Fish=PI_J07_15_curve_C$sites, Richness=PI_J07_15_curve_C$richness,# SD=PI_J07_15_curve_C$sd,
+                                     Species="Pink", Site="J07", Year="2015", code="F")
+PI_J07_16_curve_data_C <- data.frame(Fish=PI_J07_16_curve_C$sites, Richness=PI_J07_16_curve_C$richness,# SD=PI_J07_16_curve_C$sd,
+                                     Species="Pink", Site="J07", Year="2016", code="F")
+CU_D07_15_curve_data_C <- data.frame(Fish=CU_D07_15_curve_C$sites, Richness=CU_D07_15_curve_C$richness,# SD=CU_D07_15_curve_C$sd,
+                                     Species="Chum", Site="D07", Year="2015", code="C")
+CU_D07_16_curve_data_C <- data.frame(Fish=CU_D07_16_curve_C$sites, Richness=CU_D07_16_curve_C$richness,# SD=CU_D07_16_curve_C$sd,
+                                     Species="Chum", Site="D07", Year="2016", code="C")
+CU_J07_15_curve_data_C <- data.frame(Fish=CU_J07_15_curve_C$sites, Richness=CU_J07_15_curve_C$richness,# SD=CU_J07_15_curve_C$sd,
+                                     Species="Chum", Site="J07", Year="2015", code="F")
+CU_J07_16_curve_data_C <- data.frame(Fish=CU_J07_16_curve_C$sites, Richness=CU_J07_16_curve_C$richness,# SD=CU_J07_16_curve_C$sd,
+                                     Species="Chum", Site="J07", Year="2016", code="F")
+
+all_curve_data <- rbind(PI_D07_15_curve_data_A, PI_D07_16_curve_data_A, PI_J07_15_curve_data_A, PI_J07_16_curve_data_A,
+                        CU_D07_15_curve_data_A, CU_D07_16_curve_data_A, CU_J07_15_curve_data_A, CU_J07_16_curve_data_A,
+                        PI_D07_15_curve_data_B, PI_D07_16_curve_data_B, PI_J07_15_curve_data_B, PI_J07_16_curve_data_B,
+                        CU_D07_15_curve_data_B, CU_D07_16_curve_data_B, CU_J07_15_curve_data_B, CU_J07_16_curve_data_B,
+                        PI_D07_15_curve_data_C, PI_D07_16_curve_data_C, PI_J07_15_curve_data_C, PI_J07_16_curve_data_C,
+                        CU_D07_15_curve_data_C, CU_D07_16_curve_data_C, CU_J07_15_curve_data_C, CU_J07_16_curve_data_C)
+
+#all_curve_data$Site <- factor(all_curve_data$Site, levels=spat_site_order)
+#all_curve_data$Year <- factor(all_curve_data$Site, levels=spat_site_order)
+all_curve_data$Species <- factor(all_curve_data$Species, levels=c("Pink", "Chum"))
+
+ggplot(all_curve_data)+
+  geom_line(aes(x=Fish, y=Richness, color=code, #color=Site,
+                group=interaction(Site, Species, Year, code))) +
+  geom_point(aes(x=Fish, y=Richness, shape=Species,
+                 color=code#color=Site
+                 ), fill="white", 
+             size=3, stroke=2) +
+  #geom_ribbon(aes(x=all_curve_data$Fish, ymin=(all_curve_data$Richness-1*all_curve_data$SD),ymax=(all_curve_data$Richness+1*all_curve_data$SD), fill=Site, group=interaction(Site, Species)),alpha=0.2)+
+  scale_color_manual(values=c(#"darkred", "#053061"), name="Site",
+                     "darkgoldenrod", "#d94801", "darkred",
+                     "#016c59", "#542788", "#053061"), name="Site & Date",
+                     guide = guide_legend(reverse = F)) +
+  scale_shape_manual(values=c(21, 16), name="Species")+
+  labs(y="Richness (# of Prey Taxa)", x="# of Stomachs")+
+  theme_bw()+
+  facet_wrap(~Year)+
+  theme(panel.grid=element_blank(),
+        axis.text.x = element_text(color="black"),
+        axis.text.y = element_text(color="black"),
+        strip.text = element_text(size=14),
+        axis.ticks.x = element_blank(),
+        axis.title = element_text(size=12), axis.text = element_text(size=10),
+        legend.text = element_text(size=10), legend.title = element_text(size=12))
+
+ggsave(here("figs", "temporal_figs", "temporal_cum_prey_curves_detail.png"), width=15, height=15, units="cm", dpi=800)
+
+#overwhelming amount of detail (don't use unless reeeeeally want to dive into date specifics...)
 
 ##### PLASTICS #####
 

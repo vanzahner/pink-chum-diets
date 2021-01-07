@@ -1,6 +1,6 @@
 #updated spatial analysis code:
 
-#last modified september 25, 2020
+#last modified december 17, 2020
 
 #purpose is all spatial data + analysis (diets, zoops, and environment)
 
@@ -30,6 +30,8 @@ library(ggdendro)
 #cluster dendrograms
 library(ggnewscale)
 #for creating multiple color scales in ggplot
+library(ggtext)
+#to italicize in figures
 select <- dplyr::select
 #prioritize select for dplyr library (not MASS library - used in map code...)
 
@@ -88,11 +90,12 @@ spat_zoop_envr <- left_join(spat_envr_data, spat_zoop_ww_total, by="site_id")
 
 spat_zoop_intermediate <- spat_zoop_data %>%
   mutate(prey_group=if_else(class=="Sagittoidea" | phylum=="Echinodermata" | phylum=="Ochrophyta" | phylum=="Bryozoa", phylum,
-                    if_else(genus=="Oikopleura" | class=="Actinopterygii" | class=="Polychaeta" | class=="Insecta" | class=="Bivalvia", class,
+                    if_else(#genus=="Oikopleura" | 
+                              class=="Actinopterygii" | class=="Polychaeta" | class=="Insecta" | class=="Bivalvia", class,
                     if_else(phylum=="Cnidaria" | phylum=="Ctenophora", phylum, 
                     if_else(family=="Caligidae", "Parasites",
                     if_else(class=="Gastropoda", "Pteropoda",
-                    if_else(prey_info=="Unknown_egg", "Euphausiidae Eggs",
+                    if_else(prey_info=="Unknown_egg", "Zooplankton Eggs",
                     if_else(order=="Decapoda" | order=="Amphipoda" |
                             order=="Harpacticoida" | order=="Cyclopoida", order,
                     if_else(order=="Calanoida" & (size_class=="<1" | size_class=="1 to 2"), "Small (<2mm)",
@@ -101,32 +104,35 @@ spat_zoop_intermediate <- spat_zoop_data %>%
                     if_else(infraorder=="Balanomorpha", infraorder,
                     if_else(family=="Euphausiidae", "Euphausiidae Larvae",
                     if_else(family=="Podonidae", "Cladocera",
-                            prey_info))))))))))))))
+                    if_else(genus=="Oikopleura", "\\emph{Oikopleura} spp.",
+                            prey_info)))))))))))))))
 #update zooplankton groups for summary and graphs
 
 str(spat_zoop_intermediate$size_class)
 
 prey_level_details <- c("Hyperiidea", "Senticaudata", "Amphipoda", "Small (<2mm)", "Large (>2mm)", "Euphausiidae", "Adults",
                         "Euphausiidae Larvae", "Larvae", "Decapoda", "Insecta", "Arachnida",
-                        "Harpacticoida", "Cnidaria", "Ctenophora", "Appendicularia", "Chaetognatha",
+                        "Harpacticoida", "Cnidaria", "Ctenophora", "Appendicularia", 
+                        "\\emph{Oikopleura} spp.", "\\emph{Oikopleura}", "*Oikopleura*", "Chaetognatha",
                         "Cyclopoida", "Bivalvia", "Pteropoda", "Polychaeta", "Actinopterygii",
-                        "Balanomorpha", "Cumacea", "Isopoda", "Cladocera", "Euphausiidae Eggs", "Echinodermata",
-                        "Object", "Ochrophyta", "Parasites")
+                        "Balanomorpha", "Cumacea", "Isopoda", "Cladocera", "Euphausiidae Eggs",
+                        "Echinodermata", "Object", "Ochrophyta", "Parasites")
 
 zoop_group_data <- spat_zoop_intermediate %>%
   mutate(prey_group_simple=if_else(prey_group=="Cnidaria" | prey_group=="Ctenophora", "Gelatinous",
                            if_else(prey_group=="Small (<2mm)" | prey_group=="Large (>2mm)", "Calanoida", 
                            if_else(prey_group=="Euphausiidae Larvae", "Euphausiidae",
+                           if_else(prey_group=="\\emph{Oikopleura} spp.", "*Oikopleura*", 
                            if_else(prey_group!="Decapoda" & #prey_group!="Amphipoda" &
                                    #prey_group!="Harpacticoida" &
                                    prey_group!="Appendicularia" & #prey_group!="Chaetognatha" &
                                    #prey_group!="Balanomorpha" & prey_group!="Cladocera" & prey_group!="Mollusca" 
                                    prey_group!="Bivalvia" & prey_group!="Cyclopoida", 
-                                   "Other", prey_group)))))
+                                   "Other", prey_group))))))
 # keep prey groups that are substantial, rest = "Other" prey category
 
 zoop_levels <- c("Calanoida", "Euphausiidae", "Decapoda", #"Harpacticoida",
-                 "Gelatinous", "Appendicularia", "Cyclopoida", "Bivalvia", "Other")
+                 "Gelatinous", "*Oikopleura*", "Cyclopoida", "Bivalvia", "Other")
 #put the taxa groups in an order that somewhat matches the diet comp later on
 
 zoop_colors <- c("#E41A1C", "#FDAE61", "#FF7F00", #"#33A02C",
@@ -582,17 +588,16 @@ spat_gfi_table <- spat_gfi_all_data %>%
             mean_k=round(mean(na.omit(k)), digits=2), se_k=round(sd(na.omit(k)), digits=1))
 #Note: changed to be SD instead of SE (consistent with temporal's variable sample sizes)
 
-#spat_gfi_summary <- spat_gfi_all_data %>%
-#  mutate(region=if_else(site_id=="D09" | site_id=="D07" | site_id=="D11", "DI",
-#                        if_else(site_id=="J02", "QCSt", 
-#                                "JS")
-#                        )
-#         ) %>% 
-#  group_by(fish_species, region) %>%
-#  summarise(mean_ww=round(mean(weight), digits=1), se_ww=round(sd(weight), digits=1),
-#            mean_food=round(mean(food_weight_corr), digits=1), se_food=round(sd(food_weight_corr), digits=1),
-#            mean_gfi=round(mean(gfi), digits=2), se_gfi=round(sd(gfi), digits=2),
-#            mean_fl=round(mean(na.omit(fork_length)), digits=1), se_fl=round(sd(na.omit(fork_length)), digits=1))
+spat_gfi_summary <- spat_gfi_all_data %>%
+  mutate(region=if_else(site_id=="D09" | site_id=="D07" | site_id=="D11", "DI",
+                       # if_else(#site_id=="J02", "QCSt", 
+                                "JS"#)
+         )) %>% 
+  group_by(fish_species, region) %>%
+  summarise(mean_ww=round(mean(weight), digits=1), se_ww=round(sd(weight), digits=1),
+            mean_food=round(mean(food_weight_corr), digits=1), se_food=round(sd(food_weight_corr), digits=1),
+            mean_gfi=round(mean(gfi), digits=2), se_gfi=round(sd(gfi), digits=2),
+            mean_fl=round(mean(na.omit(fork_length)), digits=1), se_fl=round(sd(na.omit(fork_length)), digits=1))
 # for summary to write in paper
 
 ##### SALMON TABLES - INDICES ##### 
@@ -1326,7 +1331,7 @@ a <- ggplot(NMDS.bc, aes(NMDS1.bc, NMDS2.bc))+
                               "#F781BF", "#e41a1c", "darkred"), name="Site",
                      guide = guide_legend(reverse = TRUE)) +
   new_scale_color()+
-  geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
+  #geom_path(data=df_ell.bc, aes(x=NMDS1, y=NMDS2,colour=group), size=1, linetype=2) +
   scale_shape_manual(values=c(21, 19), name="Species")+
   guides(fill= guide_legend(override.aes = list(shape=21)))+
   labs(x="NMDS 1", y="NMDS 2")+
