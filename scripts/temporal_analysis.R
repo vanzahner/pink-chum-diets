@@ -1,6 +1,6 @@
 #updated temporal analysis code:
 
-#last modified dec 17, 2020
+#last modified jan 19, 2021
 
 #purpose is all temporal data + analysis (diets, zoops, and environment)
 
@@ -266,11 +266,11 @@ ggsave(here("figs", "temporal_figs", "zoop_comp_temporal.png"), width = 15, heig
 # Sampling table:
 
 zoop_table <- temp_zoop_ww %>%
-  select(site_id, survey_date, sieve, biomass) %>%
-  group_by(site_id, survey_date, sieve) %>% 
+  select(site_id, survey_date, size_frac, biomass) %>%
+  group_by(site_id, survey_date, size_frac) %>% 
   summarise(biomass=round(sum(biomass), digits = 1)) %>% 
-  spread(sieve, biomass, fill=0) %>%
-  mutate(Total=sum(`250`, `1000`, `2000`))
+  spread(size_frac, biomass, fill=0) %>%
+  mutate(Total=sum(`250`, `1000`, `2000`, `2000 (Gelatinous)`))
 
 diet_raw_info <- select(temp_diet_raw, ufn, fish_species, survey_date, site_id)
 
@@ -290,7 +290,8 @@ zoop_envr_table <- left_join(zoop_table_intermediate, sample_sizes, by=c("site_i
                 Year=c("2015", "", "", "", "2016", "", "", "2015", "", "", "2016", "", "")) %>% 
   select(`Site`, site_id, Date=survey_date, Year, `$\\#$ Pink`=Pink, `$\\#$ Chum`=Chum,
          `Temp. (°C)`=temperature, `Sal. (‰)`=salinity,
-         `250 $\\mu$m`=`250`, `1000 $\\mu$m`=`1000`, `2000 $\\mu$m`=`2000`, Total)
+         `250 $\\mu$m`=`250`, `1000 $\\mu$m`=`1000`,
+         `Non-Gel.`=`2000`, `Gel.`=`2000 (Gelatinous)`, Total)
 
 for (i in 4:ncol(zoop_envr_table)){
   zoop_envr_table[, i][which(is.na(zoop_envr_table[, i]))] <- "No Data"
@@ -301,13 +302,21 @@ zoop_envr_table$Date <- format(zoop_envr_table$Date, format="%B %d")
 select(zoop_envr_table, -site_id) %>%  
   kable("latex", booktabs=TRUE, linesep=c(rep("", 3), '\\addlinespace', "", "", "\\addlinespace", "", "", "\\addlinespace", "", ""),
         escape = FALSE, align=c("l", "l", "l", "c", "c", "c", "c", "r", "r", "r", "r")) %>%
-  add_header_above(c(" "=7, "Zooplankton Biomass (mg/m³)"=4)) %>% 
+  add_header_above(c(" "=9, "2000 $\\\\mu$m"=2, " "=1), escape = FALSE) %>% 
+  add_header_above(c(" "=7, "Zooplankton Biomass (mg/m³)"=5)) %>% 
   kable_styling(latex_options = "hold_position", font_size = 8, full_width = TRUE) %>%
   #column_spec(8:11, width = "0.435in") %>% 
-  column_spec(8:11, width = "0.35in") %>% 
+  column_spec(8:11, width = "0.2in") %>% 
   column_spec(2, width="0.4in") %>% 
   save_kable(here("tables", "temporal_tables", "sampling_table.pdf"))
 # 95 pink + 117 chum = 212 salmon
+
+temp_envr_surface %>%
+  group_by(site_id) %>% 
+#  group_by(year) %>% 
+  group_by(site_id, year) %>% 
+  summarise(meantemp=mean(temperature), sdtemp=sd(temperature),
+            meansal=mean(salinity), sdsal=sd(salinity))
 
 zoop_envr_table %>%
   mutate(year=c(rep("2015", 4), rep("2016", 3), rep("2015", 3), rep("2016", 3))) %>% 
@@ -1985,7 +1994,7 @@ ggsave(here("figs", "temporal_figs", "temporal_subcluster_JS.png"), width=22.5, 
 
 df <- data.frame(temp_trans_nmds)
 
-#res<- simprof((df), method.distance = "braycurtis", alpha=0.05)#,
+res<- simprof((df), method.distance = "braycurtis", alpha=0.01)#,
 #                          #num.expected = 10, num.simulated = 10)
 
 #res<- simprof((df), method.distance = "actual-braycurtis", alpha=0.05)
@@ -1995,13 +2004,21 @@ simprof.plot(res)
 mydf <- as.data.frame(unlist(res$significantclusters))
 
 clustdf <- mutate(mydf, clusts=c(1, 2, 3, rep(4, 7), 5, 6, rep(7, 5), rep(8, 10), rep(9, 2), rep(10, 7), rep(11, 8), 12, 13,
-                                 rep(14, 2), rep(15, 2), 16, rep(17, 2), 18, 19, 20, rep(21, 6), 22, rep(23, 12), rep(24, 2), rep(25, 6), rep(26, 2), rep(27, 5), 28, rep(29, 3), 30, 31,
+                                 rep(14, 2), rep(15, 2), 16, rep(16, 2), 18, 19, 20, rep(21, 6), 22, rep(23, 12), rep(24, 2), rep(25, 6), rep(26, 2), rep(27, 5), 28, rep(29, 3), 30, 31,
                                  rep(32, 3), rep(33, 3), rep(34, 6), rep(35, 3), rep(36, 2), rep(37, 15), rep(38, 5), rep(39, 3), rep(40, 3), rep(41, 2), rep(42, 6), rep(43, 7), rep(44, 4), rep(45, 7), rep(46, 4), 47,
                                  rep(48, 7), rep(49, 9), 50, 51, rep(52, 12), rep(53, 4)))
 # 7 9 1 1 12 4
 # see if this works then run simper on significant clusters (as a quantitative way to say that
 # middle cluster is because of the presence of euphausiids without just looking at data...)
 # same with when I divide up DI and JS subclusters, it's obvious what diet comp is but need quant.
+
+clustdf <- mutate(mydf, clusts=c(1, 2, 3, rep(4, 7), 5, rep(6,6), rep(7, 10), rep(8, 2),
+                                 rep(9, 7), rep(10, 8), 11, 12, rep(13, 2), rep(14, 2),
+                                 15, rep(16, 2), rep(17,22), rep(18, 2), rep(19, 6), rep(20, 2),
+                                 rep(21, 5), 22, rep(23, 3), 24, rep(25, 38),
+                                 rep(26, 3), rep(27, 3), rep(28, 8), rep(29, 7), 
+                                 rep(30, 11), rep(31, 4), 32, rep(33, 16),
+                                 rep(34, 14), rep(35, 4)))
 
 ##### FREQ OCCUR ######
 
@@ -2342,6 +2359,8 @@ my_palette <- brewer.pal(name="Greys",n=9)[c(4:7, 9)]
 
 my_palette_rev <- c("#000000", "#525252", "#737373", "#969696", "#BDBDBD")
 
+my_palette_red <- c("#000000", "#a50f15",  "#ef3b2c", "#fc9272", "#fcbba1")
+
 diet_size_biomass_ave %>%
   ggplot(aes(Date, Ave_Rel_Bio))+
   geom_bar(data = filter(diet_size_biomass_ave, Species=="Pink"), 
@@ -2360,7 +2379,7 @@ diet_size_biomass_ave %>%
   geom_text(data = diet_chum_graph, aes(x = Date + barwidth + 1.2, y = 105), label = "CU", color="#516959")+
   #geom_vline(aes(xintercept=Date+1.25), linetype="dashed")+
   labs(y="Relative Biomass (%)", fill="Size Class")+
-  scale_fill_manual(values=my_palette_rev)+
+  scale_fill_manual(values=my_palette_red)+
   guides(fill=guide_legend(reverse = TRUE))+
   theme(panel.grid=element_blank(), axis.text.x = element_text(color="black"),
         axis.text.y = element_text(color="black"), strip.text = element_text(size=16),
@@ -2368,7 +2387,7 @@ diet_size_biomass_ave %>%
         axis.text = element_text(size=12), legend.text = element_text(size=12),
         legend.title = element_text(size=14))
 
-ggsave(here("figs", "temporal_figs", "temporal_size_comp.png"))
+ggsave(here("figs", "temporal_figs", "temporal_size_comp.png"), width=22, height=13, units = "cm", dpi=400)
 
 # figure out a better way to do this... I do think it needs to be per stom not per indiv prey...
 
@@ -2440,7 +2459,15 @@ ggplot(temp_stomachs, aes(fork_length, y=(factor(year)), fill=fish_species))+
 
 library(labdsv)
 
-site_indval <- indval(temp_comm_matrix, site_names_nmds)
+row.names(clustdf) <- clustdf$`unlist(res$significantclusters)`
+
+clust_names <- select(arrange(clustdf, `unlist(res$significantclusters)`), clusts)
+
+clust_names$clusts
+
+site_indval <- indval(temp_comm_matrix, clust_names$clusts)
+
+summary(site_indval)
 
 ##### CALANOIDS #####
 

@@ -223,6 +223,12 @@ all_fish_totals <- seine_survey_data %>%
   select(seine_id, site_id, survey_date, year, yday, #so=so_total, pi=pi_total, cu=cu_total, co=co_total, he=he_total, ck=ck_total)
   so=so_taken, pi=pi_taken, cu=cu_taken, co=co_taken, he=he_taken, ck=ck_taken)
 
+filter(all_fish_totals, is.na(pi)!=TRUE) %>%
+  summarise(pi=sum(pi))
+
+filter(all_fish_totals, is.na(cu)!=TRUE) %>%
+  summarise(cu=sum(cu))
+
 all_fish_calc <- all_fish_totals %>%
   filter(so!=0) %>% #consistent across years...
   gather(key="species", value ="cpue", so:ck) %>% 
