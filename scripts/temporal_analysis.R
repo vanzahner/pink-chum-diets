@@ -837,14 +837,15 @@ gfi_all_data_table <- gfi_overlap_table %>%
          food= paste(mean_food, se_food, sep=" ± "),
          `GFI (%BW)`= paste(mean_gfi, se_gfi, sep=" ± "),
          K=paste(mean_k, se_k, sep = " ± "),
-         Richness=paste(mean_rich, se_rich, sep=" ± "),
+         #Richness=paste(mean_rich, se_rich, sep=" ± "),
          Year=c("2015", " ", "2016", " ", "2015", " ", "2016", " "),
          #Overlap=c(unique(ave_overlap), rep(" ", 4)),
          Site=c("D07", rep(" ", 3), "J07", rep(" ", 3))) %>%
   select(Species=fish_species, Site, Year, `Fish FL (mm)`=fl, `Fish WW (g)`=fishw, `Condition (K)`=K,
          #`Food WW (mg)`=food,
          `GFI (%BW)`, `# Empty`=n, #`% Empty Stom.`=per_empty,
-         Overlap=ave_overlap, Richness) %>%
+         Overlap=ave_overlap#, Richness
+         ) %>%
   unique()
 
 kable(gfi_all_data_table, "latex", booktabs=TRUE, align=c(rep("l", 7), rep("c", 2), "l"),
@@ -2468,6 +2469,8 @@ clust_names$clusts
 site_indval <- indval(temp_comm_matrix, clust_names$clusts)
 
 summary(site_indval)
+
+View(site_indval[["maxcls"]])
 
 ##### CALANOIDS #####
 
