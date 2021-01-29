@@ -417,7 +417,8 @@ temp_diet_sum <- temp_diet_data %>%
 #calculate how many stomachs each prey group appears in
 
 temp_diet_groups <- temp_diet_sum %>%
-  mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea" & taxa_info!="Cancer_oregonensis" & genus!="Alienacanthomysis" & genus!="Ammodytes",
+  mutate(taxa_new=if_else(n<3 & genus!="Neotrypaea" & taxa_info!="Cancer_oregonensis" & taxa_info!="Lophopanopeus_bellus" &
+                            genus!="Alienacanthomysis" & genus!="Ammodytes",
                   if_else(life_stage=="Object", #| life_stage=="Detritus", 
                           "",
                   if_else(class=="Arachnida" | class=="Insecta", #| class=="Actinopterygii",
@@ -1889,6 +1890,7 @@ ggplot()+
   scale_x_continuous(expand=c(0.01, 0.01))+
   scale_y_continuous(expand=c(0.01, 0.01))+
   new_scale_color()+
+  geom_hline(yintercept =0.65)+
   geom_point(data=label(dendr), aes(x=x, y=y, shape=lab$Sp, color=lab$Site),
              fill="white", size=1, stroke = 1)+
   scale_shape_manual(values=c(21, 19), name="Species")+
@@ -1995,7 +1997,7 @@ ggsave(here("figs", "temporal_figs", "temporal_subcluster_JS.png"), width=22.5, 
 
 df <- data.frame(temp_trans_nmds)
 
-res<- simprof((df), method.distance = "braycurtis", alpha=0.01)#,
+res<- simprof((df), method.distance = "braycurtis", alpha=0.05)#,
 #                          #num.expected = 10, num.simulated = 10)
 
 #res<- simprof((df), method.distance = "actual-braycurtis", alpha=0.05)
@@ -2020,6 +2022,14 @@ clustdf <- mutate(mydf, clusts=c(1, 2, 3, rep(4, 7), 5, rep(6,6), rep(7, 10), re
                                  rep(26, 3), rep(27, 3), rep(28, 8), rep(29, 7), 
                                  rep(30, 11), rep(31, 4), 32, rep(33, 16),
                                  rep(34, 14), rep(35, 4)))
+
+ufn_204 <- data.frame(ufn=dendr$labels$label)
+
+clustdf <- mutate(ufn_204, clusts=c(1, 2, 3, rep(4, 7), rep(5, 7), rep(6, 10), #rep(4, 24),
+                                    rep(7, 2), rep(8, 15),# 9,
+                                    rep(9, 39),rep(10, 2), 
+                                    rep(11, 54), rep(12, 8), rep(13, 7), rep(14, 11), rep(15, 39)))
+
 
 ##### FREQ OCCUR ######
 
@@ -2460,9 +2470,9 @@ ggplot(temp_stomachs, aes(fork_length, y=(factor(year)), fill=fish_species))+
 
 library(labdsv)
 
-row.names(clustdf) <- clustdf$`unlist(res$significantclusters)`
+#row.names(clustdf) <- clustdf$`unlist(res$significantclusters)`
 
-clust_names <- select(arrange(clustdf, `unlist(res$significantclusters)`), clusts)
+clust_names <- select(arrange(clustdf, ufn_204), clusts)
 
 clust_names$clusts
 
@@ -2471,6 +2481,19 @@ site_indval <- indval(temp_comm_matrix, clust_names$clusts)
 summary(site_indval)
 
 View(site_indval[["maxcls"]])
+
+indval_table <- read_csv(here("processed", "temporal_data", "indval.csv"))
+
+kable(indval_table, "latex", booktabs=TRUE, escape = FALSE,
+      linesep=c('\\addlinespace', rep("", 3), '\\addlinespace', "", rep('\\addlinespace', 4),
+                          rep("", 3), rep('\\addlinespace', 2), rep("", 2), '\\addlinespace', rep("", 2), '\\addlinespace')) %>% 
+  #kable_styling(latex_options = "hold_position", font_size = 8, full_width = TRUE) %>% 
+  pack_rows("Outliers", 1, 3) %>% 
+  pack_rows("DI Cluster", 4, 11, latex_gap_space = "0em") %>% 
+  pack_rows("Outliers", 12, 12, latex_gap_space = "0em") %>% 
+  pack_rows("JS Cluster", 13, 22, latex_gap_space = "0em") %>% 
+  #add_indent(c(2:3, 6:8, 10:14, 17:nrow(diet_table_detail))) %>% 
+  save_kable(here("tables", "temporal_tables", "indval_table.pdf"))
 
 ##### CALANOIDS #####
 

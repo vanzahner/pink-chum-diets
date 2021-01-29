@@ -249,7 +249,8 @@ all_fish_calc <- all_fish_totals %>%
          ) %>% # cut it off at july 7th (johnson etal 2019) and use comparable site!s
   summarise(cpue=sum(cpue)) %>%
   arrange(year, species, yday) %>%
-  mutate(region=str_sub(site_id, start = 1, end=1))
+  mutate(reg=str_sub(site_id, start = 1, end=1),
+         region=if_else(reg=="D", "DI", "JS"))
 
 full_migration_fish <- all_fish_calc %>%
   group_by(year, species, region
@@ -292,7 +293,10 @@ final_fish_dates_regions <- left_join(median_fish_dates, full_migration_fish, by
   group_by(year, species, region
            ) %>%
   summarise(survey_date=first(survey_date), yday=first(yday)) %>%
-  filter(species=="pi" | species=="cu")
+  filter(species=="pi" | species=="cu") %>%
+  mutate(#yr=year, 
+         date=format.Date(as.Date(yday, origin="2014-01-01"), format="%B %d")) %>%
+  select(-survey_date)
 
 # table we're working with for mean dates (. overall=mid-way poitn?):
 final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species", "region"
@@ -301,10 +305,11 @@ final_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year
   group_by(year, species#, region
   ) %>%
   summarise(survey_date=first(survey_date), yday=first(yday)) %>%
-  filter(species=="pi" | species=="cu")
+  filter(species=="pi" | species=="cu") %>%
+  mutate(date=format.Date(as.Date(yday, origin="2014-01-01"), format="%B %d"))
 
 final_fish_dates_regions %>%
-  group_by(species, year) %>% 
+  group_by(species, region, year) %>% 
   summarise(yday=mean(yday)) %>%
   summarise(yday=mean(yday)) %>%
   mutate(date=format.Date(as.Date(yday, origin="2014-01-01"), format="%B %d"))
@@ -313,28 +318,54 @@ timing_table <- final_fish_dates_regions %>%
   group_by(species, year) %>% 
   summarise(yday=mean(yday)) %>%
   mutate(date=format.Date(as.Date(yday, origin=paste(year, "01-01", sep="-")), format="%B %d")) %>%
-  select(-yday, yr=year) %>%
-  mutate(year=yr)
+  #select(-yday, yr=year) %>%
+  mutate(#yr=year, 
+         region="Average")
 #june 3 cu and june 6 pi (when ignoring region)
 # juen 14 cu and june 17 pi (when averaging by year AND region!)
 
-timing_table$species[which(timing_table$species=="pi")] <- "Pink"
-timing_table$species[which(timing_table$species=="cu")] <- "Chum"
-timing_table$year[which(timing_table$species=="Chum")] <- " "
+all_fish_dates <- full_join(timing_table, final_fish_dates_regions) %>%
+  select(species, region, year, date)
+# ERROR. DI = both (not correct)
 
-timing_ave_df <- data.frame(species=c("Pink", "Chum"), year=c("Average", ""), date=c("June 17", "June 14"))
+all_fish_dates$species[which(all_fish_dates$species=="pi")] <- "Pink"
+all_fish_dates$species[which(all_fish_dates$species=="cu")] <- "Chum"
+#all_fish_dates$year[which(all_fish_dates$species=="Chum")] <- " "
+#all_fish_dates$year[which(all_fish_dates$region!="DI")] <- " "
 
-timing_table_full <- rbind(timing_table, timing_ave_df)
+#timing_ave_df <- data.frame(species=c("Pink", "Chum"), year=c("Average", ""), date=c("June 17", "June 14"))
+#timing_ave_df_reg <- data.frame(species=c("Pink", "Chum", "Pink", "Chum"), year=c("Average", ""), date=c("June 17", "June 14"))
+
+timing_ave <- data.frame(species=c("Pink", "Chum", "Pink", "Chum", "Pink", "Chum"),
+                         region=c("DI", "DI", "JS", "JS", "Average", "Average"),
+                         year=rep("Average", 6),
+                         date=c("June 06", "June 04", "June 29", "June 25", "June 17", "June 14"))
+
+timing_table_full <- rbind(all_fish_dates, timing_ave) #sp, reg, year, date
 
 timing_table_full$species <- factor(timing_table_full$species, levels=c("Pink", "Chum"))
-  
-timing_table_full %>% 
+
+timing_table_flip <- spread(timing_table_full, year, date) %>%
+  mutate(reg=region)
+
+timing_table_flip$reg <- factor(timing_table_flip$reg, levels=c("DI", "JS", "Average"))
+
+timing_table_flip$region[which(timing_table_flip$species=="Chum")] <- " "
+
+timing_table_flip %>% 
   arrange(species) %>%
-  arrange(yr) %>% 
-  select(Species=species, Year=year, `Peak migration`=date) %>% 
+  arrange(reg) %>% 
+#  arrange(year) %>% 
+  rename(Species=species, #Year=year,
+         Region=region#, #`Peak migration`=date
+         ) %>% 
+  select(-reg) %>% 
 kable(booktabs=TRUE, format="latex", linesep='\\addlinespace',
-      escape = FALSE, align=c("l", "l", "c")) %>%
+      escape = FALSE, align=c("l", rep("c", 7))
+      ) %>%
   save_kable(here("tables", "temporal_tables", "migration_timing.pdf"))
+
+# need to flip it or something;
 
 ave_fish_dates <- left_join(median_fish_dates, full_migration_fish, by=c("year", "species")) %>%
   filter(cum_cpue>=peak) %>%

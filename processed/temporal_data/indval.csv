@@ -1,0 +1,23 @@
+﻿Cluster,Site,Species,Dates,Prey Group,Prey Taxa,Ind. val.,p value
+1,J07,Pink,2016-06-20,Calanoida,\emph{Aetideus divergens},0.7686,0.01
+2,D07,Pink,2016-06-16,Amphipoda,Senticaudata,0.9457,0.015
+2,D07,Pink,2016-06-16,Insecta,Culicomorpha,0.7907,0.018
+3,D07,Chum,2015-05-21,Amphipoda,\emph{Hyperia} spp.,0.9763,0.008
+3,D07,Chum,2015-05-21,Balanomorpha,Molt,0.9032,0.012
+5,D07,Pink,2015-05-21+,Balanomorpha,Nauplii,0.5365,0.039
+5,D07,Pink,2015-05-21+,Cladocera,Podonidae,0.5098,0.036
+6,D07,Pink+,2016-06-03,Echinodermata,Larvae,0.9039,0.001
+7,D07,Chum,2015-05-21,Actinopterygii,\emph{Ammodytes hexapterus},1,0.002
+8,D07,Pink/Chum,2016-05-19,Euphausiidae,Egg,0.9017,0.001
+9,D07,Chum+,2015/2016,\emph{Oikopleura},\emph{Oikopleura} spp.,0.3773,0.001
+10,D07,Chum,2015-06-13,Euphausiidae,\emph{Euphausia pacifica},0.9932,0.001
+11,J07+,Chum+,2015/2016,Cnidaria,Cnidaria,0.9617,0.001
+11,J07+,Chum+,2015/2016,Calanoida,\emph{Acartia longiremis},0.5201,0.025
+12,J07,Chum,2016-06-20,Ctenophora,Ctenophora,0.9714,0.001
+13,J07,Pink,2016-06-03,Calanoida,\emph{Pseudocalanus} spp.,0.812,0.001
+13,J07,Pink,2016-06-03,Harpacticoida,\emph{Harpacticus} spp.,0.6664,0.041
+13,J07,Pink,2016-06-03,Calanoida,\emph{Tortanus discaudatus},0.6341,0.049
+14,D07,Pink/Chum,2015-06-13,Polychaeta,\emph{Tomopteris septentrionalis},0.7273,0.039
+14,D07,Pink/Chum,2015-06-13,Chaetognatha,Sagittoidea,0.6333,0.012
+14,D07,Pink/Chum,2015-06-13,Calanoida,\emph{Calanus pacificus},0.3255,0.034
+15,J07+,Pink+,2015/2016,Calanoida,\emph{Calanus marshallae},0.3618,0.001
